@@ -1,15 +1,17 @@
 name: CI — reservation-service
 
+# Automatic CI paused: only runs when you click "Run workflow" in Actions.
+# To resume push/PR runs: restore the commented block below and remove `workflow_dispatch`.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'services/reservation-service/**'
-      - '.github/workflows/ci-reservation-service.yml'
-  pull_request:
-    paths:
-      - 'services/reservation-service/**'
-
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'services/reservation-service/**'
+  #     - '.github/workflows/ci-reservation-service.yml'
+  # pull_request:
+  #   paths:
+  #     - 'services/reservation-service/**'
 env:
   SERVICE: reservation-service
   IMAGE_NAME: kira-reservation-service

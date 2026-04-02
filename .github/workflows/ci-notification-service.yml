@@ -1,15 +1,17 @@
 name: CI — notification-service
 
+# Automatic CI paused: only runs when you click "Run workflow" in Actions.
+# To resume push/PR runs: restore the commented block below and remove `workflow_dispatch`.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'services/notification-service/**'
-      - '.github/workflows/ci-notification-service.yml'
-  pull_request:
-    paths:
-      - 'services/notification-service/**'
-
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'services/notification-service/**'
+  #     - '.github/workflows/ci-notification-service.yml'
+  # pull_request:
+  #   paths:
+  #     - 'services/notification-service/**'
 env:
   SERVICE: notification-service
   IMAGE_NAME: kira-notification-service

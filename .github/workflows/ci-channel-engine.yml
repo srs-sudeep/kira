@@ -1,15 +1,17 @@
 name: CI — channel-engine
 
+# Automatic CI paused: only runs when you click "Run workflow" in Actions.
+# To resume push/PR runs: restore the commented block below and remove `workflow_dispatch`.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'services/channel-engine/**'
-      - '.github/workflows/ci-channel-engine.yml'
-  pull_request:
-    paths:
-      - 'services/channel-engine/**'
-
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'services/channel-engine/**'
+  #     - '.github/workflows/ci-channel-engine.yml'
+  # pull_request:
+  #   paths:
+  #     - 'services/channel-engine/**'
 env:
   SERVICE: channel-engine
   IMAGE_NAME: kira-channel-engine

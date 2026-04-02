@@ -1,14 +1,17 @@
 name: CI — rate-inventory-service
 
+# Automatic CI paused: only runs when you click "Run workflow" in Actions.
+# To resume push/PR runs: restore the commented block below and remove `workflow_dispatch`.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'services/rate-inventory-service/**'
-      - '.github/workflows/ci-rate-inventory-service.yml'
-  pull_request:
-    paths:
-      - 'services/rate-inventory-service/**'
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'services/rate-inventory-service/**'
+  #     - '.github/workflows/ci-rate-inventory-service.yml'
+  # pull_request:
+  #   paths:
+  #     - 'services/rate-inventory-service/**'
 
 env:
   SERVICE: rate-inventory-service

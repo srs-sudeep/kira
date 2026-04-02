@@ -1,14 +1,17 @@
 name: CI — admin-service
 
+# Automatic CI paused: only runs when you click "Run workflow" in Actions.
+# To resume push/PR runs: restore the commented block below and remove `workflow_dispatch`.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'services/admin-service/**'
-      - '.github/workflows/ci-admin-service.yml'
-  pull_request:
-    paths:
-      - 'services/admin-service/**'
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'services/admin-service/**'
+  #     - '.github/workflows/ci-admin-service.yml'
+  # pull_request:
+  #   paths:
+  #     - 'services/admin-service/**'
 
 env:
   SERVICE: admin-service
