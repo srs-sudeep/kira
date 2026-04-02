@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "KIRA Local",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "kira",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/pgadmin4/pgpass"
+    }
+  }
+}

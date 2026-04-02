@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: channel-engine
+  namespace: kira
+  labels:
+    app: channel-engine
+    app.kubernetes.io/name: channel-engine
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: channel-engine
+  template:
+    metadata:
+      labels:
+        app: channel-engine
+        app.kubernetes.io/name: channel-engine
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: channel-engine
+          image: kira-channel-engine:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8004
+              protocol: TCP
+          env:
+            - name: SERVICE_NAME
+              value: channel-engine
+            - name: PORT
+              value: "8004"
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: ENVIRONMENT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: LOG_LEVEL
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kira-channel-engine-secret
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: REDIS_URL
+            - name: CELERY_BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: CELERY_BROKER_URL
+            - name: CELERY_RESULT_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: CELERY_RESULT_BACKEND
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kira-channel-engine-secret
+                  key: SECRET_KEY
+            - name: IDENTITY_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: IDENTITY_SERVICE_URL
+            - name: RATE_INVENTORY_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: RATE_INVENTORY_SERVICE_URL
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: CORS_ORIGINS
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8004
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

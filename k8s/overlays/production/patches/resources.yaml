@@ -1,0 +1,11 @@
+# Strategic merge patch: raise resource limits for production API pods.
+# Applies only to deployments with component=api label.
+- op: replace
+  path: /spec/template/spec/containers/0/resources
+  value:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi

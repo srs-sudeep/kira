@@ -1,0 +1,123 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  # ---------------------------------------------------------------------------
+  # Identity Service — auth, users, audit
+  # ---------------------------------------------------------------------------
+  - name: identity-service
+    url: http://identity-service:8001
+    routes:
+      - name: auth-route
+        paths:
+          - /api/v1/auth
+        strip_path: false
+      - name: users-route
+        paths:
+          - /api/v1/users
+        strip_path: false
+      - name: audit-route
+        paths:
+          - /api/v1/audit
+        strip_path: false
+    plugins:
+      - name: correlation-id
+        config:
+          header_name: X-Request-ID
+          generator: uuid#counter
+          echo_downstream: true
+
+  # ---------------------------------------------------------------------------
+  # Rate & Inventory Service — rooms, inventory
+  # ---------------------------------------------------------------------------
+  - name: rate-inventory-service
+    url: http://rate-inventory-service:8002
+    routes:
+      - name: rooms-route
+        paths:
+          - /api/v1/rooms
+        strip_path: false
+      - name: inventory-route
+        paths:
+          - /api/v1/inventory
+        strip_path: false
+    plugins:
+      - name: correlation-id
+        config:
+          header_name: X-Request-ID
+          generator: uuid#counter
+          echo_downstream: true
+
+  # ---------------------------------------------------------------------------
+  # Reservation Service
+  # ---------------------------------------------------------------------------
+  - name: reservation-service
+    url: http://reservation-service:8003
+    routes:
+      - name: reservations-route
+        paths:
+          - /api/v1/reservations
+        strip_path: false
+    plugins:
+      - name: correlation-id
+        config:
+          header_name: X-Request-ID
+          generator: uuid#counter
+          echo_downstream: true
+
+  # ---------------------------------------------------------------------------
+  # Channel Engine
+  # ---------------------------------------------------------------------------
+  - name: channel-engine
+    url: http://channel-engine:8004
+    routes:
+      - name: channels-route
+        paths:
+          - /api/v1/channels
+        strip_path: false
+    plugins:
+      - name: correlation-id
+        config:
+          header_name: X-Request-ID
+          generator: uuid#counter
+          echo_downstream: true
+
+  # ---------------------------------------------------------------------------
+  # Notification Service
+  # ---------------------------------------------------------------------------
+  - name: notification-service
+    url: http://notification-service:8005
+    routes:
+      - name: notifications-route
+        paths:
+          - /api/v1/notifications
+        strip_path: false
+    plugins:
+      - name: correlation-id
+        config:
+          header_name: X-Request-ID
+          generator: uuid#counter
+          echo_downstream: true
+
+  # ---------------------------------------------------------------------------
+  # Admin Service
+  # ---------------------------------------------------------------------------
+  - name: admin-service
+    url: http://admin-service:8006
+    routes:
+      - name: tenants-route
+        paths:
+          - /api/v1/tenants
+        strip_path: false
+    plugins:
+      - name: correlation-id
+        config:
+          header_name: X-Request-ID
+          generator: uuid#counter
+          echo_downstream: true
+
+plugins:
+  - name: request-termination
+    config:
+      status_code: 404
+      message: "Route not found"

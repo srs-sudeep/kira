@@ -1,0 +1,135 @@
+# =============================================================================
+# KIRA — Terraform variable values example
+# Copy to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit it.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Global
+# ---------------------------------------------------------------------------
+
+project     = "kira"
+environment = "production"   # "production" or "staging"
+region      = "ap-south-1"
+
+# ---------------------------------------------------------------------------
+# Terraform state backend
+# These are used for documentation; the actual values are passed via
+# -backend-config flags to `terraform init` or set directly in main.tf.
+# ---------------------------------------------------------------------------
+
+state_bucket         = "kira-terraform-state-123456789012"
+state_dynamodb_table = "kira-terraform-locks"
+
+# ---------------------------------------------------------------------------
+# Networking
+# ---------------------------------------------------------------------------
+
+vpc_cidr = "10.0.0.0/16"
+
+public_subnet_cidrs = [
+  "10.0.1.0/24",   # ap-south-1a
+  "10.0.2.0/24",   # ap-south-1b
+]
+
+private_subnet_cidrs = [
+  "10.0.11.0/24",  # ap-south-1a
+  "10.0.12.0/24",  # ap-south-1b
+]
+
+availability_zones = [
+  "ap-south-1a",
+  "ap-south-1b",
+]
+
+# ---------------------------------------------------------------------------
+# EKS
+# ---------------------------------------------------------------------------
+
+eks_cluster_version    = "1.29"
+eks_node_instance_type = "t3.xlarge"
+
+# Phase 1 (lean start)
+eks_node_desired = 1
+eks_node_min     = 1
+eks_node_max     = 3
+
+# Phase 2 (HA production)
+# eks_node_desired = 2
+# eks_node_min     = 2
+# eks_node_max     = 6
+
+eks_node_disk_size = 50
+
+# IMPORTANT: Restrict this to your office IP or VPN CIDR before go-live.
+# Example: eks_public_access_cidrs = ["203.0.113.0/24"]
+eks_public_access_cidrs = ["0.0.0.0/0"]
+
+# ---------------------------------------------------------------------------
+# RDS PostgreSQL
+# ---------------------------------------------------------------------------
+
+rds_engine_version        = "16"
+rds_instance_class        = "db.t3.medium"
+rds_allocated_storage     = 50
+rds_max_allocated_storage = 200
+rds_backup_retention_days = 7
+rds_backup_window         = "02:00-03:00"
+rds_maintenance_window    = "sun:04:00-sun:05:00"
+rds_db_name               = "kira"
+rds_username              = "kira_admin"
+
+# Phase 1 (single-AZ, saves ~$50/mo)
+# Multi-AZ is controlled by: var.environment == "production"
+# Set environment = "staging" to disable Multi-AZ.
+
+# ---------------------------------------------------------------------------
+# ElastiCache Redis
+# ---------------------------------------------------------------------------
+
+redis_engine_version  = "7.1"
+redis_node_type       = "cache.t3.micro"   # Phase 1
+# redis_node_type     = "cache.t3.medium"  # Phase 2
+
+redis_num_cache_nodes    = 1   # 1 = single node; 2 = primary + replica
+redis_snapshot_retention = 3
+
+# ---------------------------------------------------------------------------
+# S3 Buckets
+# Must be globally unique — append your account ID or a random suffix.
+# ---------------------------------------------------------------------------
+
+s3_assets_bucket_name  = "kira-assets"
+s3_backups_bucket_name = "kira-backups"
+
+# ---------------------------------------------------------------------------
+# External API credentials
+# Fill in real values from the respective OTA developer portals.
+# ---------------------------------------------------------------------------
+
+sendgrid_api_key    = "SG.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+booking_com_api_key = "your-booking-com-connectivity-api-key"
+expedia_api_key     = "your-expedia-eqc-api-key"
+mmt_api_key         = "your-makemytrip-api-key"
+
+# ---------------------------------------------------------------------------
+# DNS / ACM
+# ---------------------------------------------------------------------------
+
+domain_name     = "kira.abodeab.com"
+
+# Leave empty if your domain is not yet in Route 53.
+# After creating the hosted zone, set this to the zone ID and re-run terraform apply.
+route53_zone_id = ""
+# route53_zone_id = "Z1XXXXXXXXXXXXXXXXXX"
+
+# ---------------------------------------------------------------------------
+# WAF — set after Kong/ALB is deployed
+# ---------------------------------------------------------------------------
+
+# Leave empty on first apply. After `kubectl apply -k k8s/overlays/production/`
+# provisions the ALB, get its ARN with:
+#   aws elbv2 describe-load-balancers --query 'LoadBalancers[*].LoadBalancerArn'
+# Then set this and re-run `terraform apply` to associate the WAF.
+alb_arn = ""
+# alb_arn = "arn:aws:elasticloadbalancing:ap-south-1:123456789012:loadbalancer/app/kira/xxxx"

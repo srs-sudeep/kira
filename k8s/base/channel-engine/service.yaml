@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: channel-engine
+  namespace: kira
+  labels:
+    app: channel-engine
+    app.kubernetes.io/name: channel-engine
+spec:
+  type: ClusterIP
+  selector:
+    app: channel-engine
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8004
+      targetPort: 8004

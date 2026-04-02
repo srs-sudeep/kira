@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kira
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - identity-service/deployment.yaml
+  - identity-service/service.yaml
+  - identity-service/hpa.yaml
+  - rate-inventory-service/deployment.yaml
+  - rate-inventory-service/service.yaml
+  - rate-inventory-service/hpa.yaml
+  - reservation-service/deployment.yaml
+  - reservation-service/service.yaml
+  - reservation-service/hpa.yaml
+  - channel-engine/deployment.yaml
+  - channel-engine/worker-deployment.yaml
+  - channel-engine/service.yaml
+  - channel-engine/hpa.yaml
+  - notification-service/deployment.yaml
+  - notification-service/service.yaml
+  - notification-service/hpa.yaml
+  - admin-service/deployment.yaml
+  - admin-service/service.yaml
+  - admin-service/hpa.yaml
+  - web-app/deployment.yaml
+  - web-app/service.yaml
+  - web-app/hpa.yaml
+
+commonLabels:
+  app.kubernetes.io/part-of: kira
+  app.kubernetes.io/managed-by: kustomize

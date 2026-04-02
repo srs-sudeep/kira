@@ -1,0 +1,76 @@
+name: Deploy — Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy (choose "all" to deploy every service)'
+        required: true
+        type: choice
+        options:
+          - all
+          - identity-service
+          - rate-inventory-service
+          - reservation-service
+          - channel-engine
+          - notification-service
+          - admin-service
+          - web-app
+      image_tag:
+        description: 'Image tag to deploy (8-char commit SHA from ECR, e.g. a1b2c3d4)'
+        required: true
+        type: string
+
+jobs:
+  deploy-production:
+    name: Deploy → Production
+    runs-on: ubuntu-latest
+    environment: production   # ← requires manual approval in GitHub Environments
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Resolve service list
+        id: services
+        run: |
+          if [[ "${{ inputs.service }}" == "all" ]]; then
+            echo "list=identity-service rate-inventory-service reservation-service channel-engine notification-service admin-service web-app" >> $GITHUB_OUTPUT
+          else
+            echo "list=${{ inputs.service }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy services
+        run: |
+          for svc in ${{ steps.services.outputs.list }}; do
+            echo "▶ Deploying $svc:${{ inputs.image_tag }}"
+            kubectl set image deployment/$svc \
+              $svc=${{ secrets.ECR_REGISTRY }}/kira-$svc:${{ inputs.image_tag }} \
+              -n kira
+            kubectl rollout status deployment/$svc -n kira --timeout=300s
+            echo "✓ $svc deployed"
+          done
+
+      - name: Deploy channel-engine Celery worker (if applicable)
+        if: inputs.service == 'channel-engine' || inputs.service == 'all'
+        run: |
+          kubectl set image deployment/channel-engine-worker \
+            channel-engine-worker=${{ secrets.ECR_REGISTRY }}/kira-channel-engine:${{ inputs.image_tag }} \
+            -n kira
+          kubectl rollout status deployment/channel-engine-worker -n kira --timeout=300s
+
+      - name: Summary
+        run: |
+          echo "## Production Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Tag |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-----|" >> $GITHUB_STEP_SUMMARY
+          for svc in ${{ steps.services.outputs.list }}; do
+            echo "| $svc | \`${{ inputs.image_tag }}\` |" >> $GITHUB_STEP_SUMMARY
+          done

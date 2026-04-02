@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rate-inventory-service
+  namespace: kira
+  labels:
+    app: rate-inventory-service
+    app.kubernetes.io/name: rate-inventory-service
+spec:
+  type: ClusterIP
+  selector:
+    app: rate-inventory-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8002
+      targetPort: 8002

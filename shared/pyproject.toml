@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "kira-shared"
+version = "0.1.0"
+description = "KIRA shared library — schemas, middleware, and utilities"
+authors = ["KIRA Team"]
+python = "^3.12"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.9"
+pydantic-settings = "^2.5"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0"}
+python-jose = {extras = ["cryptography"], version = "^3.3"}
+passlib = {extras = ["bcrypt"], version = "^1.7"}
+cryptography = "^42.0"
+structlog = "^24.0"
+aiokafka = "^0.10"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

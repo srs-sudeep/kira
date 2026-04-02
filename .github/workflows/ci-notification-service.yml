@@ -1,0 +1,145 @@
+name: CI — notification-service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/notification-service/**'
+      - '.github/workflows/ci-notification-service.yml'
+  pull_request:
+    paths:
+      - 'services/notification-service/**'
+
+env:
+  SERVICE: notification-service
+  IMAGE_NAME: kira-notification-service
+  WORKDIR: services/notification-service
+
+jobs:
+  test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kira_notification_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    defaults:
+      run:
+        working-directory: ${{ env.WORKDIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv run poetry install --no-interaction
+
+      - name: Lint — ruff check
+        run: uv run ruff check .
+
+      - name: Lint — ruff format
+        run: uv run ruff format --check .
+
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/kira_notification_test
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: ci-test-secret-key-not-for-production
+          KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          SMTP_HOST: localhost
+          SMTP_PORT: "1025"
+          SMTP_USER: ci-test
+          SMTP_PASSWORD: ci-test
+          SMTP_FROM_EMAIL: noreply@kira.test
+          ENVIRONMENT: test
+        run: uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=70 -v
+
+  build-and-push:
+    name: Build & Push
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: echo "sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.WORKDIR }}
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy → Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Deploy
+        run: |
+          kubectl set image deployment/${{ env.SERVICE }} \
+            ${{ env.SERVICE }}=${{ secrets.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }} \
+            -n kira-staging
+          kubectl rollout status deployment/${{ env.SERVICE }} -n kira-staging --timeout=180s

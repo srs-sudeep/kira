@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reservation-service
+  namespace: kira
+  labels:
+    app: reservation-service
+    app.kubernetes.io/name: reservation-service
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reservation-service
+  template:
+    metadata:
+      labels:
+        app: reservation-service
+        app.kubernetes.io/name: reservation-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: reservation-service
+          image: kira-reservation-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8003
+              protocol: TCP
+          env:
+            - name: SERVICE_NAME
+              value: reservation-service
+            - name: PORT
+              value: "8003"
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: ENVIRONMENT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: LOG_LEVEL
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kira-reservation-service-secret
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: REDIS_URL
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kira-reservation-service-secret
+                  key: SECRET_KEY
+            - name: IDENTITY_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: IDENTITY_SERVICE_URL
+            - name: RATE_INVENTORY_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: RATE_INVENTORY_SERVICE_URL
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: CORS_ORIGINS
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8003
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

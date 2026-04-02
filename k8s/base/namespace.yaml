@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kira
+  labels:
+    app.kubernetes.io/part-of: kira
+    app.kubernetes.io/managed-by: kustomize
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kira-staging
+  labels:
+    app.kubernetes.io/part-of: kira
+    environment: staging

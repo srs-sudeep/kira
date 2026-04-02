@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: kira
+  labels:
+    app: notification-service
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+        app.kubernetes.io/name: notification-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: notification-service
+          image: kira-notification-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8005
+              protocol: TCP
+          env:
+            - name: SERVICE_NAME
+              value: notification-service
+            - name: PORT
+              value: "8005"
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: ENVIRONMENT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: LOG_LEVEL
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kira-notification-service-secret
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: REDIS_URL
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kira-notification-service-secret
+                  key: SECRET_KEY
+            - name: SMTP_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: kira-notification-service-secret
+                  key: SMTP_HOST
+            - name: SMTP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: SMTP_PORT
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kira-notification-service-secret
+                  key: SMTP_USER
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kira-notification-service-secret
+                  key: SMTP_PASSWORD
+            - name: SMTP_FROM_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: SMTP_FROM_EMAIL
+            - name: SMTP_FROM_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: SMTP_FROM_NAME
+            - name: IDENTITY_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: IDENTITY_SERVICE_URL
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: CORS_ORIGINS
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

@@ -1,0 +1,139 @@
+name: CI — web-app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web-app/**'
+      - '.github/workflows/ci-web-app.yml'
+  pull_request:
+    paths:
+      - 'web-app/**'
+
+env:
+  SERVICE: web-app
+  IMAGE_NAME: kira-web-app
+  WORKDIR: web-app
+
+jobs:
+  # ── Lint & Build ─────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKDIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type-check
+        run: bunx tsc --noEmit
+
+      - name: Lint
+        run: bun run lint
+
+  build:
+    name: Build
+    needs: lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKDIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-app-dist
+          path: ${{ env.WORKDIR }}/dist
+          retention-days: 1
+
+  # ── Build & Push ─────────────────────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: echo "sha=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ env.WORKDIR }}
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Deploy Staging ───────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+      - name: Deploy
+        run: |
+          kubectl set image deployment/${{ env.SERVICE }} \
+            ${{ env.SERVICE }}=${{ secrets.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image-tag }} \
+            -n kira-staging
+          kubectl rollout status deployment/${{ env.SERVICE }} -n kira-staging --timeout=180s

@@ -1,0 +1,59 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Production: namespace kira, 2+ replicas, full resource limits.
+# Image tags are set to "latest" here; actual SHA is applied via
+# `kubectl set image` in the deploy-production workflow.
+namespace: kira
+
+resources:
+  - ../../base
+
+commonLabels:
+  environment: production
+
+images:
+  - name: kira-identity-service
+    newName: ${ECR_REGISTRY}/kira-identity-service
+    newTag: latest
+  - name: kira-rate-inventory-service
+    newName: ${ECR_REGISTRY}/kira-rate-inventory-service
+    newTag: latest
+  - name: kira-reservation-service
+    newName: ${ECR_REGISTRY}/kira-reservation-service
+    newTag: latest
+  - name: kira-channel-engine
+    newName: ${ECR_REGISTRY}/kira-channel-engine
+    newTag: latest
+  - name: kira-notification-service
+    newName: ${ECR_REGISTRY}/kira-notification-service
+    newTag: latest
+  - name: kira-admin-service
+    newName: ${ECR_REGISTRY}/kira-admin-service
+    newTag: latest
+  - name: kira-web-app
+    newName: ${ECR_REGISTRY}/kira-web-app
+    newTag: latest
+
+patches:
+  # Production: 2 replicas minimum for HA
+  - path: patches/replicas.yaml
+    target:
+      kind: Deployment
+
+  # Production HPA: min 2, max 5
+  - patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+      - op: replace
+        path: /spec/maxReplicas
+        value: 5
+    target:
+      kind: HorizontalPodAutoscaler
+
+  # Production resources: higher limits for peak traffic
+  - path: patches/resources.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/component=api"

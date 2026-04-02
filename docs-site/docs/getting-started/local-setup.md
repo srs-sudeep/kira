@@ -1,0 +1,299 @@
+---
+title: Local Setup
+description: Clone the KIRA monorepo, configure environment variables, and start the full stack with Docker Compose.
+sidebar_position: 2
+---
+
+# Local Setup
+
+**What you'll learn:**
+- How to clone the repo and configure per-service `.env.local` files
+- What `docker compose up --build` actually does (which services start, in what order)
+- How to run database migrations and seed test data
+- How to confirm every service is healthy before opening the browser
+- Common first-run problems and how to fix them
+
+:::info Prerequisites
+Complete the [Prerequisites](./prerequisites.md) guide before continuing. You need Docker Desktop (with 8 GB+ RAM allocated), Python 3.12, uv, and bun installed.
+:::
+
+---
+
+## Step 1 — Clone the Repository
+
+```bash
+git clone https://github.com/abodeab/kira.git
+cd kira
+```
+
+---
+
+## Step 2 — Configure Environment Variables
+
+Each backend service reads its configuration from a `.env.local` file in its own directory. The repo ships `.env.example` files for each service — copy them:
+
+```bash
+# Copy .env.example → .env.local for each backend service
+for svc in identity-service rate-inventory-service reservation-service \
+           channel-engine notification-service admin-service; do
+  cp services/$svc/.env.example services/$svc/.env.local
+done
+```
+
+Then open each `.env.local` and fill in the values. For local development the defaults in `.env.example` work out of the box (they point to the Docker Compose service hostnames — `postgres`, `redis`, `kafka`).
+
+:::warning Secrets you must generate
+Two values in `services/identity-service/.env.local` are intentionally left blank because they must be unique:
+
+```bash
+# Generate SECRET_KEY (32 chars)
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# Generate JWT_SECRET_KEY (64 chars)
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+Paste the output into `services/identity-service/.env.local`. Without these, the identity service will refuse to start.
+:::
+
+For the full list of variables and what each one does, see [Environment Variables](./environment-variables.md).
+
+---
+
+## Step 3 — Start the Stack
+
+```bash
+docker compose up -d --build
+```
+
+**What happens during this command:**
+
+1. Docker pulls base images (only on first run — `postgres:16-alpine`, `redis:7-alpine`, `confluentinc/cp-kafka:7.5.0`, `kong:3.4-alpine`)
+2. Docker builds all 7 application images in parallel (identity-service, rate-inventory-service, reservation-service, channel-engine, notification-service, admin-service, web-app)
+3. Infrastructure containers start first: PostgreSQL, Redis, Zookeeper, Kafka
+4. Health checks pass, then application services start
+5. Celery workers start after their parent services
+6. Kong gateway starts and loads the route config from `kong/kong.yml`
+7. All containers reach `healthy` state
+
+First build takes **3–6 minutes** depending on your internet speed and machine. Subsequent starts (without `--build`) take **under 30 seconds**.
+
+:::tip Watching the build
+Drop the `-d` flag to see live output:
+```bash
+docker compose up --build
+```
+Use `Ctrl+C` to detach once everything is up (or run in a separate terminal).
+:::
+
+---
+
+## Step 4 — Run Database Migrations
+
+Each service manages its own PostgreSQL schema with Alembic. Run all migrations:
+
+```bash
+make migrate-all
+```
+
+This runs `alembic upgrade head` for each service in sequence. You should see output like:
+
+```
+=== Migrating identity-service ===
+INFO  [alembic.runtime.migration] Running upgrade  -> a1b2c3d4e5f6, initial schema
+
+=== Migrating rate-inventory-service ===
+INFO  [alembic.runtime.migration] Running upgrade  -> b2c3d4e5f6a1, initial schema
+...
+```
+
+If you prefer to migrate one service at a time:
+
+```bash
+make migrate-identity-service
+make migrate-rate-inventory-service
+# ... etc
+```
+
+---
+
+## Step 5 — Seed Test Data
+
+```bash
+make seed
+```
+
+This runs `scripts/seed_data.py` which creates:
+- A test tenant: **"Grand Hotel Demo"** (ID is printed to stdout — save it)
+- A super-admin user: `admin@kira.local` / `Admin1234!`
+- One hotel admin user: `manager@grandhotel.local` / `Manager1234!`
+- Three room types: Standard Twin, Deluxe King, Suite
+- Rate plans for each room type: BAR, Non-Refundable
+- 30 days of ARI data starting from today
+
+To also create a super-admin outside of seeding (e.g., to reset credentials):
+
+```bash
+make superadmin
+```
+
+---
+
+## Step 6 — Confirm Everything Is Healthy
+
+```bash
+docker compose ps
+```
+
+All containers should show `healthy` in the `STATUS` column. Then ping each service health endpoint:
+
+```bash
+curl -s http://localhost:8001/health | python3 -m json.tool
+curl -s http://localhost:8002/health | python3 -m json.tool
+curl -s http://localhost:8003/health | python3 -m json.tool
+curl -s http://localhost:8004/health | python3 -m json.tool
+curl -s http://localhost:8005/health | python3 -m json.tool
+curl -s http://localhost:8006/health | python3 -m json.tool
+```
+
+Each should return:
+
+```json
+{
+  "status": "ok",
+  "service": "identity-service",
+  "version": "1.0.0"
+}
+```
+
+---
+
+## Step 7 — Open the Dashboard
+
+Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
+
+Log in with the seeded hotel admin:
+- **Email:** `manager@grandhotel.local`
+- **Password:** `Manager1234!`
+
+You should land on the dashboard showing the KPI cards and the seeded reservation data.
+
+To log in as super-admin (full platform access, including the admin-service):
+- **Email:** `admin@kira.local`
+- **Password:** `Admin1234!`
+
+---
+
+## Optional — Start with Observability Dashboards
+
+Add Grafana, Prometheus, Loki, and Kafka UI:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build
+```
+
+Then open all dashboards at once:
+
+```bash
+make dashboards
+```
+
+| Dashboard | URL | Purpose |
+|---|---|---|
+| KIRA web-app | [localhost:3000](http://localhost:3000) | Property manager dashboard |
+| Kong Admin | [localhost:8001](http://localhost:8001) | API gateway admin API |
+| Grafana | [localhost:3001](http://localhost:3001) | Metrics + logs (admin/admin) |
+| Prometheus | [localhost:9090](http://localhost:9090) | Raw metrics browser |
+| Kafka UI | [localhost:8080](http://localhost:8080) | Topic browser, consumer lag |
+| pgAdmin | [localhost:5050](http://localhost:5050) | SQL browser (admin@kira.local/admin) |
+| Redis Insight | [localhost:5540](http://localhost:5540) | Redis key browser |
+| Mailhog | [localhost:8025](http://localhost:8025) | Outbound email trap |
+| Portainer | [localhost:9443](http://localhost:9443) | Container management UI |
+
+---
+
+## Stopping and Cleaning Up
+
+```bash
+# Stop all containers (data persists in Docker volumes)
+make down
+
+# Stop and delete all data (wipes PostgreSQL, Redis, Kafka)
+make clean
+```
+
+:::danger `make clean` is destructive
+`make clean` runs `docker compose down -v`, which deletes all named volumes including your PostgreSQL data. You will need to re-run migrations and seeding after this.
+:::
+
+---
+
+## Troubleshooting
+
+### Port already in use
+
+```
+Error: bind: address already in use — 0.0.0.0:5432
+```
+
+Another service on your machine is using that port. Find and stop it:
+
+```bash
+# Find what's using port 5432 (PostgreSQL)
+lsof -i :5432
+
+# Or kill it directly
+sudo kill -9 $(lsof -t -i :5432)
+```
+
+Common culprits: a local PostgreSQL installation, another Docker Compose project. You can also change the host-side port in `docker-compose.yml` (e.g., `"5433:5432"`) without affecting anything else.
+
+---
+
+### Docker runs out of memory / services crash immediately
+
+Symptom: Kafka or PostgreSQL containers exit with code 137 (OOM kill).
+
+Fix: Open Docker Desktop → Settings → Resources → Memory → increase to at least **8 GB**, then restart Docker Desktop.
+
+---
+
+### PostgreSQL not ready / services fail to connect on first start
+
+Symptom: A service exits with `could not connect to server: Connection refused`.
+
+This usually means the service started before PostgreSQL finished its initialisation. The `depends_on: { condition: service_healthy }` config handles this, but occasionally the health check fires before Postgres is truly ready on the first ever run.
+
+Fix:
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+The second start is always faster because the PostgreSQL data volume is already initialised.
+
+---
+
+### `make migrate-all` fails with "relation already exists"
+
+This happens if you run migrations against a database that already has those tables (e.g., from a previous run). It is safe to ignore — Alembic only applies new migrations, and "already exists" means you are already up to date.
+
+If you see actual errors (not warnings), run:
+
+```bash
+# Reset a specific service's schema and re-migrate
+make migrate-identity-service
+```
+
+---
+
+### Identity service starts but login returns 500
+
+Make sure `SECRET_KEY` and `JWT_SECRET_KEY` are set in `services/identity-service/.env.local`. These cannot be empty — see Step 2 above.
+
+---
+
+## Next Step
+
+→ **[First Run](./first-run.md)** — walkthrough of creating a test tenant, adding room types, making a reservation, and exploring the dashboard.

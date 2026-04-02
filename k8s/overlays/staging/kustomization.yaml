@@ -1,0 +1,77 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Staging: namespace kira-staging, 1 replica, lower resource requests,
+# image tags set to "latest" — per-service CI updates them via kubectl set image.
+namespace: kira-staging
+
+resources:
+  - ../../base
+
+commonLabels:
+  environment: staging
+
+# Override ENVIRONMENT in the shared ConfigMap for staging
+configMapGenerator:
+  - name: kira-config
+    namespace: kira-staging
+    behavior: merge
+    literals:
+      - ENVIRONMENT=staging
+      - LOG_LEVEL=DEBUG
+      - CORS_ORIGINS=https://staging.kira.abodeab.com
+      - IDENTITY_SERVICE_URL=http://identity-service:8001
+      - RATE_INVENTORY_SERVICE_URL=http://rate-inventory-service:8002
+      - RESERVATION_SERVICE_URL=http://reservation-service:8003
+      - CHANNEL_ENGINE_URL=http://channel-engine:8004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:8005
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - KAFKA_GROUP_ID_PREFIX=kira-staging
+
+# Map ECR image short names → full registry paths.
+# CI workflows use `kubectl set image` to override the tag after deployment.
+images:
+  - name: kira-identity-service
+    newName: ${ECR_REGISTRY}/kira-identity-service
+    newTag: latest
+  - name: kira-rate-inventory-service
+    newName: ${ECR_REGISTRY}/kira-rate-inventory-service
+    newTag: latest
+  - name: kira-reservation-service
+    newName: ${ECR_REGISTRY}/kira-reservation-service
+    newTag: latest
+  - name: kira-channel-engine
+    newName: ${ECR_REGISTRY}/kira-channel-engine
+    newTag: latest
+  - name: kira-notification-service
+    newName: ${ECR_REGISTRY}/kira-notification-service
+    newTag: latest
+  - name: kira-admin-service
+    newName: ${ECR_REGISTRY}/kira-admin-service
+    newTag: latest
+  - name: kira-web-app
+    newName: ${ECR_REGISTRY}/kira-web-app
+    newTag: latest
+
+patches:
+  # Staging runs 1 replica per service
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+
+  # Staging HPA: min 1, max 3
+  - patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 3
+    target:
+      kind: HorizontalPodAutoscaler

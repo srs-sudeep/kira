@@ -1,0 +1,250 @@
+name: kira
+
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+#
+# This file extends the core stack with monitoring, logging, and debug UIs.
+# All services join the external kira_kira-net network created by docker-compose.yml.
+
+services:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # GRAFANA — Central dashboards (http://localhost:3001)
+  # Login: admin / admin
+  # Pre-loaded dashboards: Service Health, Logs, Infrastructure, Business Metrics
+  # ═══════════════════════════════════════════════════════════════════════════
+  grafana:
+    image: grafana/grafana:11.0.0
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-clock-panel
+      # Disable analytics / update checks
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - grafanadata:/var/lib/grafana
+      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - kira-net
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PROMETHEUS — Metrics collection (http://localhost:9090)
+  # Scrapes /metrics from all 6 services + Kong + postgres-exporter + redis-exporter
+  # ═══════════════════════════════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --web.enable-lifecycle
+      - --web.enable-admin-api
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - promdata:/prometheus
+    depends_on:
+      - postgres-exporter
+      - redis-exporter
+    networks:
+      - kira-net
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # LOKI — Log aggregation backend (http://localhost:3100)
+  # Stores logs shipped by Promtail. Grafana queries Loki for log panels.
+  # ═══════════════════════════════════════════════════════════════════════════
+  loki:
+    image: grafana/loki:3.1.0
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - lokidata:/loki
+    networks:
+      - kira-net
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PROMTAIL — Ships Docker container logs → Loki
+  # Reads structured JSON logs from all kira-project containers.
+  # ═══════════════════════════════════════════════════════════════════════════
+  promtail:
+    image: grafana/promtail:3.1.0
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./observability/promtail/config.yml:/etc/promtail/config.yml:ro
+      - /tmp/promtail-positions:/tmp  # persist scrape positions across restarts
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - kira-net
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DATABASE EXPORTERS — Expose DB metrics to Prometheus
+  # ═══════════════════════════════════════════════════════════════════════════
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:postgres@postgres:5432/kira?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kira-net
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    restart: unless-stopped
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - kira-net
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # DEBUG UIs
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # Portainer — Docker container management (https://localhost:9443)
+  portainer:
+    image: portainer/portainer-ce:2.20.3
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainerdata:/data
+    networks:
+      - kira-net
+
+  # Kafka UI — Topic browser and consumer group lag (http://localhost:8080)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: kira-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - kira-net
+
+  # pgAdmin — PostgreSQL browser (http://localhost:5050)
+  # Login: admin@kira.dev / admin
+  # Auto-connects to the kira database (via servers.json)
+  pgadmin:
+    image: dpage/pgadmin4:8.9
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@kira.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmindata:/var/lib/pgadmin
+      - ./observability/pgadmin/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kira-net
+
+  # Redis Insight — Redis key/value browser (http://localhost:5540)
+  redis-insight:
+    image: redis/redisinsight:2.52
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    networks:
+      - kira-net
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # ELK STACK (OPTIONAL)
+  # Uncomment if you prefer Elasticsearch + Kibana over Loki.
+  # NOTE: ELK requires ~2–4 GB extra RAM. Disable Loki + Promtail above first.
+  # ═══════════════════════════════════════════════════════════════════════════
+
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.14.0
+  #   restart: unless-stopped
+  #   ports: ["9200:9200"]
+  #   environment:
+  #     discovery.type: single-node
+  #     xpack.security.enabled: "false"
+  #     ES_JAVA_OPTS: "-Xms512m -Xmx1g"
+  #   volumes:
+  #     - esdata:/usr/share/elasticsearch/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+  #   networks:
+  #     - kira-net
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.14.0
+  #   restart: unless-stopped
+  #   ports: ["5601:5601"]
+  #   environment:
+  #     ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - kira-net
+
+  # filebeat:
+  #   image: docker.elastic.co/beats/filebeat:8.14.0
+  #   restart: unless-stopped
+  #   user: root
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
+  #     - ./observability/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - kira-net
+
+networks:
+  kira-net:
+    external: true
+    name: kira_kira-net
+
+volumes:
+  grafanadata:
+  promdata:
+  lokidata:
+  portainerdata:
+  pgadmindata:
+  # esdata:   # uncomment if using ELK

@@ -1,0 +1,123 @@
+groups:
+  # ── Service health ──────────────────────────────────────────────────────────
+  - name: service_health
+    interval: 15s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been unreachable for over 1 minute."
+
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m])
+          / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "5xx error rate is {{ $value | humanizePercentage }} on {{ $labels.job }}."
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.99,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 0.3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P99 latency on {{ $labels.job }}"
+          description: "P99 latency is {{ $value | humanizeDuration }} on {{ $labels.job }}."
+
+      - alert: HighCPU
+        expr: rate(process_cpu_seconds_total[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.job }}"
+          description: "Process CPU is {{ $value | humanizePercentage }} on {{ $labels.job }}."
+
+  # ── Database ────────────────────────────────────────────────────────────────
+  - name: database
+    rules:
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "postgres-exporter cannot reach the PostgreSQL instance."
+
+      - alert: PostgresConnectionsHigh
+        expr: pg_stat_activity_count > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connections above 80"
+          description: "Current active connections: {{ $value }}."
+
+      - alert: PostgresDeadlocks
+        expr: increase(pg_stat_database_deadlocks{datname="kira"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL deadlock detected"
+          description: "{{ $value }} deadlocks in the last 5 minutes on database kira."
+
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "redis-exporter cannot reach the Redis instance."
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage above 80%"
+          description: "Redis memory is at {{ $value | humanizePercentage }}."
+
+  # ── Business metrics ────────────────────────────────────────────────────────
+  - name: business
+    rules:
+      - alert: ChannelSyncFailing
+        expr: increase(channel_sync_failures_total[10m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Channel sync failures increasing"
+          description: "{{ $value }} channel sync failures in the last 10 minutes (OTA: {{ $labels.ota }})."
+
+      - alert: ChannelSyncCircuitOpen
+        expr: channel_sync_failures_total > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Channel circuit breaker may be open for {{ $labels.ota }}"
+          description: "Check channel-engine logs for consecutive failure count."
+
+      - alert: KafkaConsumerLag
+        expr: kafka_consumer_group_lag > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag is high"
+          description: "Consumer lag for group {{ $labels.group }} on topic {{ $labels.topic }} is {{ $value }}."

@@ -1,0 +1,5 @@
+# Strategic merge patch: set all API deployments to 2 replicas in production.
+# The channel-engine Celery worker stays at 1 replica (scaled manually).
+- op: replace
+  path: /spec/replicas
+  value: 2

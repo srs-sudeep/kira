@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kira-config
+  namespace: kira
+  labels:
+    app.kubernetes.io/part-of: kira
+data:
+  # Runtime environment
+  ENVIRONMENT: production
+  LOG_LEVEL: INFO
+
+  # Internal service URLs (Kubernetes DNS)
+  # Services communicate through Kong gateway or directly by K8s service name
+  IDENTITY_SERVICE_URL: http://identity-service:8001
+  RATE_INVENTORY_SERVICE_URL: http://rate-inventory-service:8002
+  RESERVATION_SERVICE_URL: http://reservation-service:8003
+  CHANNEL_ENGINE_URL: http://channel-engine:8004
+  NOTIFICATION_SERVICE_URL: http://notification-service:8005
+
+  # Redis (shared cluster)
+  REDIS_URL: redis://redis:6379/0
+  CELERY_BROKER_URL: redis://redis:6379/1
+  CELERY_RESULT_BACKEND: redis://redis:6379/2
+
+  # Kafka
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  KAFKA_GROUP_ID_PREFIX: kira
+
+  # Auth
+  JWT_ALGORITHM: HS256
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  REFRESH_TOKEN_EXPIRE_DAYS: "7"
+
+  # Email (non-sensitive)
+  SMTP_PORT: "587"
+  SMTP_FROM_EMAIL: noreply@kira.abodeab.com
+  SMTP_FROM_NAME: KIRA
+
+  # CORS
+  CORS_ORIGINS: "https://app.kira.abodeab.com"
+
+  # Feature flags
+  MFA_ENABLED: "true"
+  RATE_LIMIT_PER_MINUTE: "60"

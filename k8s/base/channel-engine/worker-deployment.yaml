@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: channel-engine-worker
+  namespace: kira
+  labels:
+    app: channel-engine-worker
+    app.kubernetes.io/name: channel-engine-worker
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: channel-engine-worker
+  template:
+    metadata:
+      labels:
+        app: channel-engine-worker
+        app.kubernetes.io/name: channel-engine-worker
+    spec:
+      terminationGracePeriodSeconds: 60   # allow in-flight tasks to finish
+      containers:
+        - name: channel-engine-worker
+          image: kira-channel-engine:latest   # same image as API, different command
+          imagePullPolicy: IfNotPresent
+          command:
+            - celery
+            - -A
+            - app.tasks.celery_app
+            - worker
+            - --loglevel=info
+            - --concurrency=4
+            - -Q
+            - ari_push,reservation_pull,channel_sync
+          env:
+            - name: SERVICE_NAME
+              value: channel-engine-worker
+            - name: ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: ENVIRONMENT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: LOG_LEVEL
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kira-channel-engine-secret
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: REDIS_URL
+            - name: CELERY_BROKER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: CELERY_BROKER_URL
+            - name: CELERY_RESULT_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: CELERY_RESULT_BACKEND
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kira-channel-engine-secret
+                  key: SECRET_KEY
+            - name: RATE_INVENTORY_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kira-config
+                  key: RATE_INVENTORY_SERVICE_URL
+          # Celery workers don't expose HTTP — use process-level liveness check
+          livenessProbe:
+            exec:
+              command:
+                - celery
+                - -A
+                - app.tasks.celery_app
+                - inspect
+                - ping
+                - --timeout=5
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

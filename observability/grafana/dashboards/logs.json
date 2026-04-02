@@ -1,0 +1,184 @@
+{
+  "__inputs": [],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "11.0.0" },
+    { "type": "datasource", "id": "loki", "name": "Loki", "version": "1.0.0" }
+  ],
+  "uid": "kira-logs",
+  "title": "KIRA — Logs",
+  "description": "Aggregated log streams from all KIRA microservices via Loki.",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "tags": ["kira", "logs"],
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values(service)",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".+",
+        "current": {},
+        "sort": 1
+      },
+      {
+        "name": "level",
+        "label": "Level",
+        "type": "custom",
+        "options": [
+          { "selected": true, "text": "All", "value": ".*" },
+          { "selected": false, "text": "info", "value": "info" },
+          { "selected": false, "text": "warning", "value": "warning" },
+          { "selected": false, "text": "error", "value": "error" },
+          { "selected": false, "text": "critical", "value": "critical" }
+        ],
+        "includeAll": false,
+        "multi": false,
+        "current": { "text": "All", "value": ".*" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Log Volume",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Log Volume by Service",
+      "description": "Number of log lines per minute per service. Spikes often indicate errors or high request volume.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 1 },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "mean"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "lineWidth": 0,
+            "stacking": { "mode": "normal", "group": "A" }
+          },
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "sum by (service) (count_over_time({project=\"kira\", service=~\"$service\"}[1m]))",
+          "legendFormat": "{{ service }}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Error Log Volume",
+      "description": "Count of ERROR and CRITICAL log lines per minute — rising trend needs investigation.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 24, "x": 0, "y": 8 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 0
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "sum(count_over_time({project=\"kira\", service=~\"$service\"} |= \"error\" [1m]))",
+          "legendFormat": "Errors/min"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "All Logs",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 }
+    },
+    {
+      "id": 11,
+      "type": "logs",
+      "title": "Log Stream — All Services",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 14 },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{project=\"kira\", service=~\"$service\", level=~\"$level\"} | json | line_format \"[{{.service}}] {{.level | upper}} {{.event}}\"",
+          "maxLines": 500
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Errors Only",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 }
+    },
+    {
+      "id": 21,
+      "type": "logs",
+      "title": "Error Log Stream",
+      "description": "Only ERROR and CRITICAL level log lines. Use this to triage incidents.",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 29 },
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": true,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{project=\"kira\", service=~\"$service\"} | json | level =~ `error|critical` | line_format \"[{{.service}}] {{.event}}\"",
+          "maxLines": 200
+        }
+      ]
+    }
+  ]
+}
