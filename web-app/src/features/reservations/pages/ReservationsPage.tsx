@@ -37,7 +37,9 @@ export default function ReservationsPage() {
       <PageHeader
         title="Reservations"
         description={
-          data ? `${data.total.toLocaleString()} total reservations` : undefined
+          data != null && data.total != null
+            ? `${Number(data.total).toLocaleString()} total reservations`
+            : undefined
         }
         actions={
           <Button onClick={() => setCreateOpen(true)}>

@@ -1,3 +1,4 @@
+import type { ElementType } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -12,33 +13,33 @@ import {
   CheckCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { ROUTES } from '@/router/routes'
 import { QUERY_KEYS } from '@/config/constants'
 import notificationsService from '../services/notifications-service'
 import type { Notification, NotificationType } from '@/types/notification'
 
-const TYPE_ICONS: Record<NotificationType, React.ElementType> = {
-  reservation_created:  BookOpen,
+const TYPE_ICONS: Record<NotificationType, ElementType> = {
+  reservation_created: BookOpen,
   reservation_modified: Pencil,
   reservation_cancelled: XCircle,
-  channel_sync_failed:  AlertTriangle,
+  channel_sync_failed: AlertTriangle,
   channel_sync_success: CheckCircle2,
-  low_availability:     AlertCircle,
-  rate_update:          TrendingUp,
-  system:               Bell,
+  low_availability: AlertCircle,
+  rate_update: TrendingUp,
+  system: Bell,
 }
 
 const TYPE_COLOR: Record<NotificationType, string> = {
-  reservation_created:  'text-brand-600 bg-brand-50 dark:bg-brand-950/50',
-  reservation_modified: 'text-blue-600 bg-blue-50 dark:bg-blue-950/50',
-  reservation_cancelled:'text-destructive bg-red-50 dark:bg-red-950/50',
-  channel_sync_failed:  'text-destructive bg-red-50 dark:bg-red-950/50',
-  channel_sync_success: 'text-accent-600 bg-accent-50 dark:bg-accent-950/50',
-  low_availability:     'text-orange-600 bg-orange-50 dark:bg-orange-950/50',
-  rate_update:          'text-violet-600 bg-violet-50 dark:bg-violet-950/50',
-  system:               'text-muted-foreground bg-muted',
+  reservation_created: 'text-primary bg-primary/12 border-primary/10',
+  reservation_modified: 'text-blue-600 bg-blue-500/[0.1] border-blue-500/15 dark:text-blue-400',
+  reservation_cancelled: 'text-red-600 bg-red-500/[0.1] border-red-500/15 dark:text-red-400',
+  channel_sync_failed: 'text-red-600 bg-red-500/[0.1] border-red-500/15 dark:text-red-400',
+  channel_sync_success: 'text-emerald-600 bg-emerald-500/[0.1] border-emerald-500/15 dark:text-emerald-400',
+  low_availability: 'text-orange-600 bg-orange-500/[0.1] border-orange-500/15 dark:text-orange-400',
+  rate_update: 'text-violet-600 bg-violet-500/[0.1] border-violet-500/15 dark:text-violet-400',
+  system: 'text-muted-foreground bg-muted/40 border-border/30',
 }
 
 interface Props {
@@ -73,8 +74,11 @@ export function NotificationDropdown({ onClose }: Props) {
   function handleNotificationClick(n: Notification) {
     if (!n.is_read) markOneMutation.mutate(n.id)
     onClose()
-    // Route based on notification type
-    if (n.type === 'reservation_created' || n.type === 'reservation_modified' || n.type === 'reservation_cancelled') {
+    if (
+      n.type === 'reservation_created' ||
+      n.type === 'reservation_modified' ||
+      n.type === 'reservation_cancelled'
+    ) {
       const id = (n.data as { reservation_id?: string })?.reservation_id
       if (id) navigate(ROUTES.RESERVATION_DETAIL.replace(':reservationId', id))
       else navigate(ROUTES.RESERVATIONS)
@@ -90,13 +94,12 @@ export function NotificationDropdown({ onClose }: Props) {
   const unread = notifications.filter((n) => !n.is_read)
 
   return (
-    <div className="w-80 overflow-hidden rounded-xl border bg-card shadow-lg">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b">
+    <div className="w-80 overflow-hidden rounded-xl border border-border/25 bg-popover/85 glass shadow-2xl backdrop-blur-xl">
+      <div className="flex items-center justify-between border-b border-border/25 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <p className="font-semibold text-sm text-foreground">Notifications</p>
+          <p className="text-sm font-semibold tracking-tight text-foreground">Notifications</p>
           {unread.length > 0 && (
-            <span className="rounded-full bg-brand-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            <span className="rounded-full bg-primary/90 px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">
               {unread.length}
             </span>
           )}
@@ -105,7 +108,7 @@ export function NotificationDropdown({ onClose }: Props) {
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-xs"
+            className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
             onClick={() => markAllMutation.mutate()}
             disabled={markAllMutation.isPending}
           >
@@ -114,25 +117,25 @@ export function NotificationDropdown({ onClose }: Props) {
           </Button>
         )}
       </div>
-
-      {/* List */}
       <div className="max-h-80 overflow-y-auto">
         {isLoading ? (
           <div className="space-y-3 p-4">
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} className="flex gap-3">
-                <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-muted" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-2.5 w-20" />
                 </div>
               </div>
             ))}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-            <Bell className="h-6 w-6 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">All caught up!</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+            <Bell className="h-7 w-7 text-muted-foreground/25" />
+            <p className="text-sm font-medium text-muted-foreground">All caught up</p>
+            <p className="text-xs text-muted-foreground/65">No new notifications</p>
           </div>
         ) : (
           <ul>
@@ -144,59 +147,56 @@ export function NotificationDropdown({ onClose }: Props) {
                   <button
                     type="button"
                     className={cn(
-                      'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors',
-                      'hover:bg-muted/50',
-                      !n.is_read && 'bg-brand-50/50 dark:bg-brand-950/20',
+                      'flex w-full items-start gap-3 border-b border-border/20 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-muted/25',
+                      !n.is_read && 'bg-primary/[0.04]',
                     )}
                     onClick={() => handleNotificationClick(n)}
                   >
                     <div
                       className={cn(
-                        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
+                        'mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border',
                         colorClass,
                       )}
                     >
                       <Icon className="h-4 w-4" />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p
                           className={cn(
-                            'text-xs leading-snug',
-                            !n.is_read
-                              ? 'font-semibold text-foreground'
-                              : 'text-foreground',
+                            'text-[13px] leading-snug',
+                            !n.is_read ? 'font-semibold text-foreground' : 'font-medium text-foreground/85',
                           )}
                         >
                           {n.title}
                         </p>
                         {!n.is_read && (
-                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" />
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.55)]" />
                         )}
                       </div>
-                      <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+                      <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground/75">
                         {n.body}
                       </p>
-                      <p className="mt-1 text-[10px] text-muted-foreground/70">
+                      <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/45">
                         {formatRelativeTime(n.created_at)}
                       </p>
                     </div>
                   </button>
-                  <Separator className="opacity-50" />
                 </li>
               )
             })}
           </ul>
         )}
       </div>
-
-      {/* Footer */}
-      <div className="border-t px-4 py-2">
+      <div className="border-t border-border/25 bg-muted/[0.06] px-4 py-2 backdrop-blur-sm">
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-xs text-brand-600 hover:text-brand-700"
-          onClick={() => { navigate(ROUTES.NOTIFICATIONS); onClose() }}
+          className="w-full text-xs font-medium text-primary hover:text-primary"
+          onClick={() => {
+            navigate(ROUTES.NOTIFICATIONS)
+            onClose()
+          }}
         >
           View all notifications
         </Button>

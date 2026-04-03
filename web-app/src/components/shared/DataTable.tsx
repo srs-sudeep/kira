@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[]
@@ -80,11 +81,11 @@ export function DataTable<TData>({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="rounded-md border">
+      <div className="rounded-xl border border-border/40 bg-card/80 overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id}>
+              <TableRow key={hg.id} className="border-border/40 hover:bg-transparent">
                 {hg.headers.map((header) => (
                   <TableHead key={header.id} className="whitespace-nowrap">
                     {header.isPlaceholder ? null : header.column.getCanSort() ? (
@@ -93,15 +94,9 @@ export function DataTable<TData>({
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
-                        {header.column.getIsSorted() === 'asc' && (
-                          <ChevronUp className="h-3 w-3" />
-                        )}
-                        {header.column.getIsSorted() === 'desc' && (
-                          <ChevronDown className="h-3 w-3" />
-                        )}
-                        {!header.column.getIsSorted() && (
-                          <ChevronsUpDown className="h-3 w-3 opacity-50" />
-                        )}
+                        {header.column.getIsSorted() === 'asc' && <ChevronUp className="h-3 w-3" />}
+                        {header.column.getIsSorted() === 'desc' && <ChevronDown className="h-3 w-3" />}
+                        {!header.column.getIsSorted() && <ChevronsUpDown className="h-3 w-3 opacity-40" />}
                       </button>
                     ) : (
                       flexRender(header.column.columnDef.header, header.getContext())
@@ -113,14 +108,15 @@ export function DataTable<TData>({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Loading…
-                  </div>
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i} className="hover:bg-transparent">
+                  {columns.map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
@@ -142,50 +138,31 @@ export function DataTable<TData>({
         </Table>
       </div>
 
-      {/* Pagination */}
       {onPageChange && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <span>Rows per page</span>
-            <Select
-              value={String(pageSize)}
-              onValueChange={(v) => onPageSizeChange?.(Number(v))}
-            >
+            <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange?.(Number(v))}>
               <SelectTrigger className="h-8 w-16">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {PAGE_SIZE_OPTIONS.map((s) => (
-                  <SelectItem key={s} value={String(s)}>
-                    {s}
-                  </SelectItem>
+                  <SelectItem key={s} value={String(s)}>{s}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground">
               Page {page} of {totalPages}
               {total !== undefined && ` · ${total} total`}
             </span>
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => onPageChange(page - 1)}
-                disabled={page <= 1}
-              >
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => onPageChange(page + 1)}
-                disabled={page >= totalPages}
-              >
+              <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

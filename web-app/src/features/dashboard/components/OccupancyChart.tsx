@@ -1,4 +1,5 @@
-import { useState } from 'react'
+/* global document, MutationObserver -- browser */
+import { useState, useSyncExternalStore } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   AreaChart,
@@ -11,7 +12,7 @@ import {
   type TooltipProps,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 import dashboardService from '../services/dashboard-service'
@@ -24,22 +25,34 @@ const RANGES: { value: DayRange; label: string }[] = [
   { value: 90, label: '90d' },
 ]
 
+function useDarkMode() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const el = document.documentElement
+      const obs = new MutationObserver(() => onStoreChange())
+      obs.observe(el, { attributes: true, attributeFilter: ['class'] })
+      return () => obs.disconnect()
+    },
+    () => document.documentElement.classList.contains('dark'),
+    () => false,
+  )
+}
+
 function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-lg border bg-card px-3 py-2 shadow-md text-xs">
+    <div className="rounded-xl border border-border/40 bg-card/95 glass px-3 py-2 shadow-xl text-xs">
       <p className="mb-1 font-medium text-foreground">
         {label ? format(parseISO(label), 'dd MMM yyyy') : ''}
       </p>
       <p className="text-muted-foreground">
         Occupancy:{' '}
-        <span className="font-semibold text-brand-600">
-          {payload[0]?.value?.toFixed(1)}%
-        </span>
+        <span className="font-semibold text-primary">{payload[0]?.value?.toFixed(1)}%</span>
       </p>
       {payload[1] && (
         <p className="text-muted-foreground">
-          Rooms: {payload[1].payload.occupied_rooms} / {payload[1].payload.available_rooms + payload[1].payload.occupied_rooms}
+          Rooms: {payload[1].payload.occupied_rooms} /{' '}
+          {payload[1].payload.available_rooms + payload[1].payload.occupied_rooms}
         </p>
       )}
     </div>
@@ -48,6 +61,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
 
 export function OccupancyChart() {
   const [range, setRange] = useState<DayRange>(30)
+  const isDark = useDarkMode()
 
   const { data = [], isLoading } = useQuery({
     queryKey: ['dashboard', 'occupancy-trend', range],
@@ -62,43 +76,50 @@ export function OccupancyChart() {
     }
   }
 
+  const gradientId = isDark ? 'occupancyGradientDark' : 'occupancyGradient'
+
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between pb-2">
         <CardTitle className="text-base font-semibold">Occupancy Trend</CardTitle>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 rounded-full bg-muted/50 p-0.5">
           {RANGES.map(({ value, label }) => (
-            <Button
+            <button
               key={value}
-              variant={range === value ? 'default' : 'ghost'}
-              size="sm"
-              className={cn('h-7 px-2.5 text-xs', range !== value && 'text-muted-foreground')}
+              type="button"
+              className={cn(
+                'rounded-full px-2.5 py-1 text-xs font-medium transition-all',
+                range === value
+                  ? 'bg-background text-foreground shadow-sm dark:bg-primary/20 dark:text-primary dark:shadow-[0_0_14px_hsl(var(--primary)/0.35)]'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
               onClick={() => setRange(value)}
             >
               {label}
-            </Button>
+            </button>
           ))}
         </div>
       </CardHeader>
-
       <CardContent>
         {isLoading ? (
-          <div className="h-48 animate-pulse rounded-lg bg-muted" />
+          <Skeleton className="h-[200px] w-full rounded-lg" />
         ) : (
           <ResponsiveContainer width="100%" height={200}>
-            <AreaChart
-              data={data}
-              margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
-            >
+            <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="occupancyGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.22} />
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="occupancyGradientDark" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
+                  <stop offset="70%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
+                stroke="hsl(var(--border) / 0.4)"
                 vertical={false}
               />
               <XAxis
@@ -121,11 +142,15 @@ export function OccupancyChart() {
               <Area
                 type="monotone"
                 dataKey="occupancy_pct"
-                stroke="#2563eb"
+                stroke="hsl(var(--primary))"
                 strokeWidth={2}
-                fill="url(#occupancyGradient)"
+                fill={`url(#${gradientId})`}
                 dot={false}
-                activeDot={{ r: 4, fill: '#2563eb', strokeWidth: 0 }}
+                activeDot={{
+                  r: 4,
+                  fill: 'hsl(var(--primary))',
+                  strokeWidth: 0,
+                }}
               />
             </AreaChart>
           </ResponsiveContainer>

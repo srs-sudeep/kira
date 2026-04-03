@@ -18,7 +18,6 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { LoadingState } from '@/components/shared/LoadingState'
 import { AriCalendarGrid } from '../components/AriCalendarGrid'
 import { BulkUpdateForm } from '../components/BulkUpdateForm'
 import { StopSellDialog } from '../components/StopSellDialog'
@@ -152,11 +151,7 @@ export default function CalendarPage() {
       )}
 
       {/* Calendar grid */}
-      {isLoading ? (
-        <LoadingState message="Loading inventory…" />
-      ) : (
-        <AriCalendarGrid rows={rows} dates={dates} queryKey={queryKey} />
-      )}
+      <AriCalendarGrid rows={rows} dates={dates} queryKey={queryKey} isLoading={isLoading} />
 
       {/* Bulk update sheet */}
       <BulkUpdateForm

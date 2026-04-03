@@ -1,19 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
-import {
-  CalendarDays,
-  BanknoteIcon,
-  BedDouble,
-  TrendingDown,
-} from 'lucide-react'
-import { PageHeader } from '@/components/shared/PageHeader'
-import { useAuthStore } from '@/stores/auth-store'
 import { formatCurrency } from '@/lib/utils'
-import { KpiCard } from '../components/KpiCard'
-import { TodaySnapshot } from '../components/TodaySnapshot'
-import { ChannelHealthPanel } from '../components/ChannelHealthPanel'
-import { RecentBookings } from '../components/RecentBookings'
-import { OccupancyChart } from '../components/OccupancyChart'
+import { useAuthStore } from '@/stores/auth-store'
+import { useQuery } from '@tanstack/react-query'
+import { BanknoteIcon, BedDouble, CalendarDays, TrendingDown } from 'lucide-react'
 import { BookingSourcePie } from '../components/BookingSourcePie'
+import { ChannelHealthPanel } from '../components/ChannelHealthPanel'
+import { KpiCard } from '../components/KpiCard'
+import { OccupancyChart } from '../components/OccupancyChart'
+import { RecentBookings } from '../components/RecentBookings'
+import { TodaySnapshot } from '../components/TodaySnapshot'
 import dashboardService from '../services/dashboard-service'
 
 function greeting(): string {
@@ -34,82 +28,82 @@ export default function DashboardPage() {
   const firstName = user?.full_name?.split(' ')[0] ?? 'there'
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={`${greeting()}, ${firstName}`}
-        description={kpi?.period_label ?? 'Last 30 days overview'}
-      />
-
-      {/* KPI cards row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          title="Total Reservations"
-          value={kpi?.total_reservations ?? '—'}
-          change={kpi?.reservations_change_pct}
-          icon={CalendarDays}
-          iconClassName="bg-brand-50 dark:bg-brand-950"
-          isLoading={kpiLoading}
-        />
-        <KpiCard
-          title="Total Revenue"
-          value={
-            kpi?.total_revenue !== undefined
-              ? formatCurrency(kpi.total_revenue)
-              : '—'
-          }
-          change={kpi?.revenue_change_pct}
-          icon={BanknoteIcon}
-          iconClassName="bg-accent-50 dark:bg-accent-950"
-          isLoading={kpiLoading}
-        />
-        <KpiCard
-          title="Occupancy Rate"
-          value={
-            kpi?.occupancy_rate !== undefined
-              ? `${kpi.occupancy_rate.toFixed(1)}%`
-              : '—'
-          }
-          change={kpi?.occupancy_change_pct}
-          icon={BedDouble}
-          iconClassName="bg-sky-50 dark:bg-sky-950"
-          isLoading={kpiLoading}
-        />
-        <KpiCard
-          title="Cancellation Rate"
-          value={
-            kpi?.cancellation_rate !== undefined
-              ? `${kpi.cancellation_rate.toFixed(1)}%`
-              : '—'
-          }
-          change={kpi?.cancellation_change_pct}
-          icon={TrendingDown}
-          iconClassName="bg-red-50 dark:bg-red-950"
-          isLoading={kpiLoading}
-        />
+    <div className="relative -mx-4 -mt-4 min-h-[calc(100vh-3.5rem)] px-4 pb-6 pt-4 sm:-mx-6 sm:px-6">
+      {/* Subtle page backdrop — soft gradients behind dashboard content */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-b-2xl"
+        aria-hidden
+      >
+        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-primary/8 blur-3xl" />
+        <div className="absolute -right-20 top-32 h-64 w-64 rounded-full bg-accent-500/6 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-48 w-96 -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.4] [background-image:radial-gradient(circle_at_1px_1px,hsl(var(--border)/0.35)_1px,transparent_0)] [background-size:28px_28px] dark:opacity-[0.15]" />
       </div>
 
-      {/* Middle row: charts + side panels */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Occupancy chart — spans 2 cols */}
-        <div className="lg:col-span-2">
-          <OccupancyChart />
+      <div className="relative space-y-6">
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-foreground via-foreground/85 to-foreground/55 bg-clip-text text-transparent">
+                {greeting()}, {firstName}
+              </span>
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground/75 leading-relaxed">
+              {kpi?.period_label ?? 'Last 30 days overview'}
+            </p>
+          </div>
         </div>
 
-        {/* Today snapshot */}
-        <TodaySnapshot />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            title="Total Reservations"
+            value={kpi?.total_reservations ?? '—'}
+            change={kpi?.reservations_change_pct}
+            icon={CalendarDays}
+            iconClassName="bg-primary/10 dark:bg-primary/20"
+            isLoading={kpiLoading}
+          />
+          <KpiCard
+            title="Total Revenue"
+            value={kpi?.total_revenue !== undefined ? formatCurrency(kpi.total_revenue) : '—'}
+            change={kpi?.revenue_change_pct}
+            icon={BanknoteIcon}
+            iconClassName="bg-emerald-500/10 dark:bg-emerald-500/20"
+            isLoading={kpiLoading}
+          />
+          <KpiCard
+            title="Occupancy Rate"
+            value={kpi?.occupancy_rate !== undefined ? `${kpi.occupancy_rate.toFixed(1)}%` : '—'}
+            change={kpi?.occupancy_change_pct}
+            icon={BedDouble}
+            iconClassName="bg-sky-500/10 dark:bg-sky-500/20"
+            isLoading={kpiLoading}
+          />
+          <KpiCard
+            title="Cancellation Rate"
+            value={kpi?.cancellation_rate !== undefined ? `${kpi.cancellation_rate.toFixed(1)}%` : '—'}
+            change={kpi?.cancellation_change_pct}
+            icon={TrendingDown}
+            iconClassName="bg-red-500/10 dark:bg-red-500/20"
+            isLoading={kpiLoading}
+          />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <OccupancyChart />
+          </div>
+          <TodaySnapshot />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <BookingSourcePie />
+          <ChannelHealthPanel />
+          <div className="hidden lg:col-span-1 lg:block" />
+        </div>
+
+        <RecentBookings />
       </div>
-
-      {/* Bottom row: pie + channel health + recent bookings */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <BookingSourcePie />
-        <ChannelHealthPanel />
-
-        {/* Recent bookings spans full width on mobile, 1 col on lg */}
-        <div className="lg:col-span-1 hidden lg:block" />
-      </div>
-
-      {/* Recent bookings full-width */}
-      <RecentBookings />
     </div>
   )
 }

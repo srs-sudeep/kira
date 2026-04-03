@@ -20,7 +20,6 @@ export function NotificationBell() {
     staleTime: 20_000,
   })
 
-  // Trigger pulse animation when count increases
   useEffect(() => {
     if (count > prevCount.current && prevCount.current !== 0) {
       setPulse(true)
@@ -43,8 +42,9 @@ export function NotificationBell() {
           {count > 0 && (
             <span
               className={cn(
-                'absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center',
-                'rounded-full bg-brand-600 px-1 text-[10px] font-bold leading-none text-white',
+                'absolute right-0.5 top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full',
+                'bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground',
+                'animate-pulse shadow-[0_0_0_2px_hsl(var(--background)),0_0_14px_hsl(var(--primary)/0.65)]',
               )}
             >
               {count > 99 ? '99+' : count}
@@ -52,11 +52,7 @@ export function NotificationBell() {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="w-auto p-0 shadow-xl"
-      >
+      <PopoverContent align="end" sideOffset={8} className="w-auto border-border/25 bg-transparent p-0 shadow-none">
         <NotificationDropdown onClose={() => setOpen(false)} />
       </PopoverContent>
     </Popover>

@@ -126,23 +126,42 @@ export default function MfaVerifyPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600">
-            <Hotel className="h-6 w-6 text-white" />
-          </div>
-          <div className="text-center">
-            <p className="font-semibold text-foreground">KIRA</p>
-            <p className="text-xs text-muted-foreground">Channel Manager</p>
-          </div>
-        </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-6 dot-pattern">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.18),transparent)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_100%_100%,hsl(var(--primary)/0.08),transparent)]"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-16 -left-8 h-32 w-32 rounded-full bg-accent-500/15 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-10 top-1/3 h-24 w-24 rounded-full bg-primary/10 blur-2xl"
+        aria-hidden
+      />
 
-        <Card>
+      <div className="relative w-full max-w-sm">
+        <Card className="glass rounded-2xl border border-border/40 bg-card/70 shadow-2xl backdrop-blur-xl hover:translate-y-0 hover:shadow-2xl">
           <CardHeader className="pb-4 text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 dark:bg-brand-950">
-              <ShieldCheck className="h-5 w-5 text-brand-600" />
+            <div className="mb-4 flex flex-col items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent-500 shadow-lg shadow-primary/20">
+                <Hotel className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-center">
+                <p className="font-semibold text-foreground">KIRA</p>
+                <p className="text-xs text-muted-foreground">Channel Manager</p>
+              </div>
+            </div>
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted/30">
+              <ShieldCheck className="h-5 w-5 text-primary" />
             </div>
             <CardTitle className="text-xl">Two-factor authentication</CardTitle>
             <CardDescription>
@@ -172,12 +191,10 @@ export default function MfaVerifyPage() {
                   onFocus={(e) => e.target.select()}
                   aria-label={`Digit ${i + 1}`}
                   className={cn(
-                    'h-12 w-10 rounded-md border bg-background text-center text-lg font-semibold',
+                    'h-12 w-10 rounded-xl border border-border/40 bg-muted/30 text-center text-lg font-semibold text-foreground',
                     'outline-none ring-offset-background transition-colors',
-                    'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30',
-                    error
-                      ? 'border-destructive text-destructive'
-                      : 'border-input text-foreground',
+                    'focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none',
+                    error && 'border-destructive/40 text-rose-600 dark:text-rose-400',
                     isPending && 'opacity-50',
                   )}
                 />
@@ -186,7 +203,10 @@ export default function MfaVerifyPage() {
 
             {/* Error */}
             {error && (
-              <p role="alert" className="text-center text-sm text-destructive">
+              <p
+                role="alert"
+                className="text-center text-sm text-rose-600/85 dark:text-rose-400/85"
+              >
                 Invalid code. Please check your authenticator app and try again.
               </p>
             )}
@@ -211,7 +231,7 @@ export default function MfaVerifyPage() {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.LOGIN)}
-                className="text-brand-600 hover:underline"
+                className="text-primary hover:underline"
               >
                 Back to sign in
               </button>

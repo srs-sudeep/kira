@@ -6,6 +6,7 @@ import { RoleGuard } from './RoleGuard'
 import { ROUTES } from './routes'
 import { USER_ROLES } from '@/config/constants'
 import { LoadingState } from '@/components/shared/LoadingState'
+import { RouteErrorFallback } from '@/components/shared/RouteErrorFallback'
 import { AppLayout } from '@/components/layout/AppLayout'
 
 // Auth pages
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
+    errorElement: <RouteErrorFallback />,
     children: [
       // Public auth routes
       {
