@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client'
+import { ensureArray } from '@/lib/ensure-array'
 import type {
   Notification,
   NotificationListParams,
@@ -18,10 +19,10 @@ const notificationsService = {
   },
 
   async getLatest(limit = 5): Promise<Notification[]> {
-    const { data } = await apiClient.get<Notification[]>(`${BASE}/latest`, {
+    const { data } = await apiClient.get<unknown>(`${BASE}/latest`, {
       params: { limit },
     })
-    return data
+    return ensureArray<Notification>(data)
   },
 
   async getUnreadCount(): Promise<number> {

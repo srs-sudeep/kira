@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client'
+import { ensureArray } from '@/lib/ensure-array'
 import type { Reservation, ReservationListParams, ModifyReservationRequest } from '@/types/reservation'
 import type { PaginatedResponse } from '@/types/api'
 import type { Guest } from '@/types/reservation'
@@ -71,8 +72,8 @@ const reservationsService = {
   // ── Notes ────────────────────────────────────────────────────────────────────
 
   async listNotes(reservationId: string): Promise<ReservationNote[]> {
-    const { data } = await apiClient.get<ReservationNote[]>(`${BASE}/${reservationId}/notes`)
-    return data
+    const { data } = await apiClient.get<unknown>(`${BASE}/${reservationId}/notes`)
+    return ensureArray<ReservationNote>(data)
   },
 
   async addNote(reservationId: string, body: string): Promise<ReservationNote> {

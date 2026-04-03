@@ -2,15 +2,7 @@ import { apiClient } from '@/lib/api-client'
 import type { Reservation } from '@/types/reservation'
 import type { SyncStatus } from '@/types/channel'
 
-/** Coerce unknown API payloads to T[] so charts/lists never receive a plain object. */
-function ensureArray<T>(value: unknown): T[] {
-  if (Array.isArray(value)) return value
-  if (value && typeof value === 'object' && 'items' in value) {
-    const items = (value as { items: unknown }).items
-    if (Array.isArray(items)) return items as T[]
-  }
-  return []
-}
+import { ensureArray } from '@/lib/ensure-array'
 
 // ── Response shapes ──────────────────────────────────────────────────────────
 

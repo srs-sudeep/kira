@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client'
+import { ensureArray } from '@/lib/ensure-array'
 import type { Channel, ChannelMapping, SyncLog, OtaCode } from '@/types/channel'
 import type { PaginatedResponse } from '@/types/api'
 
@@ -45,8 +46,8 @@ const channelsService = {
   // ── Channels ─────────────────────────────────────────────────────────────────
 
   async list(): Promise<Channel[]> {
-    const { data } = await apiClient.get<Channel[]>(BASE)
-    return data
+    const { data } = await apiClient.get<unknown>(BASE)
+    return ensureArray<Channel>(data)
   },
 
   async get(id: string): Promise<Channel> {
@@ -92,10 +93,10 @@ const channelsService = {
   // ── Mappings ─────────────────────────────────────────────────────────────────
 
   async listMappings(channelId: string): Promise<ChannelMapping[]> {
-    const { data } = await apiClient.get<ChannelMapping[]>(
+    const { data } = await apiClient.get<unknown>(
       `${BASE}/${channelId}/mappings`,
     )
-    return data
+    return ensureArray<ChannelMapping>(data)
   },
 
   async createMapping(channelId: string, payload: MappingPayload): Promise<ChannelMapping> {

@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api-client'
+import { ensureArray } from '@/lib/ensure-array'
 import type { InventoryDay, BulkUpdateRequest } from '@/types/inventory'
 
 const BASE = '/api/v1/inventory'
@@ -40,14 +41,14 @@ const inventoryService = {
     toDate: string,
     roomTypeId?: string,
   ): Promise<CalendarRow[]> {
-    const { data } = await apiClient.get<CalendarRow[]>(`${BASE}/calendar`, {
+    const { data } = await apiClient.get<unknown>(`${BASE}/calendar`, {
       params: {
         from_date: fromDate,
         to_date: toDate,
         ...(roomTypeId ? { room_type_id: roomTypeId } : {}),
       },
     })
-    return data
+    return ensureArray<CalendarRow>(data)
   },
 
   // ── Single-day update ────────────────────────────────────────────────────────
@@ -74,8 +75,8 @@ const inventoryService = {
   // ── Blackout dates ───────────────────────────────────────────────────────────
 
   async listBlackouts(): Promise<BlackoutDate[]> {
-    const { data } = await apiClient.get<BlackoutDate[]>(`${BASE}/blackouts`)
-    return data
+    const { data } = await apiClient.get<unknown>(`${BASE}/blackouts`)
+    return ensureArray<BlackoutDate>(data)
   },
 
   async createBlackout(

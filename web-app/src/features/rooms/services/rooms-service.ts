@@ -2,14 +2,16 @@ import { apiClient } from '@/lib/api-client'
 import type { RoomType, RatePlan, RoomTypeCreateRequest, RatePlanCreateRequest } from '@/types/room'
 import type { PaginatedResponse } from '@/types/api'
 
+import { ensureArray } from '@/lib/ensure-array'
+
 const BASE = '/api/v1/rooms'
 
 const roomsService = {
   // ── Room Types ──────────────────────────────────────────────────────────────
 
   async listRoomTypes(): Promise<RoomType[]> {
-    const { data } = await apiClient.get<RoomType[]>(BASE)
-    return data
+    const { data } = await apiClient.get<unknown>(BASE)
+    return ensureArray<RoomType>(data)
   },
 
   async getRoomType(id: string): Promise<RoomType> {
@@ -37,8 +39,8 @@ const roomsService = {
   // ── Rate Plans ──────────────────────────────────────────────────────────────
 
   async listRatePlans(roomTypeId: string): Promise<RatePlan[]> {
-    const { data } = await apiClient.get<RatePlan[]>(`${BASE}/${roomTypeId}/rate-plans`)
-    return data
+    const { data } = await apiClient.get<unknown>(`${BASE}/${roomTypeId}/rate-plans`)
+    return ensureArray<RatePlan>(data)
   },
 
   async createRatePlan(roomTypeId: string, payload: RatePlanCreateRequest): Promise<RatePlan> {
