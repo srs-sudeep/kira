@@ -21,7 +21,7 @@ All Python services use `ruff` for both linting and formatting. The config is in
 
 ```toml
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 100
 
 [tool.ruff.lint]

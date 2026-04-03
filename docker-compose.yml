@@ -7,8 +7,6 @@ x-service-defaults: &service-defaults
 
 x-app-defaults: &app-defaults
   <<: *service-defaults
-  build:
-    context: .
   depends_on:
     postgres:
       condition: service_healthy
@@ -90,8 +88,8 @@ services:
   identity-service:
     <<: *app-defaults
     build:
-      context: .
-      dockerfile: services/identity-service/Dockerfile
+      context: ./services/identity-service
+      dockerfile: Dockerfile
     env_file: ./services/identity-service/.env.local
     ports:
       - "8001:8001"
@@ -103,8 +101,8 @@ services:
   rate-inventory-service:
     <<: *app-defaults
     build:
-      context: .
-      dockerfile: services/rate-inventory-service/Dockerfile
+      context: ./services/rate-inventory-service
+      dockerfile: Dockerfile
     env_file: ./services/rate-inventory-service/.env.local
     ports:
       - "8002:8002"
@@ -116,8 +114,8 @@ services:
   reservation-service:
     <<: *app-defaults
     build:
-      context: .
-      dockerfile: services/reservation-service/Dockerfile
+      context: ./services/reservation-service
+      dockerfile: Dockerfile
     env_file: ./services/reservation-service/.env.local
     ports:
       - "8003:8003"
@@ -129,8 +127,8 @@ services:
   channel-engine:
     <<: *app-defaults
     build:
-      context: .
-      dockerfile: services/channel-engine/Dockerfile
+      context: ./services/channel-engine
+      dockerfile: Dockerfile
     env_file: ./services/channel-engine/.env.local
     ports:
       - "8004:8004"
@@ -149,8 +147,8 @@ services:
   notification-service:
     <<: *app-defaults
     build:
-      context: .
-      dockerfile: services/notification-service/Dockerfile
+      context: ./services/notification-service
+      dockerfile: Dockerfile
     env_file: ./services/notification-service/.env.local
     ports:
       - "8005:8005"
@@ -169,8 +167,8 @@ services:
   admin-service:
     <<: *app-defaults
     build:
-      context: .
-      dockerfile: services/admin-service/Dockerfile
+      context: ./services/admin-service
+      dockerfile: Dockerfile
     env_file: ./services/admin-service/.env.local
     ports:
       - "8006:8006"
@@ -185,8 +183,8 @@ services:
   channel-worker:
     <<: *service-defaults
     build:
-      context: .
-      dockerfile: services/channel-engine/Dockerfile
+      context: ./services/channel-engine
+      dockerfile: Dockerfile
     env_file: ./services/channel-engine/.env.local
     volumes:
       - ./services/channel-engine/app:/app/app
@@ -203,8 +201,8 @@ services:
   notification-worker:
     <<: *service-defaults
     build:
-      context: .
-      dockerfile: services/notification-service/Dockerfile
+      context: ./services/notification-service
+      dockerfile: Dockerfile
     env_file: ./services/notification-service/.env.local
     volumes:
       - ./services/notification-service/app:/app/app

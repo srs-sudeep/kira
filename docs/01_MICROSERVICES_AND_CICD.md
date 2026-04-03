@@ -62,14 +62,14 @@ Docker packages your Python app + all dependencies into a portable "container im
 
 ```dockerfile
 # ── Build stage ──
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
 WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev
 COPY pyproject.toml ./
 RUN pip install --no-cache-dir --prefix=/install .
 
 # ── Runtime stage ──
-FROM python:3.12-slim
+FROM python:3.13-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends libpq5 && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /install /usr/local
@@ -463,7 +463,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Install dependencies
         working-directory: ${{ env.SERVICE_DIR }}

@@ -85,7 +85,7 @@ clean:
 ## Open all service dashboards in the browser
 dashboards:
 	@echo "Opening KIRA dashboards..."
-	@python -c "import webbrowser; urls = [ \
+	@python3 -c "import webbrowser; urls = [ \
 		'http://localhost:8025',   \
 		'http://localhost:3001',   \
 		'http://localhost:9090',   \

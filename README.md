@@ -27,7 +27,7 @@ Open [http://localhost:4000](http://localhost:4000). For a production static bui
 
 Full detail: [`docs-site/docs/getting-started/local-setup.md`](docs-site/docs/getting-started/local-setup.md).
 
-1. **Prerequisites:** Docker Desktop (8 GB+ RAM), Python 3.12, [uv](https://docs.astral.sh/uv/), [bun](https://bun.sh) (for the web app and docs).
+1. **Prerequisites:** Docker Desktop (8 GB+ RAM), Python 3.13, [uv](https://docs.astral.sh/uv/), [bun](https://bun.sh) (for the web app and docs).
 
 2. **Environment:** Copy each service’s `.env.example` to `.env.local` under `services/<name>/`. Generate `SECRET_KEY` and `JWT_SECRET_KEY` for `identity-service` (see the local-setup doc).
 
@@ -85,7 +85,7 @@ Each backend exposes OpenAPI at `http://localhost:<port>/docs`.
 
 ## Tech stack (summary)
 
-Aligned with [`docs/00_OVERVIEW.md`](docs/00_OVERVIEW.md) and the docs site: **Python 3.12+**, **FastAPI**, **SQLAlchemy 2** (async), **Pydantic v2**, **Alembic**, **Kafka**, **Redis**, **Celery**; frontend **TypeScript**, **Vite**, **Tailwind**, **shadcn/ui**; infra **Docker**, **Kubernetes**, **Kong**, **GitHub Actions**, **AWS** (EKS, RDS, etc.) for production paths.
+Aligned with [`docs/00_OVERVIEW.md`](docs/00_OVERVIEW.md) and the docs site: **Python 3.13+**, **FastAPI**, **SQLAlchemy 2** (async), **Pydantic v2**, **Alembic**, **Kafka**, **Redis**, **Celery**; frontend **TypeScript**, **Vite**, **Tailwind**, **shadcn/ui**; infra **Docker**, **Kubernetes**, **Kong**, **GitHub Actions**, **AWS** (EKS, RDS, etc.) for production paths.
 
 ---
 

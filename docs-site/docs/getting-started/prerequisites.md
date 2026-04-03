@@ -71,21 +71,21 @@ git --version    # git version 2.x.x
 
 ---
 
-### Python 3.12+
+### Python 3.13+
 
 Python is needed to run backend services outside Docker (e.g., for running a single service with hot reload during development, or running migrations directly).
 
 ```bash
 # macOS — Homebrew
-brew install python@3.12
+brew install python@3.13
 
 # Ubuntu / Debian
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update
-sudo apt-get install python3.12 python3.12-venv
+sudo apt-get install python3.13 python3.13-venv
 
 # Verify
-python3.12 --version    # Python 3.12.x
+python3.13 --version    # Python 3.13.x
 ```
 
 ---
@@ -176,7 +176,7 @@ Run this quick check to confirm all tools are in place:
 docker --version
 docker compose version
 git --version
-python3.12 --version
+python3.13 --version
 uv --version
 bun --version
 node --version

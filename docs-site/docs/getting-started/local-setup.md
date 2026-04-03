@@ -14,7 +14,7 @@ sidebar_position: 2
 - Common first-run problems and how to fix them
 
 :::info Prerequisites
-Complete the [Prerequisites](./prerequisites.md) guide before continuing. You need Docker Desktop (with 8 GB+ RAM allocated), Python 3.12, uv, and bun installed.
+Complete the [Prerequisites](./prerequisites.md) guide before continuing. You need Docker Desktop (with 8 GB+ RAM allocated), Python 3.13, uv, and bun installed.
 :::
 
 ---
@@ -42,18 +42,14 @@ done
 
 Then open each `.env.local` and fill in the values. For local development the defaults in `.env.example` work out of the box (they point to the Docker Compose service hostnames — `postgres`, `redis`, `kafka`).
 
-:::warning Secrets you must generate
-Two values in `services/identity-service/.env.local` are intentionally left blank because they must be unique:
+:::warning Secret you must generate
+`SECRET_KEY` in each service's `.env.local` is used for JWT signing and verification. For local development the shipped `.env.local` files include a dev-only value. For any shared or deployed environment, generate a unique key:
 
 ```bash
-# Generate SECRET_KEY (32 chars)
 python3 -c "import secrets; print(secrets.token_urlsafe(32))"
-
-# Generate JWT_SECRET_KEY (64 chars)
-python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-Paste the output into `services/identity-service/.env.local`. Without these, the identity service will refuse to start.
+Paste the same value into **every** service's `.env.local` (all services must share the key to verify JWTs issued by identity-service).
 :::
 
 For the full list of variables and what each one does, see [Environment Variables](./environment-variables.md).

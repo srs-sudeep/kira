@@ -122,7 +122,7 @@ export default function Home(): ReactNode {
             {[
               ['6', 'Microservices'],
               ['3', 'OTA Channels'],
-              ['Python 3.12', 'Backend'],
+              ['Python 3.13', 'Backend'],
               ['React 19', 'Frontend'],
               ['PostgreSQL 16', 'Database'],
               ['Kafka', 'Event Bus'],

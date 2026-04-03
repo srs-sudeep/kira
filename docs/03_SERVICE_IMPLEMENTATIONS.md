@@ -40,7 +40,7 @@ Each section below is a self-contained prompt for building one microservice. Fee
 - JWT access tokens: 30min expiry. Refresh tokens: 7 days, rotated on use.
 - MFA via pyotp (TOTP). Secret encrypted at rest.
 - Every login, logout, failed login, role change → AuditEvent record.
-- Password hashing: bcrypt via passlib.
+- Password hashing: bcrypt via pwdlib.
 
 ---
 

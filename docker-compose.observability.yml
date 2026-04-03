@@ -4,7 +4,7 @@ name: kira
 #   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
 #
 # This file extends the core stack with monitoring, logging, and debug UIs.
-# All services join the external kira_kira-net network created by docker-compose.yml.
+# All services join the kira-net network defined in docker-compose.yml.
 
 services:
 
@@ -238,8 +238,6 @@ services:
 
 networks:
   kira-net:
-    external: true
-    name: kira_kira-net
 
 volumes:
   grafanadata:

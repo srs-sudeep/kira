@@ -8,6 +8,15 @@ from app.schemas.auth import (
     RefreshResponse,
     RegisterRequest,
 )
+from app.schemas.permission import (
+    AssignPermissionRequest,
+    CreatePermissionRequest,
+    PermissionListResponse,
+    PermissionResponse,
+    RevokePermissionRequest,
+    RolePermissionsResponse,
+    UpdatePermissionRequest,
+)
 from app.schemas.user import (
     InviteUserRequest,
     UpdateUserRequest,
@@ -35,4 +44,12 @@ __all__ = [
     "AuditEventResponse",
     "AuditEventListResponse",
     "AuditFilterParams",
+    # permissions
+    "PermissionResponse",
+    "PermissionListResponse",
+    "CreatePermissionRequest",
+    "UpdatePermissionRequest",
+    "AssignPermissionRequest",
+    "RevokePermissionRequest",
+    "RolePermissionsResponse",
 ]

@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 import pyotp
 import structlog
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
 
 from app.config import settings
 from app.exceptions import UnauthorizedError
@@ -16,17 +16,17 @@ logger = structlog.get_logger(__name__)
 ALGORITHM = "HS256"
 MFA_PENDING_EXPIRE_MINUTES = 5
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_hash = PasswordHash.recommended()
 
 
 # ── Password helpers ──────────────────────────────────────────────────────────
 
 def hash_password(plain: str) -> str:
-    return pwd_context.hash(plain)
+    return pwd_hash.hash(plain)
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return pwd_hash.verify(plain, hashed)
 
 
 # ── JWT helpers ───────────────────────────────────────────────────────────────

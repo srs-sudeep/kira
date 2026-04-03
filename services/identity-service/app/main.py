@@ -14,6 +14,7 @@ from app.exception_handlers import register_exception_handlers
 from app.health import router as health_router
 from app.routers.audit_router import router as audit_router
 from app.routers.auth_router import router as auth_router
+from app.routers.permission_router import router as permission_router
 from app.routers.user_router import router as user_router
 
 # Ensure all ORM models are registered on Base.metadata before Alembic/tests use it
@@ -94,3 +95,4 @@ app.include_router(health_router)
 app.include_router(auth_router, prefix=API_PREFIX)
 app.include_router(user_router, prefix=API_PREFIX)
 app.include_router(audit_router, prefix=API_PREFIX)
+app.include_router(permission_router, prefix=API_PREFIX)

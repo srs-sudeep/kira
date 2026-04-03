@@ -41,12 +41,12 @@ We are building **true microservices from day 1** — not a modular monolith. Ea
 ### Backend (all services)
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| Language | Python 3.12+ | All backend services |
+| Language | Python 3.13+ | All backend services |
 | Framework | FastAPI | Async REST APIs |
 | ORM | SQLAlchemy 2.0 (async) | Database access |
 | Validation | Pydantic v2 | Request/response schemas |
 | Migrations | Alembic | Schema versioning |
-| Auth | python-jose + passlib | JWT + password hashing |
+| Auth | python-jose + pwdlib | JWT + password hashing |
 | Background tasks | Celery + Redis | Async jobs (email, sync) |
 | Message broker | Apache Kafka (aiokafka) | Event-driven ARI distribution |
 | Cache | Redis | Sessions, locks, caching |

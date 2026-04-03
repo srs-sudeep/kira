@@ -8,17 +8,17 @@ import getpass
 import uuid
 
 import asyncpg
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
 
 POSTGRES_DSN = "postgresql://postgres:postgres@localhost:5432/kira"
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_hash = PasswordHash.recommended()
 
 
 async def create_superadmin(email: str, password: str) -> None:
     conn = await asyncpg.connect(POSTGRES_DSN)
     try:
-        hashed = pwd_context.hash(password)
+        hashed = pwd_hash.hash(password)
         user_id = uuid.uuid4()
         await conn.execute(
             """
