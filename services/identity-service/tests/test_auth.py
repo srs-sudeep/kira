@@ -238,6 +238,23 @@ class TestAuthRoutes:
         assert resp.status_code == 200
         body = resp.json()
         assert "access_token" in body
+        assert body.get("user") is not None
+        assert body["user"]["full_name"] == f"{regular_user.first_name} {regular_user.last_name}".strip()
+
+    async def test_login_accepts_local_dev_email(self, client, db_session, tenant_id):
+        """Emails like admin@kira.local must not fail EmailStr DNS checks (local dev)."""
+        await make_user(
+            db_session,
+            email="admin@kira.local",
+            password="LocalPass123!",
+            tenant_id=tenant_id,
+        )
+        resp = await client.post(
+            "/api/v1/auth/login",
+            json={"email": "admin@kira.local", "password": "LocalPass123!"},
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json().get("user") is not None
 
     async def test_me_endpoint_requires_auth(self, client):
         resp = await client.get("/api/v1/auth/me")
