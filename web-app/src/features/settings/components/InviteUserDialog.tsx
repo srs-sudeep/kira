@@ -18,15 +18,16 @@ import type { InviteUserPayload } from '../services/users-service'
 const schema = z.object({
   full_name: z.string().min(2, 'Full name is required'),
   email: z.string().email('Invalid email'),
-  role: z.enum(['hotel_admin', 'manager', 'front_desk'], {
+  role: z.enum(['property_owner', 'revenue_manager', 'front_desk', 'read_only'], {
     required_error: 'Role is required',
   }),
 })
 
 const ROLE_LABELS: Record<string, string> = {
-  hotel_admin: 'Hotel Admin',
-  manager: 'Manager',
-  front_desk: 'Front Desk',
+  property_owner: 'Property owner',
+  revenue_manager: 'Revenue manager',
+  front_desk: 'Front desk',
+  read_only: 'Read only',
 }
 
 interface Props {

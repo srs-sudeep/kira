@@ -21,16 +21,18 @@ import type { User } from '@/types/auth'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'Super Admin',
-  hotel_admin: 'Hotel Admin',
-  manager: 'Manager',
-  front_desk: 'Front Desk',
+  property_owner: 'Property owner',
+  revenue_manager: 'Revenue manager',
+  front_desk: 'Front desk',
+  read_only: 'Read only',
 }
 
 const ROLE_BADGE_VARIANT: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
   super_admin: 'default',
-  hotel_admin: 'default',
-  manager: 'secondary',
+  property_owner: 'default',
+  revenue_manager: 'secondary',
   front_desk: 'outline',
+  read_only: 'outline',
 }
 
 interface Props {

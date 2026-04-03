@@ -24,7 +24,11 @@ const authService = {
   },
 
   async mfaLogin(payload: MfaLoginRequest): Promise<LoginResponse> {
-    const { data } = await apiClient.post<LoginResponse>(`${BASE}/login/mfa`, payload)
+    const { data } = await apiClient.post<LoginResponse>(
+      `${BASE}/login/mfa`,
+      { totp_code: payload.totp_code },
+      { headers: { Authorization: `Bearer ${payload.mfa_token}` } },
+    )
     return data
   },
 

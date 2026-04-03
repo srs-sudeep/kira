@@ -161,6 +161,24 @@ To also create a super-admin outside of seeding (e.g., to reset credentials):
 make superadmin
 ```
 
+### Re-run seed after credential / email changes
+
+If you switched to `admin@example.com` / `manager@grandhotel.example.com` (or updated `scripts/seed_data.py`), apply it to the database:
+
+- **Docker Compose Postgres** (stack running, migrations already applied):
+
+  ```bash
+  make seed-docker
+  ```
+
+- **Postgres on localhost:5432** (from repo root, with `uv`):
+
+  ```bash
+  make seed
+  ```
+
+The script **upserts** those two users by email, so passwords and roles refresh even if the rows already exist. It does not delete old accounts (e.g. `admin@kira.local`); remove those manually in Postgres if you no longer need them.
+
 ---
 
 ## Step 6 — Confirm Everything Is Healthy

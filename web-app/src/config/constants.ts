@@ -33,12 +33,13 @@ export const SYNC_STATUS = {
   PARTIAL: 'partial',
 } as const
 
-// User roles
+// User roles — aligned with identity-service public.users.role CHECK
 export const USER_ROLES = {
   SUPER_ADMIN: 'super_admin',
-  HOTEL_ADMIN: 'hotel_admin',
-  MANAGER: 'manager',
+  PROPERTY_OWNER: 'property_owner',
+  REVENUE_MANAGER: 'revenue_manager',
   FRONT_DESK: 'front_desk',
+  READ_ONLY: 'read_only',
 } as const
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES]

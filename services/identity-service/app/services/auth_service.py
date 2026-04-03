@@ -31,6 +31,7 @@ from app.schemas.auth import (
     RefreshResponse,
     RegisterRequest,
 )
+from app.schemas.user import UserResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -133,12 +134,14 @@ class AuthService:
                 user_id=str(user.id), email=user.email
             )
             return LoginResponse(
-                access_token=mfa_pending,
+                access_token="",
                 refresh_token="",
                 expires_in=MFA_PENDING_EXPIRE_MINUTES * 60,
                 user_id=user.id,
                 role=user.role,
                 mfa_required=True,
+                mfa_token=mfa_pending,
+                user=None,
             )
 
         return await self._issue_full_tokens(user)
@@ -283,4 +286,6 @@ class AuthService:
             user_id=user.id,
             role=user.role,
             mfa_required=False,
+            user=UserResponse.model_validate(user),
+            mfa_token=None,
         )

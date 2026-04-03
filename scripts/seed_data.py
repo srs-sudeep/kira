@@ -8,12 +8,23 @@ Run against Docker Compose Postgres from the host (same DSN if port 5432 is publ
 
 From another machine / CI targeting the DB container by hostname:
   POSTGRES_DSN=postgresql://postgres:postgres@postgres:5432/kira python scripts/seed_data.py
+
+Dev logins (domains must pass API ``EmailStr`` — do not use ``*.local``):
+
+- **Super admin:** ``admin@example.com`` / ``Admin1234!``
+- **Hotel admin:** ``manager@grandhotel.example.com`` / ``Manager1234!``
+
+Re-run this script to upsert those users (passwords and roles refresh on conflict).
 """
 import asyncio
 import os
 import uuid
 
 import asyncpg
+
+# bcrypt cost 12; verified by identity-service ``pwdlib`` (passwords above)
+_HASH_ADMIN = "$2b$12$6On7FtKxl/UCcSvKEwJ9fOQs7dNNHwms8NW2wI9w42jMpEs.tNSsO"  # Admin1234!
+_HASH_MANAGER = "$2b$12$Xzp6m0YfspI3wlJXK3R5Jufb0nHgqtWa3VMyP9Qva369tajVcByzm"  # Manager1234!
 
 POSTGRES_DSN = os.environ.get(
     "POSTGRES_DSN", "postgresql://postgres:postgres@localhost:5432/kira"
@@ -143,7 +154,7 @@ async def ensure_demo_tenant_row(conn: asyncpg.Connection) -> None:
     await conn.execute(
         """
         INSERT INTO public.tenants (id, name, schema_name)
-        VALUES ($1, 'Demo Hotel', $2)
+        VALUES ($1, 'Grand Hotel Demo', $2)
         ON CONFLICT (id) DO NOTHING
         """,
         TENANT_ID,
@@ -170,18 +181,28 @@ async def ensure_identity_tables(conn: asyncpg.Connection) -> None:
 
 async def seed_identity(conn: asyncpg.Connection) -> None:
     await ensure_identity_tables(conn)
-    print("Seeding identity-service sample data...")
+    print("Seeding identity-service users (admin@example.com, manager@grandhotel.example.com)...")
     await conn.execute(
         """
         INSERT INTO public.users (
             id, email, hashed_password, first_name, last_name, role, tenant_id, is_active
         )
-        VALUES ($1, $2, $3, 'Demo', 'User', 'property_owner', $4, TRUE)
-        ON CONFLICT (email) DO NOTHING
+        VALUES
+            ($1, 'admin@example.com', $2, 'Platform', 'Admin', 'super_admin', NULL, TRUE),
+            ($3, 'manager@grandhotel.example.com', $4, 'Grand Hotel', 'Manager', 'property_owner', $5, TRUE)
+        ON CONFLICT (email) DO UPDATE SET
+            hashed_password = EXCLUDED.hashed_password,
+            first_name = EXCLUDED.first_name,
+            last_name = EXCLUDED.last_name,
+            role = EXCLUDED.role,
+            tenant_id = EXCLUDED.tenant_id,
+            is_active = EXCLUDED.is_active,
+            updated_at = now()
         """,
         uuid.uuid4(),
-        "demo@hotel-example.com",
-        "$2b$12$placeholderHashReplaceWithRealBcryptHash",
+        _HASH_ADMIN,
+        uuid.uuid4(),
+        _HASH_MANAGER,
         TENANT_ID,
     )
 

@@ -38,6 +38,7 @@ export default function MfaVerifyPage() {
     mutationFn: (totp_code: string) =>
       authService.mfaLogin({ mfa_token: mfaToken, totp_code }),
     onSuccess(data) {
+      if (!data.user) return
       login(data.user, data.access_token, data.refresh_token)
       navigate(ROUTES.DASHBOARD, { replace: true })
     },

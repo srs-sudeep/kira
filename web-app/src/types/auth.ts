@@ -23,7 +23,8 @@ export interface LoginResponse {
   refresh_token: string
   token_type: 'bearer'
   expires_in: number
-  user: User
+  /** Present after password login when MFA is not required */
+  user?: User
   mfa_required?: boolean
   mfa_token?: string
 }

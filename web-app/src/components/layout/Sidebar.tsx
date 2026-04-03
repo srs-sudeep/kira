@@ -38,7 +38,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Rooms',
     href: ROUTES.ROOMS,
     icon: BedDouble,
-    allowedRoles: [USER_ROLES.HOTEL_ADMIN, USER_ROLES.MANAGER, USER_ROLES.SUPER_ADMIN],
+    allowedRoles: [USER_ROLES.PROPERTY_OWNER, USER_ROLES.REVENUE_MANAGER, USER_ROLES.SUPER_ADMIN],
   },
   {
     label: 'Inventory',
@@ -54,7 +54,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Channels',
     href: ROUTES.CHANNELS,
     icon: Radio,
-    allowedRoles: [USER_ROLES.HOTEL_ADMIN, USER_ROLES.MANAGER, USER_ROLES.SUPER_ADMIN],
+    allowedRoles: [USER_ROLES.PROPERTY_OWNER, USER_ROLES.REVENUE_MANAGER, USER_ROLES.SUPER_ADMIN],
   },
   {
     label: 'Notifications',

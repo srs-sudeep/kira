@@ -1,11 +1,14 @@
 """Pydantic v2 schemas for authentication flows."""
 import uuid
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.email_types import LooseEmailStr
+from app.schemas.user import UserResponse
 
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: LooseEmailStr
     password: str = Field(min_length=8, max_length=128)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
@@ -14,7 +17,7 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: LooseEmailStr
     password: str
     # Supplied on the second step when the account has MFA enabled
     totp_code: str | None = None
@@ -30,6 +33,10 @@ class LoginResponse(BaseModel):
     user_id: uuid.UUID
     role: str
     mfa_required: bool = False
+    # Populated on full login; omitted when MFA step is required
+    user: UserResponse | None = None
+    # MFA pending JWT — client sends as Bearer on POST /auth/login/mfa
+    mfa_token: str | None = None
 
 
 class RefreshRequest(BaseModel):

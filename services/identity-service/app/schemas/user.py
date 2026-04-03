@@ -3,7 +3,9 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+from app.schemas.email_types import LooseEmailStr
 
 UserRole = Literal[
     "super_admin",
@@ -45,6 +47,11 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    @computed_field
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}".strip()
+
 
 class UserListResponse(BaseModel):
     """Paginated wrapper for user queries."""
@@ -59,7 +66,7 @@ class UserListResponse(BaseModel):
 
 
 class InviteUserRequest(BaseModel):
-    email: EmailStr
+    email: LooseEmailStr
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     role: UserRole

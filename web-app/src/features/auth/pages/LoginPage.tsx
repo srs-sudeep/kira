@@ -60,6 +60,9 @@ export default function LoginPage() {
         })
         return
       }
+      if (!data.user) {
+        return
+      }
       login(data.user, data.access_token, data.refresh_token)
       navigate(from, { replace: true })
     },
