@@ -302,7 +302,13 @@ async def seed_permissions(conn: asyncpg.Connection) -> None:
         print(f"  {role}: {len(codes)} permissions")
 
 
-async def seed_audit_sample(conn: asyncpg.Connection) -> None:
+async def get_user_id_by_email(conn: asyncpg.Connection, email: str) -> uuid.UUID | None:
+    """Return current PK for a user (may differ from DEV_* constants after ON CONFLICT upsert)."""
+    row = await conn.fetchrow("SELECT id FROM public.users WHERE email = $1", email)
+    return row["id"] if row else None
+
+
+async def seed_audit_sample(conn: asyncpg.Connection, manager_user_id: uuid.UUID) -> None:
     has = await conn.fetchval(
         "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
         "WHERE table_schema = 'public' AND table_name = 'audit_events')"
@@ -323,7 +329,7 @@ async def seed_audit_sample(conn: asyncpg.Connection) -> None:
             """,
             uuid.uuid4(),
             TENANT_ID,
-            DEV_MANAGER_ID,
+            manager_user_id,
             "login" if i % 2 == 0 else "update",
             "user" if i % 2 == 0 else "reservation",
             f"res-{i}" if i % 2 else None,
@@ -341,7 +347,14 @@ async def main() -> None:
         await ensure_demo_tenant_row(conn)
         await seed_identity(conn)
         await seed_permissions(conn)
-        await seed_audit_sample(conn)
+
+        manager_id = await get_user_id_by_email(conn, "manager@grandhotel.example.com")
+        if manager_id is None:
+            raise RuntimeError(
+                "Expected manager@grandhotel.example.com after seed_identity — check users table."
+            )
+
+        await seed_audit_sample(conn, manager_id)
 
         ddl_path = _REPO_ROOT / "shared" / "tenant_tables.sql"
         if not ddl_path.is_file():
@@ -360,7 +373,7 @@ async def main() -> None:
         await seed_tenant_business_data(
             conn,
             tenant_schema=TENANT_SCHEMA,
-            manager_user_id=DEV_MANAGER_ID,
+            manager_user_id=manager_id,
         )
         print("Seed complete.")
     finally:
