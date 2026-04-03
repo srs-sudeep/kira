@@ -13,14 +13,16 @@ export function AppLayout() {
 
       <div
         className={cn(
-          'flex flex-1 flex-col overflow-hidden transition-all duration-200',
-          sidebarCollapsed ? 'ml-16' : 'ml-64',
+          'flex flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out',
+          sidebarCollapsed ? 'ml-[72px]' : 'ml-[272px]',
         )}
       >
         <Header />
 
-        <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-[1400px] p-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

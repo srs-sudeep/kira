@@ -1,13 +1,18 @@
+import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useUiStore } from '@/stores/ui-store'
-import { cn } from '@/lib/utils'
 
 export default function App() {
   const theme = useUiStore((s) => s.theme)
+  const accentColor = useUiStore((s) => s.accentColor)
 
-  return (
-    <div className={cn(theme === 'dark' && 'dark')}>
-      <Outlet />
-    </div>
-  )
+  useEffect(() => {
+    useUiStore.getState().setTheme(theme)
+  }, [theme])
+
+  useEffect(() => {
+    useUiStore.getState().setAccentColor(accentColor)
+  }, [accentColor])
+
+  return <Outlet />
 }
