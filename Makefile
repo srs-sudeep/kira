@@ -95,7 +95,7 @@ seed-docker:
 	$(COMPOSE) --profile tools run --rm seed-data
 
 ## First-time setup: start stack, wait for Postgres, migrate in Docker, seed in Docker
-bootstrap: up wait-postgres migrate-docker-all seed-docker
+bootstrap: up-full wait-postgres migrate-docker-all seed-docker
 	@echo ""
 	@echo "Done. Web UI: http://localhost:3000  |  Kong: http://localhost:8000"
 	@echo "OpenAPI is on each service port (e.g. http://localhost:8001/docs), not on Kong."
