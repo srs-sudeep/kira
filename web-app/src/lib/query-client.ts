@@ -2,14 +2,10 @@ import { QueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { type AxiosError } from 'axios'
 
+import { getAxiosApiErrorMessage } from '@/lib/api-error'
+
 function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string; message?: string }>
-  return (
-    axiosError.response?.data?.detail ??
-    axiosError.response?.data?.message ??
-    axiosError.message ??
-    'An unexpected error occurred'
-  )
+  return getAxiosApiErrorMessage(error, 'An unexpected error occurred')
 }
 
 export const queryClient = new QueryClient({

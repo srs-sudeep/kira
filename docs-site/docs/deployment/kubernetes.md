@@ -6,6 +6,8 @@ sidebar_position: 3
 
 # Kubernetes
 
+For **checking a local/dev Kubernetes cluster** and **limits of validating `k8s/` without EKS**, see **[Local Kubernetes validation](./local-kubernetes.md)**.
+
 **What you'll learn:**
 - The K8s concepts KIRA uses and why
 - How the `base/` + `overlays/` Kustomize structure works

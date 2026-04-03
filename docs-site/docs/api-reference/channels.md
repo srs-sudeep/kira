@@ -54,7 +54,7 @@ Credentials structure varies by OTA:
 | `expedia` | `api_key`, `api_secret`, `hotel_id` |
 | `mmt` | `api_key`, `api_secret`, `hotel_code` |
 
-## POST /channels/{id}/test
+## `POST /channels/{id}/test`
 
 Test the OTA connection.
 
@@ -75,7 +75,7 @@ Test the OTA connection.
 }
 ```
 
-## POST /channels/{id}/sync-now
+## `POST /channels/{id}/sync-now`
 
 Trigger an immediate full ARI push to the OTA.
 
@@ -87,7 +87,7 @@ Trigger an immediate full ARI push to the OTA.
 }
 ```
 
-## GET /channels/{id}/mappings
+## `GET /channels/{id}/mappings`
 
 List room type / rate plan mappings for this channel.
 
@@ -105,7 +105,7 @@ List room type / rate plan mappings for this channel.
 ]
 ```
 
-## POST /channels/{id}/mappings
+## `POST /channels/{id}/mappings`
 
 ```json
 {
@@ -116,7 +116,7 @@ List room type / rate plan mappings for this channel.
 }
 ```
 
-## GET /channels/{id}/sync-log
+## `GET /channels/{id}/sync-log`
 
 Paginated sync history.
 

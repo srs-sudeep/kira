@@ -68,8 +68,11 @@ apiClient.interceptors.response.use(
     isRefreshing = true
 
     try {
+      const refreshUrl = API_BASE_URL
+        ? `${API_BASE_URL.replace(/\/$/, '')}/api/v1/auth/refresh`
+        : '/api/v1/auth/refresh'
       const { data } = await axios.post<{ access_token: string; refresh_token: string }>(
-        `${API_BASE_URL}/api/v1/auth/refresh`,
+        refreshUrl,
         { refresh_token: refreshToken },
       )
       useAuthStore.getState().setTokens(data.access_token, data.refresh_token)

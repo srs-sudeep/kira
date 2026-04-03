@@ -77,7 +77,7 @@ const config: Config = {
         {
           title: 'Docs',
           items: [
-            { label: 'Getting Started', to: '/docs/intro' },
+            { label: 'Getting Started', to: '/docs/' },
             { label: 'Architecture', to: '/docs/architecture/overview' },
             { label: 'API Reference', to: '/docs/api-reference/overview' },
           ],

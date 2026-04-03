@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthStore } from '@/stores/auth-store'
 import { ROUTES } from '@/router/routes'
 import authService from '@/features/auth/services/auth-service'
+import { getAxiosApiErrorMessage } from '@/lib/api-error'
 import { cn } from '@/lib/utils'
 
 const loginSchema = z.object({
@@ -192,8 +193,7 @@ export default function LoginPage() {
                         'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive',
                       )}
                     >
-                      {(error as { response?: { data?: { detail?: string } } })
-                        ?.response?.data?.detail ?? 'Invalid email or password'}
+                      {getAxiosApiErrorMessage(error, 'Invalid email or password')}
                     </p>
                   )}
 

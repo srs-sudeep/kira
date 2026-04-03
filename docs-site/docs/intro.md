@@ -97,6 +97,7 @@ From Docker Compose to production on AWS EKS.
 - [Overview](./deployment/overview.md) — environments, image tagging, required AWS infrastructure
 - [Docker](./deployment/docker.md) — Compose setup, Dockerfiles, observability stack
 - [Kubernetes](./deployment/kubernetes.md) — Kustomize base + overlays, secrets, resource config
+- [Local Kubernetes validation](./deployment/local-kubernetes.md) — dev cluster smoke tests vs EKS
 - [CI/CD](./deployment/ci-cd.md) — GitHub Actions pipelines, path filters, production approval gate
 
 ### Operations

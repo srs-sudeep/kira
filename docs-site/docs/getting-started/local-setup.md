@@ -145,8 +145,12 @@ make seed
 
 This runs `scripts/seed_data.py` which creates:
 - A test tenant: **"Grand Hotel Demo"** (ID is printed to stdout — save it)
-- A super-admin user: `admin@kira.local` / `Admin1234!`
-- One hotel admin user: `manager@grandhotel.local` / `Manager1234!`
+- A super-admin user: `admin@example.com` / `Admin1234!`
+- One hotel admin user: `manager@grandhotel.example.com` / `Manager1234!`
+
+:::caution Login emails and `.local`
+Use addresses that pass API validation (e.g. `@example.com`, `@grandhotel.example.com`). The identity service uses Pydantic **`EmailStr`**, which **rejects** domains like **`*.local`** (reserved for mDNS). If you see `422` with “not a valid email address” for `@kira.local`, switch to the addresses above or run `make superadmin` with an allowed email.
+:::
 - Three room types: Standard Twin, Deluxe King, Suite
 - Rate plans for each room type: BAR, Non-Refundable
 - 30 days of ARI data starting from today
@@ -193,13 +197,13 @@ Each should return:
 Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
 Log in with the seeded hotel admin:
-- **Email:** `manager@grandhotel.local`
+- **Email:** `manager@grandhotel.example.com`
 - **Password:** `Manager1234!`
 
 You should land on the dashboard showing the KPI cards and the seeded reservation data.
 
 To log in as super-admin (full platform access, including the admin-service):
-- **Email:** `admin@kira.local`
+- **Email:** `admin@example.com`
 - **Password:** `Admin1234!`
 
 ---

@@ -29,7 +29,7 @@ Use the super-admin credentials created during seeding:
 
 | Field | Value |
 |---|---|
-| Email | `admin@kira.local` |
+| Email | `admin@example.com` |
 | Password | `Admin1234!` |
 
 After login you land on the **Dashboard** page. As super-admin, the sidebar shows an extra **Admin** section that hotel-role users cannot see.
@@ -55,7 +55,7 @@ Country:        India
 Currency:       INR
 Timezone:       Asia/Kolkata
 Star Rating:    4
-Admin Email:    manager@example-hotel.local
+Admin Email:    manager@example-hotel.example.com
 ```
 
 4. Click **Create Tenant**
@@ -74,7 +74,7 @@ Log out of the super-admin account and log in as the hotel manager created durin
 
 | Field | Value |
 |---|---|
-| Email | `manager@grandhotel.local` |
+| Email | `manager@grandhotel.example.com` |
 | Password | `Manager1234!` |
 
 The dashboard now shows data scoped to **Grand Hotel Demo** only — the per-tenant schema isolation is working.

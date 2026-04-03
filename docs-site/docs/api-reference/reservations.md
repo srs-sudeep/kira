@@ -81,11 +81,11 @@ Create a reservation (typically called by channel-engine for OTA bookings, or di
 }
 ```
 
-## GET /reservations/{id}
+## `GET /reservations/{id}`
 
 Full reservation detail including modification history.
 
-## PATCH /reservations/{id}
+## `PATCH /reservations/{id}`
 
 Modify a confirmed reservation.
 
@@ -98,7 +98,7 @@ Modify a confirmed reservation.
 }
 ```
 
-## POST /reservations/{id}/cancel
+## `POST /reservations/{id}/cancel`
 
 ```json
 {
@@ -118,10 +118,10 @@ Modify a confirmed reservation.
 }
 ```
 
-## POST /reservations/{id}/check-in
+## `POST /reservations/{id}/check-in`
 
 Mark reservation as checked in. Returns `204 No Content`.
 
-## POST /reservations/{id}/check-out
+## `POST /reservations/{id}/check-out`
 
 Mark reservation as checked out. Returns `204 No Content`.

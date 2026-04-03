@@ -70,6 +70,7 @@ const sidebars: SidebarsConfig = {
         'deployment/local-docker',
         'deployment/aws-production',
         'deployment/kubernetes',
+        'deployment/local-kubernetes',
         'deployment/cicd-pipeline',
         'deployment/ssl-and-domains',
       ],

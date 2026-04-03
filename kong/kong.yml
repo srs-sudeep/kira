@@ -3,18 +3,13 @@ _transform: true
 
 services:
   # ---------------------------------------------------------------------------
-  # Gateway root — GET / only (avoids "no Route matched" on http://localhost:8000/)
-  # ---------------------------------------------------------------------------
   - name: gateway-landing
     url: http://127.0.0.1:1
     routes:
-      # Prefix "/" matches every path, but Kong picks the longest matching route for
-      # /api/v1/… so APIs are not swallowed. Only "/" alone resolves here when no
-      # longer path matches.
       - name: kong-root
         paths:
-          # Regex routes must start with ~/ (not ~). Match only GET /, not /api/…
-          - "~/^/$"
+          # Prefix `/`; Kong prefers the longest matching path, so `/api/v1/…` still hits APIs.
+          - "/"
         methods:
           - GET
           - HEAD
