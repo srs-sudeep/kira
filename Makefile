@@ -1,30 +1,37 @@
-.PHONY: up up-full down logs test-% test-all migrate-% migrate-all seed clean dashboards docs-dev docs-build
+.PHONY: up up-full down logs test-% test-all migrate-% migrate-all migrate-docker-% migrate-docker-all \
+	seed seed-docker bootstrap wait-postgres clean dashboards dashboards-full stack-status docs-dev docs-build docs-docker-up help
 
 SERVICES := identity-service rate-inventory-service reservation-service channel-engine notification-service admin-service
+
+COMPOSE := docker compose
 
 # ---------------------------------------------------------------------------
 # Stack management
 # ---------------------------------------------------------------------------
 
-## Start core stack (infra + services)
+## Start core stack (infra + API services + Kong + web-app on :3000)
 up:
-	docker compose up -d --build
+	$(COMPOSE) up -d --build
 
-## Start full stack with observability dashboards
+## Start full stack with observability (Grafana, Prometheus, Loki, …)
 up-full:
-	docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml up -d --build
 
 ## Stop and remove containers (keep volumes)
 down:
-	docker compose -f docker-compose.yml -f docker-compose.observability.yml down
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml down
 
 ## Follow logs for all containers
 logs:
-	docker compose logs -f
+	$(COMPOSE) logs -f
 
 ## Follow logs for a specific service — usage: make logs-identity-service
 logs-%:
-	docker compose logs -f $*
+	$(COMPOSE) logs -f $*
+
+## Show container status (use when /docs or dashboards fail to load)
+stack-status:
+	$(COMPOSE) ps -a
 
 # ---------------------------------------------------------------------------
 # Testing
@@ -43,14 +50,14 @@ test-all:
 	done
 
 # ---------------------------------------------------------------------------
-# Migrations
+# Migrations (host — requires uv; uses localhost:5432)
 # ---------------------------------------------------------------------------
 
 ## Run Alembic migrations for a specific service — usage: make migrate-identity-service
 migrate-%:
 	cd services/$* && uv run alembic upgrade head
 
-## Run migrations for all services sequentially
+## Run migrations for all services sequentially (host)
 migrate-all:
 	@for svc in $(SERVICES); do \
 		echo "\n=== Migrating $$svc ==="; \
@@ -59,14 +66,49 @@ migrate-all:
 	done
 
 # ---------------------------------------------------------------------------
+# Migrations (Docker — run inside each service container; uses postgres hostname)
+# Requires: make up (stack running)
+# ---------------------------------------------------------------------------
+
+## Run Alembic inside one container — usage: make migrate-docker-identity-service
+migrate-docker-%:
+	$(COMPOSE) exec $* sh -c "cd /app && python -m alembic upgrade head"
+
+## Run all service migrations inside Docker (preferred after make up)
+migrate-docker-all:
+	@for svc in $(SERVICES); do \
+		echo "\n=== Migrating $$svc (Docker) ==="; \
+		$(COMPOSE) exec $$svc sh -c "cd /app && python -m alembic upgrade head" || exit 1; \
+	done
+
+# ---------------------------------------------------------------------------
 # Data
 # ---------------------------------------------------------------------------
 
-## Seed development data
+## Seed dev data from the host (Postgres must be reachable at localhost:5432)
 seed:
 	uv run python scripts/seed_data.py
 
-## Create a super-admin user
+## Seed dev data via Docker Compose (Postgres up; run migrate-docker-all first)
+seed-docker:
+	$(COMPOSE) --profile tools run --rm seed-data
+
+## First-time setup: start stack, wait for Postgres, migrate in Docker, seed in Docker
+bootstrap: up wait-postgres migrate-docker-all seed-docker
+	@echo ""
+	@echo "Done. Web UI: http://localhost:3000  |  Kong: http://localhost:8000"
+	@echo "OpenAPI is on each service port (e.g. http://localhost:8001/docs), not on Kong."
+
+## Wait until Postgres accepts connections
+wait-postgres:
+	@echo "Waiting for Postgres..."
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do \
+		$(COMPOSE) exec -T postgres pg_isready -U postgres -d kira >/dev/null 2>&1 && exit 0; \
+		sleep 1; \
+	done; \
+	echo "Postgres did not become ready in time."; exit 1
+
+## Create a super-admin user (interactive; run on host)
 superadmin:
 	uv run python scripts/create_superadmin.py
 
@@ -76,37 +118,46 @@ superadmin:
 
 ## Stop everything and remove containers, volumes, and orphans
 clean:
-	docker compose -f docker-compose.yml -f docker-compose.observability.yml down -v --remove-orphans
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml down -v --remove-orphans
 
 # ---------------------------------------------------------------------------
-# Dashboards — open all UIs in the default browser
+# Dashboards — open UIs in the default browser (macOS/Linux)
 # ---------------------------------------------------------------------------
 
-## Open all service dashboards in the browser
+## Core stack URLs (requires: make up — containers must be healthy)
 dashboards:
-	@echo "Opening KIRA dashboards..."
-	@python3 -c "import webbrowser; urls = [ \
-		'http://localhost:8025',   \
-		'http://localhost:3001',   \
-		'http://localhost:9090',   \
-		'http://localhost:5050',   \
-		'http://localhost:5540',   \
-		'http://localhost:8080',   \
-		'http://localhost:9443',   \
-		'http://localhost:8000',   \
-		'http://localhost:8001/docs',  \
-		'http://localhost:8002/docs',  \
-		'http://localhost:8003/docs',  \
-		'http://localhost:8004/docs',  \
-		'http://localhost:8005/docs',  \
-		'http://localhost:8006/docs',  \
-	]; [webbrowser.open(u) for u in urls]"
+	@echo "Opening KIRA core UIs (web, Mailhog, Kong landing, one Swagger example)…"
+	@echo "Tip: Grafana/pgAdmin/Kafka UI need  make up-full  then  make dashboards-full"
+	@echo "If tabs fail:  make stack-status   and   docker compose logs <service>"
+	@python3 -c "import webbrowser; webbrowser.open('http://localhost:3000'); \
+		[webbrowser.open(u) for u in [ \
+		'http://localhost:8025', \
+		'http://localhost:8000', \
+		'http://localhost:8001/docs', \
+		]]"
+
+## Observability + debug UIs (requires: make up-full — not started by make up alone)
+dashboards-full:
+	@echo "Opening KIRA + observability UIs (Grafana :3001, Prometheus, pgAdmin, …)…"
+	@echo "If ports refuse connection, run:  make up-full"
+	@python3 -c "import webbrowser; [webbrowser.open(u) for u in [ \
+		'http://localhost:3000', \
+		'http://localhost:8025', \
+		'http://localhost:3001', \
+		'http://localhost:9090', \
+		'http://localhost:5050', \
+		'http://localhost:5540', \
+		'http://localhost:8080', \
+		'https://localhost:9443', \
+		'http://localhost:8000', \
+		'http://localhost:8001/docs', \
+		]]"
 
 # ---------------------------------------------------------------------------
 # Documentation
 # ---------------------------------------------------------------------------
 
-## Start Docusaurus dev server (http://localhost:4000)
+## Docusaurus dev server with hot reload (http://localhost:4000) — run on host
 docs-dev:
 	cd docs-site && bun install && bun run start -- --port 4000
 
@@ -114,39 +165,49 @@ docs-dev:
 docs-build:
 	cd docs-site && bun install && bun run build
 
+## Serve built docs in Docker (http://localhost:4000) — rebuild image after doc changes
+docs-docker-up:
+	$(COMPOSE) --profile docs up -d --build docs-site
+
 # ---------------------------------------------------------------------------
 # Help
 # ---------------------------------------------------------------------------
+
 help:
 	@echo ""
 	@echo "KIRA — Hotel Channel Manager"
 	@echo "=============================="
 	@echo ""
+	@echo "First-time (Docker):"
+	@echo "  make bootstrap       Start stack, migrate DB in containers, seed data"
+	@echo ""
 	@echo "Stack:"
-	@echo "  make up              Start core stack"
-	@echo "  make up-full         Start stack + observability"
+	@echo "  make up              Core: Postgres, Redis, Kafka, APIs, Kong, web :3000"
+	@echo "  make up-full         Core + Grafana, Prometheus, Loki, …"
 	@echo "  make down            Stop containers"
 	@echo "  make clean           Stop + remove volumes"
 	@echo ""
+	@echo "DB (stack running):"
+	@echo "  make migrate-docker-all   Alembic inside each service container"
+	@echo "  make seed-docker        Seed script via Docker network"
+	@echo ""
+	@echo "DB (host, uv + localhost:5432):"
+	@echo "  make migrate-all     Alembic on host for all services"
+	@echo "  make seed            Seed script on host"
+	@echo ""
 	@echo "Logs:"
 	@echo "  make logs            Tail all logs"
-	@echo "  make logs-<service>  Tail a specific service"
+	@echo "  make logs-<service>  Tail one service"
 	@echo ""
 	@echo "Tests:"
 	@echo "  make test-<service>  Run tests for one service"
 	@echo "  make test-all        Run all service tests"
 	@echo ""
-	@echo "Migrations:"
-	@echo "  make migrate-<svc>   Migrate one service"
-	@echo "  make migrate-all     Migrate all services"
-	@echo ""
-	@echo "Data:"
-	@echo "  make seed            Seed dev data"
-	@echo "  make superadmin      Create super-admin user"
-	@echo ""
-	@echo "  make dashboards      Open all UIs in browser"
-	@echo ""
 	@echo "Docs:"
-	@echo "  make docs-dev        Start Docusaurus dev server (port 4000)"
-	@echo "  make docs-build      Build static docs site"
+	@echo "  make docs-dev        Docusaurus dev server (host, port 4000)"
+	@echo "  make docs-docker-up  Built docs in Docker (port 4000)"
+	@echo ""
+	@echo "  make dashboards      Open core UIs (web, Mailhog, Kong :8000, identity /docs)"
+	@echo "  make dashboards-full After make up-full — Grafana, pgAdmin, Kafka UI, …"
+	@echo "  make stack-status    docker compose ps (debug connection errors)"
 	@echo ""

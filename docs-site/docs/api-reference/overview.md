@@ -15,6 +15,23 @@ All KIRA services expose REST APIs following consistent conventions.
 | Staging | `https://api.staging.kira.abodeab.com` |
 | Production | `https://api.kira.abodeab.com` |
 
+## OpenAPI (Swagger) and Kong
+
+Kong routes **API prefixes only** (for example `/api/v1/auth`, `/api/v1/rooms`). It does **not** proxy FastAPI’s interactive docs.
+
+Use the **service ports** for Swagger UI and OpenAPI JSON:
+
+| Service | Swagger UI |
+|---------|------------|
+| identity-service | `http://localhost:8001/docs` |
+| rate-inventory-service | `http://localhost:8002/docs` |
+| reservation-service | `http://localhost:8003/docs` |
+| channel-engine | `http://localhost:8004/docs` |
+| notification-service | `http://localhost:8005/docs` |
+| admin-service | `http://localhost:8006/docs` |
+
+`http://localhost:8000/docs` will **not** work — that is Kong’s proxy port, not a single merged OpenAPI.
+
 ## Authentication
 
 All endpoints (except `/auth/login` and `/auth/register`) require a JWT Bearer token:

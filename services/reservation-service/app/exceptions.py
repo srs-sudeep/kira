@@ -19,6 +19,11 @@ class ForbiddenError(KiraBaseException):
         super().__init__(message)
 
 
+class UnauthorizedError(KiraBaseException):
+    def __init__(self, message: str = "Unauthorized"):
+        super().__init__(message)
+
+
 class ValidationError(KiraBaseException):
     def __init__(self, message: str):
         super().__init__(message)

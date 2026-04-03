@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'getting-started/prerequisites',
         'getting-started/local-setup',
+        'getting-started/dev-dashboards',
         'getting-started/environment-variables',
         'getting-started/running-services',
         'getting-started/first-run',

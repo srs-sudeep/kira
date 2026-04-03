@@ -5,10 +5,11 @@ from datetime import timedelta
 
 from jose import JWTError, jwt
 from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
 
 from shared.utils.datetime_utils import utcnow
 
-pwd_hash = PasswordHash.recommended()
+pwd_hash = PasswordHash([BcryptHasher()])
 
 ALGORITHM = "HS256"
 

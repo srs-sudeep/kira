@@ -65,7 +65,7 @@ export function ChannelHealthPanel() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
                     {channel.display_name ||
-                      OTA_CHANNEL_LABELS[channel.ota] ??
+                      OTA_CHANNEL_LABELS[channel.ota] ||
                       channel.ota}
                   </p>
                   <p className="text-xs text-muted-foreground">

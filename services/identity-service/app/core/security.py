@@ -7,6 +7,7 @@ import pyotp
 import structlog
 from jose import JWTError, jwt
 from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
 
 from app.config import settings
 from app.exceptions import UnauthorizedError
@@ -16,7 +17,8 @@ logger = structlog.get_logger(__name__)
 ALGORITHM = "HS256"
 MFA_PENDING_EXPIRE_MINUTES = 5
 
-pwd_hash = PasswordHash.recommended()
+# Use bcrypt (pwdlib[bcrypt]); avoid PasswordHash.recommended() which requires Argon2.
+pwd_hash = PasswordHash([BcryptHasher()])
 
 
 # ── Password helpers ──────────────────────────────────────────────────────────

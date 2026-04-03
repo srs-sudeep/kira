@@ -94,7 +94,8 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - ./services/identity-service/app:/app/app
+      # Full tree so Alembic (migrations/, alembic.ini) is available inside the container
+      - ./services/identity-service:/app
       - ./shared:/app/shared
     command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
@@ -107,7 +108,7 @@ services:
     ports:
       - "8002:8002"
     volumes:
-      - ./services/rate-inventory-service/app:/app/app
+      - ./services/rate-inventory-service:/app
       - ./shared:/app/shared
     command: uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
 
@@ -120,7 +121,7 @@ services:
     ports:
       - "8003:8003"
     volumes:
-      - ./services/reservation-service/app:/app/app
+      - ./services/reservation-service:/app
       - ./shared:/app/shared
     command: uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload
 
@@ -133,7 +134,7 @@ services:
     ports:
       - "8004:8004"
     volumes:
-      - ./services/channel-engine/app:/app/app
+      - ./services/channel-engine:/app
       - ./shared:/app/shared
     depends_on:
       postgres:
@@ -153,7 +154,7 @@ services:
     ports:
       - "8005:8005"
     volumes:
-      - ./services/notification-service/app:/app/app
+      - ./services/notification-service:/app
       - ./shared:/app/shared
     depends_on:
       postgres:
@@ -173,7 +174,7 @@ services:
     ports:
       - "8006:8006"
     volumes:
-      - ./services/admin-service/app:/app/app
+      - ./services/admin-service:/app
       - ./shared:/app/shared
     command: uvicorn app.main:app --host 0.0.0.0 --port 8006 --reload
 
@@ -187,7 +188,7 @@ services:
       dockerfile: Dockerfile
     env_file: ./services/channel-engine/.env.local
     volumes:
-      - ./services/channel-engine/app:/app/app
+      - ./services/channel-engine:/app
       - ./shared:/app/shared
     depends_on:
       postgres:
@@ -205,7 +206,7 @@ services:
       dockerfile: Dockerfile
     env_file: ./services/notification-service/.env.local
     volumes:
-      - ./services/notification-service/app:/app/app
+      - ./services/notification-service:/app
       - ./shared:/app/shared
     depends_on:
       postgres:
@@ -243,22 +244,56 @@ services:
       retries: 5
 
   # ---------------------------------------------------------------------------
-  # Frontend (scaffolded in Phase 4)
+  # One-off DB seed (run: docker compose --profile tools run --rm seed-data)
+  # ---------------------------------------------------------------------------
+  seed-data:
+    image: python:3.13-slim
+    profiles: [tools]
+    volumes:
+      - ./:/work
+    working_dir: /work
+    environment:
+      POSTGRES_DSN: postgresql://postgres:postgres@postgres:5432/kira
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - kira-net
+    command:
+      [
+        "sh",
+        "-c",
+        "pip install --no-cache-dir -q asyncpg && python scripts/seed_data.py",
+      ]
+
+  # ---------------------------------------------------------------------------
+  # Frontend — Vite dev server (http://localhost:3000)
+  # API calls go to Kong :8000 via Vite proxy (/api → localhost:8000 from browser host)
   # ---------------------------------------------------------------------------
   web-app:
     <<: *service-defaults
     image: node:20-alpine
     working_dir: /app
+    environment:
+      # Vite dev server proxies /api → Kong; must use service DNS from inside the container
+      API_PROXY_TARGET: http://kong:8000
     volumes:
       - ./web-app:/app
     ports:
       - "3000:3000"
-    command: ["sh", "-c", "echo 'Frontend not yet scaffolded' && sleep infinity"]
-    profiles:
-      - frontend
+    command:
+      [
+        "sh",
+        "-c",
+        "npm install && npx vite --host 0.0.0.0 --port 3000",
+      ]
+    depends_on:
+      kong:
+        condition: service_started
 
   # ---------------------------------------------------------------------------
-  # Documentation site
+  # Documentation site (static build) — optional profile to avoid slow rebuilds on every up
+  # Start with: docker compose --profile docs up -d docs-site   OR   make docs-docker-up
   # ---------------------------------------------------------------------------
   docs-site:
     <<: *service-defaults
@@ -270,7 +305,11 @@ services:
     profiles:
       - docs
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3

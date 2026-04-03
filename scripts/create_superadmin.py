@@ -5,14 +5,18 @@ Prompts for email and password interactively.
 """
 import asyncio
 import getpass
+import os
 import uuid
 
 import asyncpg
 from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
 
-POSTGRES_DSN = "postgresql://postgres:postgres@localhost:5432/kira"
+POSTGRES_DSN = os.environ.get(
+    "POSTGRES_DSN", "postgresql://postgres:postgres@localhost:5432/kira"
+)
 
-pwd_hash = PasswordHash.recommended()
+pwd_hash = PasswordHash([BcryptHasher()])
 
 
 async def create_superadmin(email: str, password: str) -> None:

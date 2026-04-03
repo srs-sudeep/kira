@@ -1,7 +1,7 @@
 ---
 title: First Run
 description: Walkthrough of creating a hotel tenant, adding room types, making a reservation, and exploring the KIRA dashboard.
-sidebar_position: 3
+sidebar_position: 5
 ---
 
 # First Run Walkthrough

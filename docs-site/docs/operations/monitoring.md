@@ -27,7 +27,7 @@ graph LR
     Prom --> AlertMgr
 ```
 
-**Local dev:** Prometheus and Grafana run via `docker-compose.observability.yml`. Default Grafana login: `admin` / `admin` at `http://localhost:3001`.
+**Local dev:** Prometheus and Grafana run via `docker-compose.observability.yml`. Grafana enables **anonymous Viewer** access at `http://localhost:3001` (no login). Use **Sign in** with `admin` / `admin` when you need to edit dashboards. See [Dev dashboards & ports](../getting-started/dev-dashboards.md).
 
 **Production:** Prometheus and Grafana run as pods in the `kira-monitoring` namespace, provisioned via Helm (kube-prometheus-stack).
 

@@ -86,7 +86,21 @@ Use `Ctrl+C` to detach once everything is up (or run in a separate terminal).
 
 ## Step 4 — Run Database Migrations
 
-Each service manages its own PostgreSQL schema with Alembic. Run all migrations:
+Each service manages its own PostgreSQL schema with Alembic.
+
+### Option A — Everything in Docker (recommended)
+
+With the stack running (`make up`), apply migrations **inside** the containers so they use the `postgres` hostname from `.env.local`:
+
+```bash
+make migrate-docker-all
+```
+
+Single service: `make migrate-docker-identity-service` (replace with the service name).
+
+### Option B — On your host (uv + localhost)
+
+If Postgres is reachable at `localhost:5432`:
 
 ```bash
 make migrate-all
@@ -115,9 +129,19 @@ make migrate-rate-inventory-service
 
 ## Step 5 — Seed Test Data
 
+**Docker (uses the Compose network to reach Postgres):**
+
+```bash
+make seed-docker
+```
+
+**Host (requires `uv`, same DSN as localhost:5432):**
+
 ```bash
 make seed
 ```
+
+**All-in-one** after a fresh clone: `make bootstrap` runs `up`, waits for Postgres, `migrate-docker-all`, and `make seed-docker`.
 
 This runs `scripts/seed_data.py` which creates:
 - A test tenant: **"Grand Hotel Demo"** (ID is printed to stdout — save it)
@@ -180,31 +204,34 @@ To log in as super-admin (full platform access, including the admin-service):
 
 ---
 
-## Optional — Start with Observability Dashboards
+## Optional — Observability dashboards
 
-Add Grafana, Prometheus, Loki, and Kafka UI:
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build
-```
-
-Then open all dashboards at once:
+Add Grafana, Prometheus, Loki, Kafka UI, pgAdmin, etc.:
 
 ```bash
-make dashboards
+make up-full
 ```
+
+Then open the observability URLs in your browser:
+
+```bash
+make dashboards-full
+```
+
+For the **core** stack only (web, Mailhog, Kong landing, one Swagger tab): `make dashboards` after `make up`. See [Dev dashboards & ports](./dev-dashboards.md) for what each command opens.
 
 | Dashboard | URL | Purpose |
 |---|---|---|
 | KIRA web-app | [localhost:3000](http://localhost:3000) | Property manager dashboard |
-| Kong Admin | [localhost:8001](http://localhost:8001) | API gateway admin API |
-| Grafana | [localhost:3001](http://localhost:3001) | Metrics + logs (admin/admin) |
+| Kong proxy | [localhost:8000](http://localhost:8000) | API gateway (HTML landing on `/`; APIs under `/api/v1/`) |
+| Kong Admin API | [localhost:8100](http://localhost:8100) | Kong admin (not Swagger) |
+| Grafana | [localhost:3001](http://localhost:3001) | Metrics + logs (anonymous or admin/admin) |
 | Prometheus | [localhost:9090](http://localhost:9090) | Raw metrics browser |
 | Kafka UI | [localhost:8080](http://localhost:8080) | Topic browser, consumer lag |
-| pgAdmin | [localhost:5050](http://localhost:5050) | SQL browser (admin@kira.local/admin) |
+| pgAdmin | [localhost:5050](http://localhost:5050) | SQL browser — **`admin@kira.dev` / `admin`** (see [Dev dashboards](./dev-dashboards.md)) |
 | Redis Insight | [localhost:5540](http://localhost:5540) | Redis key browser |
 | Mailhog | [localhost:8025](http://localhost:8025) | Outbound email trap |
-| Portainer | [localhost:9443](http://localhost:9443) | Container management UI |
+| Portainer | [localhost:9443](https://localhost:9443) | Container management UI |
 
 ---
 

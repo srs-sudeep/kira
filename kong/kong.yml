@@ -3,7 +3,37 @@ _transform: true
 
 services:
   # ---------------------------------------------------------------------------
-  # Identity Service — auth, users, audit
+  # Gateway root — GET / only (avoids "no Route matched" on http://localhost:8000/)
+  # ---------------------------------------------------------------------------
+  - name: gateway-landing
+    url: http://127.0.0.1:1
+    routes:
+      # Prefix "/" matches every path, but Kong picks the longest matching route for
+      # /api/v1/… so APIs are not swallowed. Only "/" alone resolves here when no
+      # longer path matches.
+      - name: kong-root
+        paths:
+          # Regex routes must start with ~/ (not ~). Match only GET /, not /api/…
+          - "~/^/$"
+        methods:
+          - GET
+          - HEAD
+        strip_path: false
+    plugins:
+      - name: request-termination
+        config:
+          status_code: 200
+          content_type: "text/html; charset=utf-8"
+          body: |
+            <!DOCTYPE html>
+            <html lang="en"><head><meta charset="utf-8"/><title>KIRA API Gateway</title></head><body>
+            <h1>KIRA Kong (port 8000)</h1>
+            <p>HTTP APIs are under <strong>/api/v1/</strong>. OpenAPI (Swagger) is <strong>not</strong> exposed through Kong — open each service directly, e.g. <a href="http://localhost:8001/docs">identity-service /docs</a> on port 8001.</p>
+            <p><a href="http://localhost:3000">Web app :3000</a> · <a href="http://localhost:4000">Docs site :4000</a> (run <code>make docs-dev</code>) · <a href="http://localhost:8025">Mailhog</a></p>
+            </body></html>
+
+  # ---------------------------------------------------------------------------
+  # Identity Service — auth, users, audit, permissions
   # ---------------------------------------------------------------------------
   - name: identity-service
     url: http://identity-service:8001
@@ -19,6 +49,10 @@ services:
       - name: audit-route
         paths:
           - /api/v1/audit
+        strip_path: false
+      - name: permissions-route
+        paths:
+          - /api/v1/permissions
         strip_path: false
     plugins:
       - name: correlation-id
@@ -115,9 +149,3 @@ services:
           header_name: X-Request-ID
           generator: uuid#counter
           echo_downstream: true
-
-plugins:
-  - name: request-termination
-    config:
-      status_code: 404
-      message: "Route not found"

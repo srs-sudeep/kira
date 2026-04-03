@@ -1,13 +1,23 @@
 """KIRA seed data script — populates development databases with sample data.
 
-Run with:  uv run python scripts/seed_data.py
+Run on the host (Postgres on localhost:5432):
+  uv run python scripts/seed_data.py
+
+Run against Docker Compose Postgres from the host (same DSN if port 5432 is published):
+  POSTGRES_DSN=postgresql://postgres:postgres@localhost:5432/kira uv run python scripts/seed_data.py
+
+From another machine / CI targeting the DB container by hostname:
+  POSTGRES_DSN=postgresql://postgres:postgres@postgres:5432/kira python scripts/seed_data.py
 """
 import asyncio
+import os
 import uuid
 
 import asyncpg
 
-POSTGRES_DSN = "postgresql://postgres:postgres@localhost:5432/kira"
+POSTGRES_DSN = os.environ.get(
+    "POSTGRES_DSN", "postgresql://postgres:postgres@localhost:5432/kira"
+)
 
 TENANT_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 TENANT_SCHEMA = f"tenant_{str(TENANT_ID).replace('-', '_')}"
@@ -111,7 +121,25 @@ async def seed_tenant(conn: asyncpg.Connection) -> None:
     await conn.execute(f'CREATE SCHEMA IF NOT EXISTS "{TENANT_SCHEMA}"')
 
 
+async def ensure_identity_tables(conn: asyncpg.Connection) -> None:
+    row = await conn.fetchrow(
+        """
+        SELECT 1 AS ok
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'users'
+        """
+    )
+    if not row:
+        raise RuntimeError(
+            'Table "public.users" does not exist. Run Alembic migrations before seeding:\n'
+            "  make migrate-docker-all\n"
+            "or one-shot first-time setup:\n"
+            "  make bootstrap"
+        )
+
+
 async def seed_identity(conn: asyncpg.Connection) -> None:
+    await ensure_identity_tables(conn)
     print("Seeding identity-service sample data...")
     await conn.execute(
         """

@@ -1,6 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.exceptions import NotFoundError, ConflictError, ForbiddenError, ValidationError
+from app.exceptions import (
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError,
+)
 import structlog
 
 logger = structlog.get_logger()
@@ -18,6 +24,10 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(ForbiddenError)
     async def forbidden_handler(request: Request, exc: ForbiddenError):
         return JSONResponse(status_code=403, content={"detail": str(exc)})
+
+    @app.exception_handler(UnauthorizedError)
+    async def unauthorized_handler(request: Request, exc: UnauthorizedError):
+        return JSONResponse(status_code=401, content={"detail": str(exc)})
 
     @app.exception_handler(ValidationError)
     async def validation_handler(request: Request, exc: ValidationError):

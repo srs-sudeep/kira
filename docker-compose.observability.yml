@@ -23,6 +23,11 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_INSTALL_PLUGINS: grafana-clock-panel
+      # Anonymous viewer — open http://localhost:3001 with no login (dashboards are read-only).
+      # Use Sign in → admin / admin for Editor/Admin (import dashboards, change settings).
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_NAME: "Main Org."
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
       # Disable analytics / update checks
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
@@ -135,9 +140,15 @@ services:
     restart: unless-stopped
     ports:
       - "9443:9443"
+    command:
+      - -H
+      - unix:///var/run/docker.sock
+      - --admin-password-file
+      - /tmp/portainer-password
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainerdata:/data
+      - ./observability/portainer/dev-admin-password:/tmp/portainer-password:ro
     networks:
       - kira-net
 
@@ -150,6 +161,7 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: kira-local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      # Upstream default is auth.type=DISABLED — no login for local dev
     depends_on:
       kafka:
         condition: service_healthy
@@ -168,9 +180,13 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@kira.dev
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: "False"
+      # Skip the master-password prompt on first load (local dev only).
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     volumes:
       - pgadmindata:/var/lib/pgadmin
       - ./observability/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      # PostgreSQL password for the pre-registered "KIRA Local" server (see servers.json)
+      - ./observability/pgadmin/pgpass:/pgadmin4/pgpass:ro
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,7 +1,7 @@
 ---
 title: Project Structure
 description: A complete tour of the KIRA monorepo — every top-level folder explained, with the reasoning behind each structural decision.
-sidebar_position: 4
+sidebar_position: 6
 ---
 
 # Project Structure

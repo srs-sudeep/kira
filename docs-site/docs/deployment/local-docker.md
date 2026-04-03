@@ -201,7 +201,7 @@ Launched by merging `docker-compose.observability.yml`:
 | Grafana | 3001 | Dashboards — default login admin/admin |
 | Loki | 3100 | Log aggregation (receives from Promtail) |
 | Promtail | — | Ships Docker container logs to Loki |
-| pgAdmin | 5050 | PostgreSQL GUI — login admin@kira.local / admin |
+| pgAdmin | 5050 | PostgreSQL GUI — `admin@kira.dev` / `admin` ([dev dashboards](../getting-started/dev-dashboards.md)) |
 | Redis Insight | 5540 | Redis key browser |
 | Kafka UI | 8080 | Topic browser, consumer group lag |
 | Portainer | 9443 | Docker container management UI |
