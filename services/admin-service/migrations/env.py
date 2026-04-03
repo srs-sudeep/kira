@@ -17,16 +17,28 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+# One shared Postgres DB — each service must use its own version table.
+ALEMBIC_VERSION_TABLE = "alembic_version_admin_service"
+
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        version_table=ALEMBIC_VERSION_TABLE,
+    )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def do_run_migrations(connection):
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        version_table=ALEMBIC_VERSION_TABLE,
+    )
     with context.begin_transaction():
         context.run_migrations()
 

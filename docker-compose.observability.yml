@@ -134,15 +134,17 @@ services:
   # DEBUG UIs
   # ═══════════════════════════════════════════════════════════════════════════
 
-  # Portainer — Docker container management (https://localhost:9443)
+  # Portainer — Docker container management (http://localhost:9000, HTTPS optional on 9443)
   portainer:
     image: portainer/portainer-ce:2.20.3
     restart: unless-stopped
     ports:
+      - "9000:9000"
       - "9443:9443"
     command:
       - -H
       - unix:///var/run/docker.sock
+      - --http-enabled
       - --admin-password-file
       - /tmp/portainer-password
     volumes:
@@ -180,12 +182,10 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@kira.dev
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: "False"
-      # Skip the master-password prompt on first load (local dev only).
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     volumes:
       - pgadmindata:/var/lib/pgadmin
       - ./observability/pgadmin/servers.json:/pgadmin4/servers.json:ro
-      # PostgreSQL password for the pre-registered "KIRA Local" server (see servers.json)
       - ./observability/pgadmin/pgpass:/pgadmin4/pgpass:ro
     depends_on:
       postgres:

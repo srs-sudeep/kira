@@ -45,6 +45,9 @@ Full detail: [`docs-site/docs/getting-started/local-setup.md`](docs-site/docs/ge
 
 **Host-only alternative** (Postgres exposed on `localhost:5432`): `make migrate-all` and `make seed` using `uv` on your machine.
 
+**Migrations:** All services share one Postgres database; each service uses its own Alembic version table (`alembic_version_admin_service`, `alembic_version_identity_service`, …) so revisions do not overwrite each other. `make migrate-docker-all` runs **admin-service first** (creates `public.tenants`), then **identity-service** (creates `public.users`, permissions, etc.). If you upgraded from an older layout that used a single `alembic_version` row, run `make migrate-docker-all` after pulling; if **notification** tables already exist but its migration reruns and errors, stamp once:  
+`docker compose exec notification-service sh -c "cd /app && python -m alembic stamp head"`.
+
 **Useful commands:** `make help` — `bootstrap`, `up`, `up-full`, `migrate-docker-all`, `seed-docker`, `dashboards`, `dashboards-full`, `docs-dev`, `docs-docker-up`.
 
 ---
@@ -79,6 +82,27 @@ Monorepo details: [`docs/02_MONOREPO_STRUCTURE.md`](docs/02_MONOREPO_STRUCTURE.m
 | web-app | 3000 |
 
 Each backend exposes OpenAPI at `http://localhost:<port>/docs`.
+
+---
+
+## Observability and debug UIs (`make up-full`)
+
+Start the full stack with observability: `make up-full`. These URLs assume defaults from `docker-compose.observability.yml` and `observability/`. **Use only on your machine** — passwords are for local dev.
+
+| Dashboard | URL | Access / credentials |
+|-----------|-----|------------------------|
+| **Grafana** | [http://localhost:3001](http://localhost:3001) | Anonymous **Viewer** (no login). **Sign in** as **`admin` / `admin`** to edit dashboards or settings. |
+| **Prometheus** | [http://localhost:9090](http://localhost:9090) | No authentication. |
+| **Loki** | [http://localhost:3100](http://localhost:3100) | HTTP API only; query logs in Grafana. |
+| **Kafka UI** | [http://localhost:8080](http://localhost:8080) | No login (local dev). |
+| **pgAdmin** | [http://localhost:5050](http://localhost:5050) | **`admin@kira.dev` / `admin`**. Pre-registered server **KIRA Local** (DB user `postgres`, password via mounted `pgpass`; same as Postgres below). |
+| **Redis Insight** | [http://localhost:5540](http://localhost:5540) | No login; add Redis **host** `localhost`, **port** `6379`, no password. |
+| **Portainer** | [http://localhost:9000](http://localhost:9000) (HTTPS also [https://localhost:9443](https://localhost:9443)) | On **first init**, admin password is read from [`observability/portainer/dev-admin-password`](observability/portainer/dev-admin-password) (default **`KiraLocalPortainer!`**). Existing volumes may ignore this file. |
+| **Mailhog** | [http://localhost:8025](http://localhost:8025) | No login (starts with `make up`). |
+
+**Postgres (browser or `psql`):** host `localhost`, port **`5432`**, database **`kira`**, user **`postgres`**, password **`postgres`**.
+
+More detail: [`docs-site/docs/getting-started/dev-dashboards.md`](docs-site/docs/getting-started/dev-dashboards.md).
 
 ---
 

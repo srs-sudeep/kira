@@ -1,7 +1,8 @@
 .PHONY: up up-full down logs test-% test-all migrate-% migrate-all migrate-docker-% migrate-docker-all \
 	seed seed-docker bootstrap wait-postgres clean dashboards dashboards-full stack-status docs-dev docs-build docs-docker-up help
 
-SERVICES := identity-service rate-inventory-service reservation-service channel-engine notification-service admin-service
+
+SERVICES := admin-service identity-service rate-inventory-service reservation-service channel-engine notification-service
 
 COMPOSE := docker compose
 
@@ -148,7 +149,7 @@ dashboards-full:
 		'http://localhost:5050', \
 		'http://localhost:5540', \
 		'http://localhost:8080', \
-		'https://localhost:9443', \
+		'http://localhost:9000', \
 		'http://localhost:8000', \
 		'http://localhost:8001/docs', \
 		]]"

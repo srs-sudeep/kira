@@ -39,7 +39,7 @@ these services are available (in addition to the core stack on 8000–8006 and 3
 | **Kafka UI** | [http://localhost:8080](http://localhost:8080) | **No login** — default app config uses `auth.type=DISABLED`. |
 | **pgAdmin** | [http://localhost:5050](http://localhost:5050) | Log in with **`admin@kira.dev` / `admin`**. The **master password** prompt is disabled for local dev. The **KIRA Local** server is pre-registered; the DB password is supplied via a mounted `pgpass` file so you can connect without re-entering the Postgres password each time. |
 | **Redis Insight** | [http://localhost:5540](http://localhost:5540) | Starts with **no connections** — Redis has no “database” list until you add one. Click **Add Redis database** → **Host:** `localhost` (from your Mac) or `redis` (from another container on `kira-net`) → **Port:** `6379` → **no password** (local dev). The key space is empty until the app writes keys. |
-| **Portainer** | [https://localhost:9443](https://localhost:9443) | **Admin password is set on first init** from `observability/portainer/dev-admin-password` (default: **`KiraLocalPortainer!`**). If you already created an admin account in an older volume, this file is ignored — reset with `docker volume rm kira_portainerdata` (destructive) or use Portainer’s password recovery. |
+| **Portainer** | [http://localhost:9000](http://localhost:9000) | **Admin password is set on first init** from `observability/portainer/dev-admin-password` (default: **`KiraLocalPortainer!`**). HTTPS is optional on [https://localhost:9443](https://localhost:9443). If you already created an admin account in an older volume, this file is ignored — reset with `docker volume rm kira_portainerdata` (destructive) or use Portainer’s password recovery. |
 
 :::warning Local development only
 Grafana anonymous access, pgAdmin master-password bypass, and committed Portainer/pgAdmin passwords are **only** appropriate on your machine. Never enable these patterns for production.
@@ -78,7 +78,7 @@ make stack-status
 | Grafana / pgAdmin / `:3001` won’t load | Observability stack not started. | Run **`make up-full`** (not only `make up`). Then use **`make dashboards-full`**, not `make dashboards`. |
 | `:4000` won’t load | Docs site not running. | Run **`make docs-dev`** or **`make docs-docker-up`** on port 4000. |
 | `:3000` blank | `web-app` container failed or still installing npm deps. | `docker compose logs web-app` — wait for Vite to print “ready”. |
-| `Client sent an HTTP request to an HTTPS server` on `:9443` | Portainer only speaks **HTTPS** on that port. | Open **[https://localhost:9443](https://localhost:9443)** (note `https://`), not `http://`. |
+| `Client sent an HTTP request to an HTTPS server` on `:9443` | That Portainer port is **HTTPS-only**. | Use **[http://localhost:9000](http://localhost:9000)** for HTTP, or **`https://`** on `:9443`. |
 | Kong `:8000` shows “no Route matched” | Stale Kong container or old `kong.yml` not mounted. | `docker compose restart kong` after `git pull`, or `make down && make up`. |
 
 ---

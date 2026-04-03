@@ -43,6 +43,8 @@ compactor:
   retention_enabled: true
   retention_delete_delay: 2h
   retention_delete_worker_count: 150
+  # Required by Loki when retention_enabled is true (same backend as schema object_store).
+  delete_request_store: filesystem
 
 query_range:
   results_cache:

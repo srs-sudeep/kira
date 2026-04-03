@@ -121,6 +121,36 @@ async def seed_tenant(conn: asyncpg.Connection) -> None:
     await conn.execute(f'CREATE SCHEMA IF NOT EXISTS "{TENANT_SCHEMA}"')
 
 
+async def ensure_tenants_table(conn: asyncpg.Connection) -> None:
+    row = await conn.fetchrow(
+        """
+        SELECT 1 AS ok
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'tenants'
+        """
+    )
+    if not row:
+        raise RuntimeError(
+            'Table "public.tenants" does not exist. Run migrations first (admin-service must run '
+            "before seeding):\n"
+            "  make migrate-docker-all\n"
+            "or:  make bootstrap"
+        )
+
+
+async def ensure_demo_tenant_row(conn: asyncpg.Connection) -> None:
+    """Insert the dev tenant row so users.tenant_id FK succeeds."""
+    await conn.execute(
+        """
+        INSERT INTO public.tenants (id, name, schema_name)
+        VALUES ($1, 'Demo Hotel', $2)
+        ON CONFLICT (id) DO NOTHING
+        """,
+        TENANT_ID,
+        TENANT_SCHEMA,
+    )
+
+
 async def ensure_identity_tables(conn: asyncpg.Connection) -> None:
     row = await conn.fetchrow(
         """
@@ -143,15 +173,16 @@ async def seed_identity(conn: asyncpg.Connection) -> None:
     print("Seeding identity-service sample data...")
     await conn.execute(
         """
-        INSERT INTO public.users (id, email, hashed_password, tenant_id, roles, is_active)
-        VALUES ($1, $2, $3, $4, $5, TRUE)
+        INSERT INTO public.users (
+            id, email, hashed_password, first_name, last_name, role, tenant_id, is_active
+        )
+        VALUES ($1, $2, $3, 'Demo', 'User', 'property_owner', $4, TRUE)
         ON CONFLICT (email) DO NOTHING
         """,
         uuid.uuid4(),
         "demo@hotel-example.com",
         "$2b$12$placeholderHashReplaceWithRealBcryptHash",
         TENANT_ID,
-        ["tenant_admin"],
     )
 
 
@@ -215,7 +246,9 @@ async def main() -> None:
     print("Connecting to PostgreSQL...")
     conn = await asyncpg.connect(POSTGRES_DSN)
     try:
+        await ensure_tenants_table(conn)
         await seed_tenant(conn)
+        await ensure_demo_tenant_row(conn)
         await seed_identity(conn)
         await seed_permissions(conn)
         print("Seed complete.")
