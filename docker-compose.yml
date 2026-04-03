@@ -170,8 +170,8 @@ services:
   admin-service:
     <<: *app-defaults
     build:
-      context: ./services/admin-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: services/admin-service/Dockerfile
     env_file: ./services/admin-service/.env.local
     ports:
       - "8006:8006"
@@ -265,7 +265,7 @@ services:
       [
         "sh",
         "-c",
-        "pip install --no-cache-dir -q asyncpg && python scripts/seed_data.py",
+        "pip install --no-cache-dir -q asyncpg cryptography && python scripts/seed_data.py",
       ]
 
   # ---------------------------------------------------------------------------

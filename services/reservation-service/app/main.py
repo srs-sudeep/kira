@@ -11,6 +11,7 @@ from app.events.consumer import reservation_consumer
 from app.events.producer import kafka_producer
 from app.exception_handlers import register_exception_handlers
 from app.health import router as health_router
+from app.routers.dashboard_router import router as dashboard_router
 from app.routers.reservation_router import router as reservation_router
 
 logger = structlog.get_logger()
@@ -50,4 +51,5 @@ Instrumentator(
 
 register_exception_handlers(app)
 app.include_router(health_router)
+app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(reservation_router, prefix="/api/v1")

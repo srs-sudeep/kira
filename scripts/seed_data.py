@@ -9,18 +9,33 @@ Run against Docker Compose Postgres from the host (same DSN if port 5432 is publ
 From another machine / CI targeting the DB container by hostname:
   POSTGRES_DSN=postgresql://postgres:postgres@postgres:5432/kira python scripts/seed_data.py
 
+Dependencies (Docker ``seed-data`` installs these): ``asyncpg``, ``cryptography``.
+
+Also set ``ENCRYPTION_KEY`` to the same 64-char hex as reservation-service and channel-engine
+(see ``.env.local``) so guest PII and channel credentials match running services.
+
+Run order: **migrations first** (``make migrate-docker-all`` or ``make bootstrap``), then this seed.
+
 Dev logins (domains must pass API ``EmailStr`` — do not use ``*.local``):
 
 - **Super admin:** ``admin@example.com`` / ``Admin1234!``
 - **Hotel admin:** ``manager@grandhotel.example.com`` / ``Manager1234!``
+- **Revenue / front desk:** ``revenue@grandhotel.example.com`` / ``Manager1234!`` · ``frontdesk@grandhotel.example.com`` / ``Manager1234!``
 
-Re-run this script to upsert those users (passwords and roles refresh on conflict).
+Re-run this script to refresh passwords, tenant DDL, and demo business data (tenant tables are truncated then re-seeded).
 """
 import asyncio
 import os
+import sys
 import uuid
+from pathlib import Path
 
 import asyncpg
+
+_SCRIPTS_DIR = Path(__file__).resolve().parent
+_REPO_ROOT = _SCRIPTS_DIR.parent
+if str(_SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(_SCRIPTS_DIR))
 
 # bcrypt cost 12; verified by identity-service ``pwdlib`` (passwords above)
 _HASH_ADMIN = "$2b$12$6On7FtKxl/UCcSvKEwJ9fOQs7dNNHwms8NW2wI9w42jMpEs.tNSsO"  # Admin1234!
@@ -32,6 +47,12 @@ POSTGRES_DSN = os.environ.get(
 
 TENANT_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 TENANT_SCHEMA = f"tenant_{str(TENANT_ID).replace('-', '_')}"
+
+# Stable user IDs (so tenant notifications and notes reference valid users)
+DEV_ADMIN_ID = uuid.UUID("10000000-0000-0000-0000-000000000001")
+DEV_MANAGER_ID = uuid.UUID("10000000-0000-0000-0000-000000000002")
+DEV_REVENUE_ID = uuid.UUID("10000000-0000-0000-0000-000000000003")
+DEV_FRONT_ID = uuid.UUID("10000000-0000-0000-0000-000000000004")
 
 # ── Default permissions: (resource, action, description) ──────────────────────
 DEFAULT_PERMISSIONS: list[tuple[str, str, str]] = [
@@ -160,6 +181,17 @@ async def ensure_demo_tenant_row(conn: asyncpg.Connection) -> None:
         TENANT_ID,
         TENANT_SCHEMA,
     )
+    await conn.execute(
+        """
+        UPDATE public.tenants SET
+            city = 'New York',
+            country = 'USA',
+            timezone = 'America/New_York',
+            base_currency = 'USD'
+        WHERE id = $1
+        """,
+        TENANT_ID,
+    )
 
 
 async def ensure_identity_tables(conn: asyncpg.Connection) -> None:
@@ -181,7 +213,9 @@ async def ensure_identity_tables(conn: asyncpg.Connection) -> None:
 
 async def seed_identity(conn: asyncpg.Connection) -> None:
     await ensure_identity_tables(conn)
-    print("Seeding identity-service users (admin@example.com, manager@grandhotel.example.com)...")
+    print(
+        "Seeding identity users (admin, manager, revenue, front desk) with stable UUIDs..."
+    )
     await conn.execute(
         """
         INSERT INTO public.users (
@@ -189,7 +223,9 @@ async def seed_identity(conn: asyncpg.Connection) -> None:
         )
         VALUES
             ($1, 'admin@example.com', $2, 'Platform', 'Admin', 'super_admin', NULL, TRUE),
-            ($3, 'manager@grandhotel.example.com', $4, 'Grand Hotel', 'Manager', 'property_owner', $5, TRUE)
+            ($3, 'manager@grandhotel.example.com', $4, 'Grand Hotel', 'Manager', 'property_owner', $5, TRUE),
+            ($6, 'revenue@grandhotel.example.com', $7, 'Riley', 'Revenue', 'revenue_manager', $5, TRUE),
+            ($8, 'frontdesk@grandhotel.example.com', $7, 'Frank', 'Desk', 'front_desk', $5, TRUE)
         ON CONFLICT (email) DO UPDATE SET
             hashed_password = EXCLUDED.hashed_password,
             first_name = EXCLUDED.first_name,
@@ -199,11 +235,14 @@ async def seed_identity(conn: asyncpg.Connection) -> None:
             is_active = EXCLUDED.is_active,
             updated_at = now()
         """,
-        uuid.uuid4(),
+        DEV_ADMIN_ID,
         _HASH_ADMIN,
-        uuid.uuid4(),
+        DEV_MANAGER_ID,
         _HASH_MANAGER,
         TENANT_ID,
+        DEV_REVENUE_ID,
+        _HASH_MANAGER,
+        DEV_FRONT_ID,
     )
 
 
@@ -263,6 +302,36 @@ async def seed_permissions(conn: asyncpg.Connection) -> None:
         print(f"  {role}: {len(codes)} permissions")
 
 
+async def seed_audit_sample(conn: asyncpg.Connection) -> None:
+    has = await conn.fetchval(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
+        "WHERE table_schema = 'public' AND table_name = 'audit_events')"
+    )
+    if not has:
+        return
+    print("Seeding audit_events sample rows...")
+    for i in range(12):
+        await conn.execute(
+            """
+            INSERT INTO public.audit_events (
+                id, tenant_id, user_id, action, resource_type, resource_id, metadata, created_at
+            )
+            VALUES (
+                $1, $2, $3, $4, $5, $6, $7::jsonb,
+                NOW() - ($8::integer * interval '1 day')
+            )
+            """,
+            uuid.uuid4(),
+            TENANT_ID,
+            DEV_MANAGER_ID,
+            "login" if i % 2 == 0 else "update",
+            "user" if i % 2 == 0 else "reservation",
+            f"res-{i}" if i % 2 else None,
+            '{"source":"seed"}',
+            i % 14,
+        )
+
+
 async def main() -> None:
     print("Connecting to PostgreSQL...")
     conn = await asyncpg.connect(POSTGRES_DSN)
@@ -272,6 +341,27 @@ async def main() -> None:
         await ensure_demo_tenant_row(conn)
         await seed_identity(conn)
         await seed_permissions(conn)
+        await seed_audit_sample(conn)
+
+        ddl_path = _REPO_ROOT / "shared" / "tenant_tables.sql"
+        if not ddl_path.is_file():
+            raise FileNotFoundError(f"Missing {ddl_path}")
+        ddl_sql = ddl_path.read_text(encoding="utf-8")
+
+        from seed_tenant_business import (
+            apply_tenant_ddl,
+            seed_tenant_business_data,
+            truncate_tenant_data,
+        )
+
+        print(f"Applying tenant DDL + demo data in {TENANT_SCHEMA}...")
+        await apply_tenant_ddl(conn, TENANT_SCHEMA, ddl_sql)
+        await truncate_tenant_data(conn, TENANT_SCHEMA)
+        await seed_tenant_business_data(
+            conn,
+            tenant_schema=TENANT_SCHEMA,
+            manager_user_id=DEV_MANAGER_ID,
+        )
         print("Seed complete.")
     finally:
         await conn.close()

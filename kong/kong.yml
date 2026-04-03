@@ -83,6 +83,10 @@ services:
   - name: reservation-service
     url: http://reservation-service:8003
     routes:
+      - name: dashboard-route
+        paths:
+          - /api/v1/dashboard
+        strip_path: false
       - name: reservations-route
         paths:
           - /api/v1/reservations

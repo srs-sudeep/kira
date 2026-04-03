@@ -1,1 +1,1 @@
-"""KIRA shared library — cross-service schemas, middleware, and utilities."""
+"""Shared KIRA packages (tenant DDL loader, etc.)."""

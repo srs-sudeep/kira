@@ -87,6 +87,7 @@ migrate-docker-all:
 # ---------------------------------------------------------------------------
 
 ## Seed dev data from the host (Postgres must be reachable at localhost:5432)
+## Set ENCRYPTION_KEY to match reservation-service / channel-engine .env.local (64-char hex).
 seed:
 	uv run python scripts/seed_data.py
 
