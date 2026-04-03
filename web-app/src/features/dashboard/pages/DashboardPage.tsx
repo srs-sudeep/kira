@@ -1,7 +1,9 @@
-import { formatCurrency } from '@/lib/utils'
+import { useState } from 'react'
+import { formatCurrency, cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { useQuery } from '@tanstack/react-query'
-import { BanknoteIcon, BedDouble, CalendarDays, TrendingDown } from 'lucide-react'
+import { BanknoteIcon, BedDouble, CalendarDays, TrendingDown, ChevronRight, Home } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { BookingSourcePie } from '../components/BookingSourcePie'
 import { ChannelHealthPanel } from '../components/ChannelHealthPanel'
 import { KpiCard } from '../components/KpiCard'
@@ -10,6 +12,8 @@ import { RecentBookings } from '../components/RecentBookings'
 import { TodaySnapshot } from '../components/TodaySnapshot'
 import dashboardService from '../services/dashboard-service'
 
+type PeriodFilter = '24H' | '7D' | '30D'
+
 function greeting(): string {
   const h = new Date().getHours()
   if (h < 12) return 'Good morning'
@@ -17,19 +21,24 @@ function greeting(): string {
   return 'Good evening'
 }
 
+const PERIOD_TO_DAYS: Record<PeriodFilter, number> = { '24H': 1, '7D': 7, '30D': 30 }
+
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user)
+  const [period, setPeriod] = useState<PeriodFilter>('30D')
+
+  const days = PERIOD_TO_DAYS[period]
 
   const { data: kpi, isLoading: kpiLoading } = useQuery({
-    queryKey: ['dashboard', 'kpi-summary', 30],
-    queryFn: () => dashboardService.getKpiSummary(30),
+    queryKey: ['dashboard', 'kpi-summary', days],
+    queryFn: () => dashboardService.getKpiSummary(days),
   })
 
   const firstName = user?.full_name?.split(' ')[0] ?? 'there'
 
   return (
     <div className="relative -mx-4 -mt-4 min-h-[calc(100vh-3.5rem)] px-4 pb-6 pt-4 sm:-mx-6 sm:px-6">
-      {/* Subtle page backdrop — soft gradients behind dashboard content */}
+      {/* Subtle page backdrop */}
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden rounded-b-2xl"
         aria-hidden
@@ -41,6 +50,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="relative space-y-6">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[13px]">
+          <Link to="/" className="text-muted-foreground/60 hover:text-foreground transition-colors" aria-label="Home">
+            <Home className="h-3.5 w-3.5" />
+          </Link>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/30" />
+          <span className="font-medium text-foreground/80">Dashboard</span>
+        </nav>
+
         <div className="flex items-start justify-between gap-4 mb-8">
           <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight">
@@ -51,6 +69,25 @@ export default function DashboardPage() {
             <p className="mt-1.5 text-sm text-muted-foreground/75 leading-relaxed">
               {kpi?.period_label ?? 'Last 30 days overview'}
             </p>
+          </div>
+
+          {/* Page-level period filter */}
+          <div className="flex items-center gap-1 rounded-full bg-muted/50 p-0.5 shrink-0">
+            {(['24H', '7D', '30D'] as PeriodFilter[]).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={cn(
+                  'rounded-full px-3 py-1 text-xs font-medium transition-all',
+                  period === p
+                    ? 'bg-background text-foreground shadow-sm dark:bg-primary/20 dark:text-primary'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+                onClick={() => setPeriod(p)}
+              >
+                {p}
+              </button>
+            ))}
           </div>
         </div>
 

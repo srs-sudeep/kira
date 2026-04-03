@@ -31,11 +31,8 @@ export function KpiCard({
   const isNegative = (change ?? 0) < 0
 
   return (
-    <div className="group relative rounded-xl border border-border/60 bg-card p-5 transition-all duration-200 hover:border-border hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20">
-      {/* Subtle gradient glow on hover (dark mode) */}
-      <div className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:bg-gradient-to-br dark:from-brand-500/[0.04] dark:to-accent-500/[0.04]" />
-
-      <div className="relative">
+    <div className="group edge-light p-5">
+      <div>
         {isLoading ? (
           <div className="space-y-3">
             <SkeletonPulse className="h-3.5 w-24" />

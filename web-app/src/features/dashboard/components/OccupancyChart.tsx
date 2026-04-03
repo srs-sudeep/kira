@@ -108,13 +108,13 @@ export function OccupancyChart() {
             <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="occupancyGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.22} />
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
                   <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="occupancyGradientDark" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
-                  <stop offset="70%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                  <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -143,13 +143,15 @@ export function OccupancyChart() {
                 type="monotone"
                 dataKey="occupancy_pct"
                 stroke="hsl(var(--primary))"
-                strokeWidth={2}
+                strokeWidth={isDark ? 2.5 : 2}
                 fill={`url(#${gradientId})`}
                 dot={false}
                 activeDot={{
-                  r: 4,
+                  r: 5,
                   fill: 'hsl(var(--primary))',
-                  strokeWidth: 0,
+                  stroke: isDark ? 'hsl(var(--primary))' : 'hsl(var(--background))',
+                  strokeWidth: isDark ? 4 : 2,
+                  strokeOpacity: isDark ? 0.3 : 1,
                 }}
               />
             </AreaChart>

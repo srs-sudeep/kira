@@ -88,7 +88,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98.5%;
+    --background: 0 0% 98%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -104,8 +104,8 @@
     --accent-foreground: 240 6% 10%;
     --destructive: 346 77% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
     --ring: 245 58% 51%;
     --radius: 0.625rem;
 
@@ -114,37 +114,37 @@
     --sidebar-foreground: 240 10% 3.9%;
     --sidebar-accent: 245 58% 95%;
     --sidebar-accent-foreground: 245 58% 40%;
-    --sidebar-border: 240 6% 92%;
+    --sidebar-border: 0 0% 92%;
     --sidebar-width: 272px;
     --sidebar-width-collapsed: 72px;
   }
 
   .dark {
-    --background: 240 15% 3.5%;
+    --background: 240 10% 4%;
     --foreground: 0 0% 93%;
-    --card: 240 12% 6%;
+    --card: 240 10% 7%;
     --card-foreground: 0 0% 93%;
-    --popover: 240 12% 7%;
+    --popover: 240 10% 7%;
     --popover-foreground: 0 0% 93%;
     --primary: 245 58% 64%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 6% 13%;
+    --secondary: 240 10% 13%;
     --secondary-foreground: 0 0% 93%;
-    --muted: 240 6% 13%;
+    --muted: 240 10% 13%;
     --muted-foreground: 240 5% 55%;
-    --accent: 240 6% 13%;
+    --accent: 240 10% 13%;
     --accent-foreground: 0 0% 93%;
     --destructive: 346 77% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 6% 12%;
-    --input: 240 6% 12%;
+    --border: 240 10% 12%;
+    --input: 240 10% 12%;
     --ring: 245 58% 64%;
 
-    --sidebar: 240 15% 4.5%;
+    --sidebar: 240 10% 5%;
     --sidebar-foreground: 0 0% 93%;
     --sidebar-accent: 245 40% 13%;
     --sidebar-accent-foreground: 245 50% 80%;
-    --sidebar-border: 240 6% 10%;
+    --sidebar-border: 240 10% 10%;
   }
 }
 
@@ -187,6 +187,29 @@
 .glass {
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+/* ── Edge-light card effect ─────────────────────────────────────────────────── */
+.edge-light {
+  border-radius: var(--radius);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dark .edge-light {
+  border: 1px solid transparent;
+  border-image: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 60%) 1;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+.edge-light:hover {
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.08);
+}
+.dark .edge-light:hover {
+  border-image: linear-gradient(135deg, rgba(255, 255, 255, 0.18), transparent 60%) 1;
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.08),
+              0 0 20px -4px rgba(99, 102, 241, 0.08);
 }
 
 /* ── Gradient text utility ──────────────────────────────────────────────────── */

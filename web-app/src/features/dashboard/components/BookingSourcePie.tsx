@@ -15,10 +15,8 @@ import { CurrencyDisplay } from '@/components/shared/CurrencyDisplay'
 import { Skeleton } from '@/components/ui/skeleton'
 import dashboardService from '../services/dashboard-service'
 
-/** Light mode — saturated, readable on white */
 const PALETTE_LIGHT = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6']
-/** Dark mode — neon / high chroma */
-const PALETTE_DARK = ['#a5b4fc', '#22d3ee', '#34d399', '#fbbf24', '#c4b5fd']
+const PALETTE_DARK = ['#818cf8', '#22d3ee', '#34d399', '#fbbf24', '#a78bfa']
 
 function useDarkMode() {
   return useSyncExternalStore(
