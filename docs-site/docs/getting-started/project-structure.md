@@ -313,9 +313,9 @@ observability/
 │   ├── provisioning/      # Auto-provision datasources (Prometheus, Loki) on startup
 │   └── dashboards/        # Pre-built dashboard JSON files
 ├── loki/
-│   └── local-config.yaml  # Loki storage config (filesystem for local dev)
-└── promtail/
-    └── config.yml         # Scrapes Docker container stdout, ships to Loki
+│   └── loki-config.yml    # Loki storage config (filesystem for local dev)
+└── alloy/
+    └── config.alloy       # Grafana Alloy: Docker logs → Loki (Promtail successor)
 ```
 
 The observability stack is opt-in via a separate Compose file:

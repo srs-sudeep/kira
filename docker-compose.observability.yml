@@ -70,7 +70,7 @@ services:
 
   # ═══════════════════════════════════════════════════════════════════════════
   # LOKI — Log aggregation backend (http://localhost:3100)
-  # Stores logs shipped by Promtail. Grafana queries Loki for log panels.
+  # Stores logs shipped by Grafana Alloy. Grafana queries Loki for log panels.
   # ═══════════════════════════════════════════════════════════════════════════
   loki:
     image: grafana/loki:3.1.0
@@ -85,17 +85,23 @@ services:
       - kira-net
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # PROMTAIL — Ships Docker container logs → Loki
-  # Reads structured JSON logs from all kira-project containers.
+  # GRAFANA ALLOY — Ships Docker container logs → Loki (Promtail is EOL; Alloy is the replacement)
+  # Config: observability/alloy/config.alloy | UI: http://localhost:12345
   # ═══════════════════════════════════════════════════════════════════════════
-  promtail:
-    image: grafana/promtail:3.1.0
+  alloy:
+    image: grafana/alloy:v1.7.5
     restart: unless-stopped
+    ports:
+      - "12345:12345"
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./observability/promtail/config.yml:/etc/promtail/config.yml:ro
-      - /tmp/promtail-positions:/tmp  # persist scrape positions across restarts
-    command: -config.file=/etc/promtail/config.yml
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloydata:/var/lib/alloy/data
     depends_on:
       - loki
     networks:
@@ -172,7 +178,6 @@ services:
 
   # pgAdmin — PostgreSQL browser (http://localhost:5050)
   # Login: admin@kira.dev / admin
-  # Auto-connects to the kira database (via servers.json)
   pgadmin:
     image: dpage/pgadmin4:8.9
     restart: unless-stopped
@@ -259,6 +264,7 @@ volumes:
   grafanadata:
   promdata:
   lokidata:
+  alloydata:
   portainerdata:
   pgadmindata:
   # esdata:   # uncomment if using ELK

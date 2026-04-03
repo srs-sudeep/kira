@@ -149,6 +149,7 @@ dashboards-full:
 		'http://localhost:5050', \
 		'http://localhost:5540', \
 		'http://localhost:8080', \
+		'http://localhost:12345', \
 		'http://localhost:9000', \
 		'http://localhost:8000', \
 		'http://localhost:8001/docs', \

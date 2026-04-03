@@ -94,6 +94,7 @@ Start the full stack with observability: `make up-full`. These URLs assume defau
 | **Grafana** | [http://localhost:3001](http://localhost:3001) | Anonymous **Viewer** (no login). **Sign in** as **`admin` / `admin`** to edit dashboards or settings. |
 | **Prometheus** | [http://localhost:9090](http://localhost:9090) | No authentication. |
 | **Loki** | [http://localhost:3100](http://localhost:3100) | HTTP API only; query logs in Grafana. |
+| **Grafana Alloy** | [http://localhost:12345](http://localhost:12345) | Ships Docker logs to Loki (replaces EOL Promtail); optional debug UI. |
 | **Kafka UI** | [http://localhost:8080](http://localhost:8080) | No login (local dev). |
 | **pgAdmin** | [http://localhost:5050](http://localhost:5050) | **`admin@kira.dev` / `admin`**. Pre-registered server **KIRA Local** (DB user `postgres`, password via mounted `pgpass`; same as Postgres below). |
 | **Redis Insight** | [http://localhost:5540](http://localhost:5540) | No login; add Redis **host** `localhost`, **port** `6379`, no password. |

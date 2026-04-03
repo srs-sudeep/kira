@@ -117,15 +117,15 @@ In production, `LOG_LEVEL=INFO` is set in the ConfigMap. `DEBUG` logs are never 
 
 ---
 
-## Local Log Aggregation (Loki + Promtail)
+## Local Log Aggregation (Loki + Grafana Alloy)
 
-When running with `docker-compose.observability.yml`, Promtail collects container logs and ships them to Loki:
+When running with `docker-compose.observability.yml`, **Grafana Alloy** collects container logs and ships them to Loki. (Promtail reached **end of life** in March 2026; Alloy is the supported agent.)
 
 ```
-Docker containers → /var/lib/docker/containers/ → Promtail → Loki → Grafana
+Docker API (containers) → Grafana Alloy → Loki → Grafana
 ```
 
-Promtail config (`observability/promtail/config.yml`) auto-discovers Docker containers and labels logs with `container_name`, `compose_service`, and `image`.
+Alloy config lives at `observability/alloy/config.alloy` (River). It discovers Compose project `kira`, adds labels `container`, `service`, and `project`, parses JSON `structlog` lines (level / event / timestamp), normalises `warn` → `warning`, and drops `debug` lines (same behaviour as the former Promtail pipeline). Alloy’s debug UI: `http://localhost:12345`.
 
 ### Searching logs in Grafana (Loki)
 
@@ -135,16 +135,16 @@ Promtail config (`observability/promtail/config.yml`) auto-discovers Docker cont
 
 ```logql
 # All logs from identity-service
-{compose_service="identity-service"}
+{service="identity-service"}
 
 # ERROR logs from any service
-{compose_service=~".+"} |= `"level":"error"`
+{service=~".+"} |= `"level":"error"`
 
 # Logs for a specific tenant
-{compose_service="reservation-service"} | json | tenant_id="t_abc123"
+{service="reservation-service"} | json | tenant_id="t_abc123"
 
 # Failed sync events in channel-engine
-{compose_service="channel-engine"} | json | event="channel_sync_failed"
+{service="channel-engine"} | json | event="channel_sync_failed"
 ```
 
 4. Switch to **Table** view to see parsed JSON fields as columns
@@ -203,7 +203,7 @@ To trace a full request chain across services:
 
 ```logql
 # In Grafana/Loki — find all logs for request ID abc123
-{compose_service=~".+"} | json | request_id="abc-123-..."
+{service=~".+"} | json | request_id="abc-123-..."
 ```
 
 This is especially useful for debugging a reservation creation that triggered ARI updates and a sync across multiple services.

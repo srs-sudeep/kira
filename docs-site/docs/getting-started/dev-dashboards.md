@@ -36,6 +36,7 @@ these services are available (in addition to the core stack on 8000–8006 and 3
 | **Grafana** | [http://localhost:3001](http://localhost:3001) | **Anonymous access enabled** — you land on the home page **without** typing a password (Viewer). To edit dashboards or settings, click **Sign in** and use **`admin` / `admin`**. |
 | **Prometheus** | [http://localhost:9090](http://localhost:9090) | No authentication (local dev). |
 | **Loki** | [http://localhost:3100](http://localhost:3100) | API only; use Grafana → Loki for log queries. |
+| **Grafana Alloy** | [http://localhost:12345](http://localhost:12345) | Log pipeline agent (Docker → Loki). Debug UI; no login in local dev. |
 | **Kafka UI** | [http://localhost:8080](http://localhost:8080) | **No login** — default app config uses `auth.type=DISABLED`. |
 | **pgAdmin** | [http://localhost:5050](http://localhost:5050) | Log in with **`admin@kira.dev` / `admin`**. The **master password** prompt is disabled for local dev. The **KIRA Local** server is pre-registered; the DB password is supplied via a mounted `pgpass` file so you can connect without re-entering the Postgres password each time. |
 | **Redis Insight** | [http://localhost:5540](http://localhost:5540) | Starts with **no connections** — Redis has no “database” list until you add one. Click **Add Redis database** → **Host:** `localhost` (from your Mac) or `redis` (from another container on `kira-net`) → **Port:** `6379` → **no password** (local dev). The key space is empty until the app writes keys. |

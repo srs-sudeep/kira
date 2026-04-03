@@ -878,6 +878,10 @@ helm install loki grafana/loki-stack \
   --set grafana.enabled=false   # already installed above
 ```
 
+:::note Promtail end of life
+Promtail is EOL (no further updates). For **new** clusters, plan a move to **Grafana Alloy** (or Grafana Cloud / Kubernetes Monitoring) for log shipping; the `loki-stack` chart’s Promtail subchart is shown here for compatibility with older docs—check current Grafana Helm charts for Alloy-based options.
+:::
+
 Access Grafana (not exposed publicly — access via VPN or port-forward):
 
 ```bash
