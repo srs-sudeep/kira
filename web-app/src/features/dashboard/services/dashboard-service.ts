@@ -2,6 +2,16 @@ import { apiClient } from '@/lib/api-client'
 import type { Reservation } from '@/types/reservation'
 import type { SyncStatus } from '@/types/channel'
 
+/** Coerce unknown API payloads to T[] so charts/lists never receive a plain object. */
+function ensureArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value
+  if (value && typeof value === 'object' && 'items' in value) {
+    const items = (value as { items: unknown }).items
+    if (Array.isArray(items)) return items as T[]
+  }
+  return []
+}
+
 // ── Response shapes ──────────────────────────────────────────────────────────
 
 export interface KpiSummary {
@@ -70,34 +80,32 @@ const dashboardService = {
   },
 
   async getOccupancyTrend(days: 7 | 30 | 90 = 30): Promise<OccupancyDataPoint[]> {
-    const { data } = await apiClient.get<OccupancyDataPoint[]>(
+    const { data } = await apiClient.get<unknown>(
       '/api/v1/dashboard/occupancy-trend',
       { params: { days } },
     )
-    return data
+    return ensureArray<OccupancyDataPoint>(data)
   },
 
   async getBookingSources(days = 30): Promise<BookingSource[]> {
-    const { data } = await apiClient.get<BookingSource[]>(
+    const { data } = await apiClient.get<unknown>(
       '/api/v1/dashboard/booking-sources',
       { params: { days } },
     )
-    return data
+    return ensureArray<BookingSource>(data)
   },
 
   async getChannelHealth(): Promise<ChannelHealthItem[]> {
-    const { data } = await apiClient.get<ChannelHealthItem[]>(
-      '/api/v1/dashboard/channel-health',
-    )
-    return data
+    const { data } = await apiClient.get<unknown>('/api/v1/dashboard/channel-health')
+    return ensureArray<ChannelHealthItem>(data)
   },
 
   async getRecentBookings(limit = 5): Promise<Reservation[]> {
-    const { data } = await apiClient.get<{ items: Reservation[] }>(
+    const { data } = await apiClient.get<unknown>(
       '/api/v1/reservations',
       { params: { page: 1, page_size: limit, sort_by: 'created_at', sort_dir: 'desc' } },
     )
-    return data.items
+    return ensureArray<Reservation>(data)
   },
 }
 
