@@ -11,26 +11,6 @@ resources:
 commonLabels:
   environment: staging
 
-# Override ENVIRONMENT in the shared ConfigMap for staging
-configMapGenerator:
-  - name: kira-config
-    namespace: kira-staging
-    behavior: merge
-    literals:
-      - ENVIRONMENT=staging
-      - LOG_LEVEL=DEBUG
-      - CORS_ORIGINS=https://staging.kira.abodeab.com
-      - IDENTITY_SERVICE_URL=http://identity-service:8001
-      - RATE_INVENTORY_SERVICE_URL=http://rate-inventory-service:8002
-      - RESERVATION_SERVICE_URL=http://reservation-service:8003
-      - CHANNEL_ENGINE_URL=http://channel-engine:8004
-      - NOTIFICATION_SERVICE_URL=http://notification-service:8005
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - KAFKA_GROUP_ID_PREFIX=kira-staging
-
 # Map ECR image short names → full registry paths.
 # CI workflows use `kubectl set image` to override the tag after deployment.
 images:
@@ -57,6 +37,9 @@ images:
     newTag: latest
 
 patches:
+  # Override ConfigMap values for staging
+  - path: configmap-patch.yaml
+
   # Staging runs 1 replica per service
   - patch: |-
       - op: replace

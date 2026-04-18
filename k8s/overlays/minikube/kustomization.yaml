@@ -1,0 +1,66 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Minikube: in-cluster Postgres, Redis, Kafka — no AWS dependencies.
+# Used for testing K8s deployment manifests locally.
+namespace: kira-minikube
+
+resources:
+  - ../../base
+  - secrets.yaml
+  - infra/postgres.yaml
+  - infra/redis.yaml
+  - infra/kafka.yaml
+
+commonLabels:
+  environment: minikube
+
+# Local images built with `minikube image build` or `docker build` + `minikube image load`.
+# No registry prefix needed — imagePullPolicy: Never pulls from the local daemon.
+images:
+  - name: kira-identity-service
+    newTag: local
+  - name: kira-rate-inventory-service
+    newTag: local
+  - name: kira-reservation-service
+    newTag: local
+  - name: kira-channel-engine
+    newTag: local
+  - name: kira-notification-service
+    newTag: local
+  - name: kira-admin-service
+    newTag: local
+  - name: kira-web-app
+    newTag: local
+
+patches:
+  # Override ConfigMap values for minikube
+  - path: configmap-patch.yaml
+
+  # Single replica everywhere
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: Deployment
+
+  # Disable HPAs (minikube has no metrics-server by default)
+  - patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 1
+    target:
+      kind: HorizontalPodAutoscaler
+
+  # imagePullPolicy: Never so K8s uses locally loaded images
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: Never
+    target:
+      kind: Deployment
+      labelSelector: app.kubernetes.io/name

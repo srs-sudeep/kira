@@ -37,45 +37,33 @@ stack-status:
 	$(COMPOSE) ps -a
 
 # ---------------------------------------------------------------------------
-# Testing
+# Testing — CLI is the single source of truth (see cli/test.py)
 # ---------------------------------------------------------------------------
 
 ## Run tests for a specific service — usage: make test-identity-service
 test-%:
-	cd services/$* && uv run pytest -v
+	uv run kira test $*
 
-## Run tests for all services sequentially. Optional: SKIP_TEST_SERVICES="identity-service admin-service"
+## Run tests for all Python services (no web). Env: SKIP_TEST_SERVICES="svc …"
 test-all:
-	@for svc in $(SERVICES); do \
-		skip=0; for s in $(SKIP_TEST_SERVICES); do \
-			if [ "$$s" = "$$svc" ]; then skip=1; break; fi; \
-		done; \
-		if [ "$$skip" -eq 1 ]; then echo "\n=== Skipping $$svc (SKIP_TEST_SERVICES) ==="; continue; fi; \
-		echo "\n=== Testing $$svc ==="; \
-		cd services/$$svc && uv run pytest -v; \
-		cd ../..; \
-	done
+	uv run kira test --all --no-web
 
 ## Run web-app tests (Vitest)
 test-web:
-	cd web-app && bun run test
+	uv run kira test --web
 
 ## Run tests with coverage for all services (fail-under=70%)
 test-coverage:
-	@for svc in $(SERVICES); do \
-		echo "\n=== Coverage: $$svc ==="; \
-		cd services/$$svc && uv run pytest --cov --cov-report=html --cov-fail-under=70 -v; \
-		cd ../..; \
-	done
+	uv run kira test --all --coverage --no-web
 
 ## Run integration tests (starts infra containers)
 test-integration:
-	bash scripts/test_integration.sh
+	uv run kira test --integration
 
 ## Run service pytest, web Vitest, then integration (Husky pre-push; sequential).
 ## Skip flags (export or prefix the command): SKIP_TEST_PRE_PUSH=1 skips the whole suite;
 ## SKIP_TEST_ALL=1, SKIP_TEST_WEB=1, SKIP_TEST_INTEGRATION=1 skip each stage;
-## SKIP_TEST_SERVICES="svc …" skips those dirs in test-all and in scripts/test_integration.sh.
+## SKIP_TEST_SERVICES="svc …" skips those dirs in test-all and in integration.
 ## (One shell so SKIP_TEST_PRE_PUSH=1 exit applies to the whole target — not one line per subshell.)
 test-pre-push:
 	@set -e; \
@@ -163,17 +151,12 @@ clean:
 # Dashboards — open UIs in the default browser (macOS/Linux)
 # ---------------------------------------------------------------------------
 
-## Core stack URLs (requires: make up — containers must be healthy)
+## Core stack URLs (requires: make up)
 dashboards:
-	@echo "Opening KIRA core UIs (same as  uv run kira dashboards )…"
-	@echo "Tip: Grafana/pgAdmin/Kafka UI need  make up-full  then  make dashboards-full"
-	@echo "If tabs fail:  make stack-status   and   docker compose logs <service>"
 	@uv run kira dashboards
 
-## Observability + debug UIs (requires: make up-full — not started by make up alone)
+## Observability + debug UIs (requires: make up-full)
 dashboards-full:
-	@echo "Opening KIRA + observability UIs (same as  uv run kira dashboards --full )…"
-	@echo "If ports refuse connection, run:  make up-full"
 	@uv run kira dashboards --full
 
 # ---------------------------------------------------------------------------
@@ -230,13 +213,13 @@ help:
 	@echo "  make logs            Tail all logs"
 	@echo "  make logs-<service>  Tail one service"
 	@echo ""
-	@echo "Tests:"
+	@echo "Tests (delegated to kira CLI):"
 	@echo "  make test-<service>  Run tests for one service"
-	@echo "  make test-all        Run all service tests"
+	@echo "  make test-all        Run all service tests (no web)"
 	@echo "  make test-web        Run web-app tests (Vitest)"
 	@echo "  make test-coverage   Run tests with coverage"
 	@echo "  make test-integration Run integration tests with infra"
-	@echo "  make test-pre-push   test-all + test-web + test-integration (pre-push; see skip envs in Makefile)"
+	@echo "  make test-pre-push   test-all + test-web + test-integration (pre-push; see skip envs)"
 	@echo ""
 	@echo "CLI:"
 	@echo "  make dev-setup       Bootstrap local dev (via kira CLI)"
@@ -245,7 +228,7 @@ help:
 	@echo "  make docs-dev        Docusaurus dev server (host, port 4000)"
 	@echo "  make docs-docker-up  Built docs in Docker (port 4000)"
 	@echo ""
-	@echo "  make dashboards      Open core UIs (kira dashboards: web, docs, Mailhog, Kong, all /docs)"
-	@echo "  make dashboards-full After make up-full — same + Grafana, Prometheus, Loki, …"
+	@echo "  make dashboards      Open core UIs"
+	@echo "  make dashboards-full Open core + observability UIs"
 	@echo "  make stack-status    docker compose ps (debug connection errors)"
 	@echo ""

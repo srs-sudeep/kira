@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kira-config
+  namespace: kira
+data:
+  ENVIRONMENT: staging
+  LOG_LEVEL: DEBUG
+  CORS_ORIGINS: "https://staging.kira.abodeab.com"
+  KAFKA_GROUP_ID_PREFIX: kira-staging

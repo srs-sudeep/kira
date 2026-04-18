@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from typing import Optional
 
 import typer
@@ -21,12 +22,21 @@ from cli.utils import (
 app = typer.Typer(invoke_without_command=True)
 
 
+def _skip_services() -> set[str]:
+    """Read SKIP_TEST_SERVICES from env (space-separated service dir names)."""
+    raw = os.environ.get("SKIP_TEST_SERVICES", "").strip()
+    return set(raw.split()) if raw else set()
+
+
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
     service: Optional[str] = typer.Argument(None, help="Service name to test"),
     all: bool = typer.Option(False, "--all", help="Run tests for all services + web"),
     web: bool = typer.Option(False, "--web", help="Run web-app tests (Vitest)"),
+    no_web: bool = typer.Option(
+        False, "--no-web", help="When combined with --all, skip web-app tests"
+    ),
     coverage: bool = typer.Option(
         False, "--coverage", help="Run with coverage (fail-under=70%)"
     ),
@@ -46,6 +56,7 @@ def main(
         _run_integration()
         return
 
+    skip = _skip_services()
     failed: list[str] = []
 
     if service:
@@ -55,10 +66,14 @@ def main(
 
     if all:
         for svc in SERVICES:
+            if svc in skip:
+                info(f"Skipping {svc} (SKIP_TEST_SERVICES)")
+                continue
             if not _test_service(svc, coverage=coverage):
                 failed.append(svc)
-        if not _test_web():
-            failed.append("web-app")
+        if not no_web:
+            if not _test_web():
+                failed.append("web-app")
 
     if web and not all:
         if not _test_web():
@@ -85,7 +100,7 @@ def _test_service(name: str, *, coverage: bool = False) -> bool:
 
 def _test_web() -> bool:
     info("Testing web-app (Vitest)…")
-    result = run(["npm", "run", "test"], cwd=ROOT / "web-app", check=False)
+    result = run(["bun", "run", "test"], cwd=ROOT / "web-app", check=False)
     if result.returncode != 0:
         warn("  web-app tests failed")
         return False
@@ -100,7 +115,6 @@ def _run_integration() -> None:
     info("Starting infrastructure for integration tests…")
     run(compose("up", "-d", "postgres", "redis", "kafka"))
 
-    # Wait for postgres
     info("Waiting for Postgres…")
     for _ in range(30):
         result = run(
@@ -118,16 +132,19 @@ def _run_integration() -> None:
 
     success("Infrastructure ready")
 
+    skip = _skip_services()
     failed: list[str] = []
     try:
         for svc in SERVICES:
+            if svc in skip:
+                info(f"Skipping integration: {svc} (SKIP_TEST_SERVICES)")
+                continue
             info(f"Integration testing {svc}…")
             result = run(
                 ["uv", "run", "pytest", "-v", "-m", "integration"],
                 cwd=ROOT / "services" / svc,
                 check=False,
             )
-            # Exit 5 = no tests collected / all deselected for -m integration.
             if result.returncode not in (0, 5):
                 failed.append(svc)
             elif result.returncode == 5:

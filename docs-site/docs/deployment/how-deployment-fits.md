@@ -1,6 +1,6 @@
 ---
 title: How deployment fits together
-description: Mental model for local Docker Compose vs EKS production, which AWS services you touch, small traffic vs scale-up, and when minikube matters.
+description: Mental model for local Docker Compose vs EKS production, which AWS services you touch, small traffic vs scale-up, and the minikube overlay.
 sidebar_position: 0
 ---
 
@@ -16,9 +16,9 @@ Use this page when the **split between Compose, Kubernetes, Terraform, and AWS**
 | ----- | ---------- | ------------- |
 | **1. App packaging** | Each service is a **Docker image** (API, web, workers). | `docker/*.Dockerfile`, CI builds and pushes to **ECR**. |
 | **2. Runtime on a cluster** | Images run as **Pods**; scaling, networking, secrets = **Kubernetes**. | `k8s/` (Kustomize), **EKS** in AWS for staging/production. |
-| **3. Managed data & network** | Databases and queues are **AWS managed** (or Phase‑1 shortcuts). | **Terraform** under `infra/terraform/` — VPC, **RDS**, **ElastiCache**, **MSK** (optional), **EKS**, etc. |
+| **3. Managed data & network** | Databases and queues are **AWS managed** (or Phase-1 shortcuts). | **Terraform** under `infra/terraform/` — VPC, **RDS**, **ElastiCache**, **MSK** (optional), **EKS**, etc. |
 
-**Local dev** skips layer 2 for the full stack: **Docker Compose** runs the same *containers* on one machine (Postgres, Redis, Kafka, APIs, web). That is **not** mini‑EKS; it is the fastest way to develop.
+**Local dev** skips layer 2 for the full stack: **Docker Compose** runs the same *containers* on one machine (Postgres, Redis, Kafka, APIs, web). That is **not** mini-EKS; it is the fastest way to develop.
 
 **Production** uses **EKS** so you get rolling updates, health checks, HPAs, and isolation — same *idea* as Compose (containers + env), different *orchestrator*.
 
@@ -37,7 +37,7 @@ You do **not** manually `docker compose` on a server for production; you **`kube
 
 ## AWS: what you actually work with
 
-These are the **building blocks** this project’s docs assume (see [Deployment overview](./overview.md) and [AWS production](./aws-production.md)):
+These are the **building blocks** this project's docs assume (see [Deployment overview](./overview.md) and [AWS production](./aws-production.md)):
 
 | AWS service | Role in KIRA |
 | ----------- | ------------- |
@@ -60,12 +60,18 @@ These are the **building blocks** this project’s docs assume (see [Deployment 
 | Approach | Use it when |
 | -------- | ----------- |
 | **Docker Compose** (`docker/docker-compose.yml`, `kira dev up`, `make up`) | **Daily development** — full stack on your laptop, hot reload, matches how the team works. **Start here.** |
-| **minikube / kind / Docker Desktop Kubernetes** | You want to learn **`kubectl`**, dry‑run manifests, or prove a cluster tool — **not** required to run the app locally. See [Local Kubernetes validation](./local-kubernetes.md). |
+| **minikube overlay** (`k8s/overlays/minikube/`) | **Test the full K8s deployment path** with in-cluster Postgres, Redis, and Kafka — no AWS account needed. See [Local Kubernetes validation](./local-kubernetes.md). |
 
-Important: **`k8s/`** is aimed at **EKS + RDS + Redis + (MSK or substitute)**. There is **no** bundled “one command” replica of the entire cloud stack on minikube. So:
+The **minikube overlay** ships a complete Kustomize overlay with StatefulSet Postgres, single-node Redis, and KRaft Kafka so KIRA boots on a local cluster. Use it to:
+
+- **Validate K8s manifests, probes, and service networking end-to-end.**
+- **Test secret wiring, ConfigMap overrides, and image loading.**
+- **Practise `kubectl` workflows before touching EKS.**
+
+It **cannot** replicate RDS Multi-AZ, ElastiCache clustering, MSK durability, real TLS/DNS, or HPAs (no metrics-server by default).
 
 - **Develop the product → Compose.**
-- **Learn K8s / validate YAML → local cluster + dry‑run.**
+- **Test K8s deployment path → minikube overlay.**
 - **Ship to users → EKS + Terraform + CI as in the AWS guide.**
 
 ---
@@ -79,17 +85,17 @@ Important: **`k8s/`** is aimed at **EKS + RDS + Redis + (MSK or substitute)**. T
 | Provision AWS + EKS | [AWS production](./aws-production.md) |
 | Full prod checklist | [End-to-end production](./e2e-production.md) |
 | CI → ECR → deploy | [CI/CD pipeline](./cicd-pipeline.md) |
-| `kubectl` on laptop only | [Local Kubernetes validation](./local-kubernetes.md) |
+| Deploy on minikube | [Local Kubernetes validation](./local-kubernetes.md) |
 
 ---
 
 ## Short answers
 
-**“How does production work if I use K8s and infra?”**  
+**"How does production work if I use K8s and infra?"**  
 Terraform (or your IaC) creates **VPC + EKS + RDS + Redis + (Kafka)**. CI builds **images** to **ECR**. **Kubernetes** in EKS runs those images using **`k8s/`** manifests and **Secrets** that point at RDS/Redis/Kafka endpoints.
 
-**“Do I need minikube locally?”**  
-**No** for normal KIRA development — use **Compose**. Use **minikube** (or kind, etc.) only if you want a disposable **Kubernetes** playground or manifest checks.
+**"Do I need minikube locally?"**  
+**No** for normal KIRA development — use **Compose**. Use the **minikube overlay** when you want to test the real Kubernetes deployment path (manifests, probes, secrets, networking) without AWS.
 
-**“Which AWS services for a small user base?”**  
-Same list as above, **smaller SKUs** and optional **MSK** deferral; see cost / Phase‑1 notes in [AWS production](./aws-production.md).
+**"Which AWS services for a small user base?"**  
+Same list as above, **smaller SKUs** and optional **MSK** deferral; see cost / Phase-1 notes in [AWS production](./aws-production.md).
