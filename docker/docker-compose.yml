@@ -124,6 +124,13 @@ services:
     volumes:
       - ../services/rate-inventory-service:/app
       - ../shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
 
   reservation-service:
@@ -141,6 +148,13 @@ services:
     volumes:
       - ../services/reservation-service:/app
       - ../shared:/app/shared
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload
 
   channel-engine:
