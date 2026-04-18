@@ -83,7 +83,7 @@ make stack-status
 
 | Symptom | Likely cause | What to do |
 |---------|----------------|------------|
-| `ERR_CONNECTION_RESET` on `:8001/docs` … `:8006/docs` | The **service container is not running** (crash, failed build, or stack not started). | Run `make stack-status`. If a service is `Exited`, check `docker compose logs <service>`. Run `make up` or `make bootstrap`. |
+| `ERR_CONNECTION_RESET` on `:8001/docs` … `:8006/docs` | The **service container is not running** (crash, failed build, or stack not started). | Run **`uv run kira dev status`** (or `make stack-status`). If a service is `Exited`, check **`uv run kira dev logs <service>`**. Run **`uv run kira dev up`** or **`uv run kira dev bootstrap`**. |
 | Grafana / pgAdmin / `:3001` won’t load | Observability stack not started. | Run **`make up-full`** (not only `make up`). Then use **`make dashboards-full`**, not `make dashboards`. |
 | `:4000` won’t load | Docs site not running. | Run **`make docs-dev`** or **`make docs-docker-up`** on port 4000. |
 | `:3000` blank | `web-app` container failed or still installing npm deps. | `docker compose logs web-app` — wait for Vite to print “ready”. |
@@ -105,6 +105,6 @@ Do not run both at the same time on port **4000**.
 
 ## Related
 
-- [Local setup](./local-setup.md) — env files, `make bootstrap`, migrations, seed
+- [Local setup](./local-setup.md) — env files, **`kira dev bootstrap`** / **`make bootstrap`**, migrations, seed
 - [Monitoring](../operations/monitoring.md) — Grafana/Prometheus in more detail
 - [Deployment: local Docker](../deployment/local-docker.md) — compose files overview

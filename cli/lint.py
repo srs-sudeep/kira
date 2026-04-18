@@ -65,7 +65,11 @@ def _lint_service(name: str, *, fix: bool = False) -> bool:
     if result.returncode != 0:
         warn(f"  {name} has lint issues")
         return False
-    fmt = ["uv", "run", "ruff", "format", "."] if fix else ["uv", "run", "ruff", "format", "--check", "."]
+    fmt = (
+        ["uv", "run", "ruff", "format", "."]
+        if fix
+        else ["uv", "run", "ruff", "format", "--check", "."]
+    )
     result_fmt = run(fmt, cwd=svc_dir, check=False)
     if result_fmt.returncode != 0:
         warn(f"  {name} format check failed")
@@ -86,7 +90,11 @@ def _lint_shared(*, fix: bool = False) -> bool:
     if run(chk, cwd=anchor, check=False).returncode != 0:
         warn("  shared has lint issues")
         return False
-    fmt = ["uv", "run", "ruff", "format", rel] if fix else ["uv", "run", "ruff", "format", "--check", rel]
+    fmt = (
+        ["uv", "run", "ruff", "format", rel]
+        if fix
+        else ["uv", "run", "ruff", "format", "--check", rel]
+    )
     if run(fmt, cwd=anchor, check=False).returncode != 0:
         warn("  shared format check failed")
         return False
@@ -104,7 +112,11 @@ def _lint_web(*, fix: bool = False) -> bool:
         warn("  web-app has lint issues")
         return False
     info("Linting web-app (tsc)…")
-    tsc = ["bunx", "tsc", "--noEmit"] if shutil.which("bun") else ["npx", "tsc", "--noEmit"]
+    tsc = (
+        ["bunx", "tsc", "--noEmit"]
+        if shutil.which("bun")
+        else ["npx", "tsc", "--noEmit"]
+    )
     if run(tsc, cwd=ROOT / "web-app", check=False).returncode != 0:
         warn("  web-app TypeScript check failed")
         return False

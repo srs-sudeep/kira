@@ -89,6 +89,7 @@ def _deploy(
         run(
             ["docker", "login", "--username", "AWS", "--password-stdin", registry],
             check=True,
+            stdin_text=login_pass.stdout,
         )
     success("ECR login successful")
 

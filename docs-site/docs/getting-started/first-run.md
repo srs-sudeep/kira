@@ -14,7 +14,9 @@ sidebar_position: 5
 - What each dashboard KPI card tracks
 
 :::info Prerequisite
-Complete [Local Setup](./local-setup.md) first. The stack must be running (`docker compose ps` shows all services healthy) and you should have the seeded credentials available.
+Complete **[Local Setup](./local-setup.md)** (or **[E2E local dev](./e2e-local-dev.md)**) first. The stack must be running — check with **`uv run kira dev status`** (or **`make stack-status`**) until services are healthy. You should have seeded credentials (from **`kira dev setup`** / **`kira dev bootstrap`** / **`kira seed`**).
+
+Optional: **[Per-developer database isolation](./per-developer-db.md)** — run **`uv run kira dev init`** before the first **`kira dev up`** if you want your own `kira_<name>` database instead of the default **`kira`**.
 :::
 
 <!-- TODO: add screenshots -->

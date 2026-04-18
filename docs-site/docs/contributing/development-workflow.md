@@ -93,7 +93,7 @@ Husky git hooks run **commitlint** on every commit message. If the format is wro
 
 ## Git hooks (Husky)
 
-Hooks run automatically after **`bun install`** at the repo root. They run **lint-staged**, **full `kira lint --all`**, **commitlint**, and **`make test-pre-push`** (Python + web + Docker integration) on commit and push.
+Hooks run automatically after **`bun install`** at the repo root. **pre-commit** runs **lint-staged** then **`uv run kira lint --all`**. **commit-msg** runs **commitlint**. **pre-push** runs **`make test-pre-push`** (which calls **`uv run kira test …`** for backends, web, and integration — see [Git hooks](./git-hooks-and-pushes.md)).
 
 For a full table, skip variables, and the **`kira push`** wrapper, see **[Git, Husky hooks, and pushes](./git-hooks-and-pushes.md)**.
 
@@ -124,10 +124,10 @@ git checkout -b feat/rate-inventory-seasonal-blackout
 uv run kira dev up          # or: kira dev up
 uv run kira dev logs rate-inventory-service
 
-# Or directly with docker compose
-docker compose up -d postgres redis kafka
-docker compose up -d rate-inventory-service
-docker compose logs -f rate-inventory-service
+# Or explicitly (always pass the core compose file from repo root):
+docker compose -f docker/docker-compose.yml up -d postgres redis kafka
+docker compose -f docker/docker-compose.yml up -d rate-inventory-service
+docker compose -f docker/docker-compose.yml logs -f rate-inventory-service
 ```
 
 ### Running tests for one service
@@ -144,20 +144,17 @@ uv run pytest -v --cov=app --cov-report=term-missing
 ### Running tests for all services
 
 ```bash
-# Via CLI
+# Via CLI (backends only — same as make test-all / pre-push Python stage)
+uv run kira test --all --no-web
+
+# Backends + web-app
 uv run kira test --all
 
-# Or with make
+# Or with make (delegates to kira)
 make test-all
-
-# Or manually
-docker compose up -d postgres redis kafka
-
-for service in identity-service rate-inventory-service reservation-service channel-engine notification-service admin-service; do
-  echo "=== Testing $service ==="
-  docker compose exec $service uv run pytest -v --cov=app --cov-fail-under=70
-done
 ```
+
+Pre-push also runs **web** tests and **integration** tests; mirror the full gate with **`make test-pre-push`** or **`uv run kira push -y`** before pushing.
 
 ### Running lint
 

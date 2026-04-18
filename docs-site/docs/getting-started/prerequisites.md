@@ -186,6 +186,14 @@ node --version
 
 All six commands should return version numbers without errors.
 
+After you **clone** the repo, you can smoke-test the monorepo CLI (optional):
+
+```bash
+cd kira    # your clone
+uv run kira --help
+# With Makefile: make help   # lists make targets (each maps to kira where applicable)
+```
+
 ---
 
 ## Recommended: VS Code
@@ -282,4 +290,6 @@ Then you type **`kira`** instead of **`uv run kira`** (same subcommands and flag
 
 ## Next Step
 
-→ **[Local Setup](./local-setup.md)** — clone the repo, configure environment variables, and start the full stack.
+→ **[Local Setup](./local-setup.md)** — clone, env files, **`uv run kira dev setup`** / **`make dev-setup`**, then **`uv run kira dev up`** / **`make up`**.
+
+→ **[Per-developer database isolation](./per-developer-db.md)** — optional **`kira dev init`** before sharing a machine.

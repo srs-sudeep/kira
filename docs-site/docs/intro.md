@@ -103,10 +103,11 @@ Every endpoint documented with request/response examples.
 
 From Docker Compose to production on AWS EKS.
 
+- [How deployment fits together](./deployment/how-deployment-fits.md) — Compose vs EKS vs **minikube overlay**, AWS building blocks
 - [Overview](./deployment/overview.md) — environments, image tagging, required AWS infrastructure
 - [Docker](./deployment/local-docker.md) — Compose setup, Dockerfiles, observability stack
-- [Kubernetes](./deployment/kubernetes.md) — Kustomize base + overlays, secrets, resource config
-- [Local Kubernetes validation](./deployment/local-kubernetes.md) — dev cluster smoke tests vs EKS
+- [Kubernetes](./deployment/kubernetes.md) — Kustomize base + overlays (staging, production, **minikube**), secrets, resource config
+- [Local Kubernetes validation](./deployment/local-kubernetes.md) — minikube overlay, dry-runs, `kubectl kustomize`
 - [CI/CD](./deployment/cicd-pipeline.md) — GitHub Actions pipelines, path filters, production approval gate
 - [Deploy Scripts](./deployment/deploy-scripts.md) — Manual CLI-based deployment to staging/production
 
@@ -127,8 +128,9 @@ Running the platform in production.
 How to add features, fix bugs, and keep the codebase healthy.
 
 - [Development Workflow](./contributing/development-workflow.md) — branch naming, commit format, PR process
+- [Git, Husky hooks, and pushes](./contributing/git-hooks-and-pushes.md) — pre-commit / pre-push, **`kira push`**, skip env vars
 - [Coding Standards](./contributing/coding-standards.md) — Python and TypeScript style rules
-- [Testing Guide](./contributing/testing-guide.md) — pytest patterns, Vitest, coverage gate
+- [Testing Guide](./contributing/testing-guide.md) — pytest patterns, Vitest, coverage gate, **`kira test`**
 - [Commit Conventions](./contributing/commit-conventions.md) — Husky hooks, Commitizen, Commitlint
 
 ---
@@ -137,7 +139,7 @@ How to add features, fix bugs, and keep the codebase healthy.
 
 ### I'm setting up locally for the first time
 
-→ Install [Prerequisites](./getting-started/prerequisites.md), then **`uv run kira dev setup`** and **`uv run kira dev up`** — walkthrough: **[E2E local dev](./getting-started/e2e-local-dev.md)**. For **`make` vs `kira`**, compose files, and profiles: **[Makefile, CLI, and Compose](./getting-started/makefile-and-cli.md)**. Command-by-command: **[CLI Reference](./getting-started/cli-reference.md)**. Manual Docker path: **[Local Setup](./getting-started/local-setup.md)**.
+→ Install [Prerequisites](./getting-started/prerequisites.md), then **`uv run kira dev setup`** / **`make dev-setup`** and **`uv run kira dev up`** / **`make up`** — walkthrough: **[E2E local dev](./getting-started/e2e-local-dev.md)**. Optional DB isolation: **[Per-developer database isolation](./getting-started/per-developer-db.md)** (**`kira dev init`**). The **`kira`** CLI is the **source of truth**; **`make`** wraps the same commands. Details: **[Makefile, CLI, and Compose](./getting-started/makefile-and-cli.md)** and **[CLI Reference](./getting-started/cli-reference.md)**. Manual Docker path: **[Local Setup](./getting-started/local-setup.md)**.
 
 ### I'm deploying to production
 

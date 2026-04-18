@@ -54,6 +54,7 @@ def run(
     check: bool = True,
     capture: bool = False,
     env: dict[str, str] | None = None,
+    stdin_text: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run a shell command, forwarding output by default."""
     import os
@@ -72,6 +73,7 @@ def run(
             text=True,
             capture_output=capture,
             env=merged_env,
+            input=stdin_text,
         )
     except subprocess.CalledProcessError as exc:
         error(f"Command failed: {' '.join(cmd)} (exit {exc.returncode})")
@@ -121,6 +123,26 @@ def sync_poetry_service_env(svc_dir: Path) -> None:
     )
 
 
+def wait_for_postgres(*, timeout_s: int = 30) -> None:
+    """Block until the core Compose Postgres service accepts connections."""
+    import time
+
+    info("Waiting for Postgres…")
+    for _ in range(timeout_s):
+        result = run(
+            compose(
+                "exec", "-T", "postgres", "pg_isready", "-U", "postgres", "-d", "kira"
+            ),
+            check=False,
+            capture=True,
+        )
+        if result.returncode == 0:
+            success("Postgres is ready")
+            return
+        time.sleep(1)
+    error("Postgres did not become ready in time")
+
+
 def compose(*args: str, files: list[str] | None = None) -> list[str]:
     """Build a docker compose command list.
 
@@ -131,9 +153,7 @@ def compose(*args: str, files: list[str] | None = None) -> list[str]:
     """
     cmd = ["docker", "compose"]
     file_list = (
-        files
-        if files is not None
-        else [str(ROOT / "docker" / "docker-compose.yml")]
+        files if files is not None else [str(ROOT / "docker" / "docker-compose.yml")]
     )
     for f in file_list:
         fp = Path(f).expanduser()

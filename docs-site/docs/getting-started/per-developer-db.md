@@ -30,15 +30,17 @@ Without the example, new contributors would have to reverse-engineer the overrid
 
 ## Quick Setup
 
-```bash
-# One-time: generate your personal override file
-uv run kira dev init --name alice    # → DB: kira_alice
+**Only the CLI** generates the override (no `make` target — use `uv run kira` or `./bin/kira` from anywhere):
 
-# Or accept the default ($USER):
-uv run kira dev init                 # → DB: kira_<your-username>
+```bash
+# One-time: generate your personal override file (→ DB: kira_alice)
+uv run kira dev init --name alice
+
+# Or accept the default ($USER) → DB: kira_<your-username>
+uv run kira dev init
 ```
 
-This creates `docker/docker-compose.override.yml` from the committed template.
+This creates `docker/docker-compose.override.yml` from the committed template. Equivalent manual step: **`cp docker/docker-compose.override.yml.example docker/docker-compose.override.yml`** and edit `POSTGRES_DB` / `DATABASE_URL` values by hand.
 
 ## What Changes
 
@@ -54,37 +56,42 @@ All services, workers, and the postgres container are updated.
 ## First-Time Workflow
 
 ```bash
-# 1. Clone and set up
+# 1. Clone
 git clone https://github.com/abodeab/kira.git && cd kira
 
-# 2. Generate your personal DB override
+# 2. Personal DB override (CLI only — see above)
 uv run kira dev init --name alice
 
-# 3. Start the stack (creates kira_alice DB automatically)
+# 3. Start the stack (creates kira_alice on first Postgres init)
 uv run kira dev up
+# Make: make up
 
-# 4. Run migrations
+# 4. Migrations in containers
 uv run kira migrate --all --docker
+# Make: make migrate-docker-all
 
 # 5. Seed dev data
 uv run kira seed --docker
+# Make: make seed-docker
 ```
+
+**One-shot alternative** (full stack + wait + migrate + seed in Docker, after clone + `kira dev init`): **`uv run kira dev bootstrap`** — same as **`make bootstrap`**.
 
 ## Switching Databases
 
 If you need a fresh database or want to switch names:
 
 ```bash
-# Remove the old DB volume
-uv run kira dev clean
+# Remove the old DB volume (non-interactive — same as make clean)
+uv run kira dev clean --yes
+# Make: make clean
 
-# Regenerate with a new name
+# Regenerate override (CLI only)
 uv run kira dev init --name alice-v2
 
 # Restart + migrate + seed
-uv run kira dev up
-uv run kira migrate --all --docker
-uv run kira seed --docker
+uv run kira dev up && uv run kira migrate --all --docker && uv run kira seed --docker
+# Make: make up && make migrate-docker-all && make seed-docker
 ```
 
 ## Running Services Outside Docker
@@ -106,4 +113,4 @@ The base `docker/docker-compose.yml` uses `POSTGRES_DB: kira`. Everything works,
 Yes — Postgres supports multiple databases in one server. Each developer's override creates a different database name within the same `postgres` container. There's no need for separate containers.
 
 **Q: Do migrations need to run per-database?**
-Yes. Each personal database starts empty. After `kira dev init` + `kira dev up`, you must run `kira migrate --all --docker` to apply schemas to your new database.
+Yes. Each personal database starts empty. After **`kira dev init`** + **`kira dev up`**, run **`uv run kira migrate --all --docker`** (or **`make migrate-docker-all`**) to apply schemas to your new database.

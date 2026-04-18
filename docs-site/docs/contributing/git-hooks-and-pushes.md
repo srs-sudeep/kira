@@ -43,9 +43,13 @@ Run **`bun install`** once after clone so Husky installs (`.husky/` hooks are wi
 |------|------|-----------|
 | **pre-commit** | After `git commit` (before the commit is created) | **`bunx lint-staged`** on staged files (Ruff on staged Python, ESLint/tsc on staged web), then **`uv run kira lint --all`** (full monorepo lint gate: Ruff check+format per service, shared, ESLint + `tsc` on `web-app`). |
 | **commit-msg** | Commit message is written | **`bunx commitlint`** — enforces [Conventional Commits](./commit-conventions.md) and allowed **scopes**. |
-| **pre-push** | Before `git push` sends objects | **`make test-pre-push`**: all Python services **`pytest`**, **`web-app`** Vitest, then **`scripts/test_integration.sh`** (Docker Postgres/Redis/Kafka + **`pytest -m integration`** per service). Pytest **exit code 5** (no tests matched `-m integration`) is treated as OK for that service. |
+| **pre-push** | Before `git push` sends objects | **`make test-pre-push`**: all Python services **`pytest`**, **`web-app`** Vitest, then **`uv run kira test --integration`** (Docker Postgres/Redis/Kafka + **`pytest -m integration`** per service). Pytest **exit code 5** (no tests matched `-m integration`) is treated as OK for that service. |
 
 **Plain `git push`** always runs the full **pre-push** gate unless you set skip environment variables (below) or use **`kira push`** (which runs tests first, then pushes with **`SKIP_TEST_PRE_PUSH=1`** so the hook does not run the same suite twice).
+
+:::info Make vs `kira`
+Each **`make test-*`** / **`make migrate-*`** style target is implemented by calling **`uv run kira …`** with the same flags. The **CLI** under **`cli/`** is the source of truth; **`make`** is for convenience and Husky’s **`test-pre-push`** orchestration.
+:::
 
 ---
 
@@ -58,8 +62,8 @@ Set variables in the **same** environment as `git push` (prefix the command or `
 | **`SKIP_TEST_PRE_PUSH=1`** | Skip the **entire** pre-push test suite (hook exits success without running tests). |
 | **`SKIP_TEST_ALL=1`** | Skip **all** Python service **`pytest`** loops (`make test-all`). |
 | **`SKIP_TEST_WEB=1`** | Skip **web-app** Vitest (`make test-web`). |
-| **`SKIP_TEST_INTEGRATION=1`** | Skip Docker **integration** script (`make test-integration`). |
-| **`SKIP_TEST_SERVICES="identity-service channel-engine"`** | Space-separated service directory names to skip in **`test-all`** and in **`scripts/test_integration.sh`**. |
+| **`SKIP_TEST_INTEGRATION=1`** | Skip Docker **integration** stage (`make test-integration` → **`uv run kira test --integration`**). |
+| **`SKIP_TEST_SERVICES="identity-service channel-engine"`** | Space-separated service directory names to skip in **`test-all`** and in **`kira test --integration`**. |
 
 Examples:
 
@@ -93,7 +97,7 @@ See also: [Getting started — CLI reference](../getting-started/cli-reference.m
 | Goal | Command |
 |------|---------|
 | One service | `uv run kira test <service>` or `make test-<service>` |
-| All Python services | `make test-all` |
+| All Python services (no web) | `uv run kira test --all --no-web` or `make test-all` |
 | All services + web (pytest + Vitest) | `uv run kira test --all` |
 | Web only | `make test-web` or `uv run kira test --web` |
 | Integration (Docker infra) | `make test-integration` or `uv run kira test --integration` |

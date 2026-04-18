@@ -1,10 +1,21 @@
 ---
+title: Environment Variables
 sidebar_position: 4
+description: Service configuration via env vars, with links to kira setup, bootstrap, and per-developer DB isolation.
 ---
 
 # Environment Variables
 
 All services read configuration from environment variables via Pydantic `BaseSettings`. Never hardcode secrets.
+
+:::tip Getting `.env.local` files and a running stack
+
+- **Copy envs + install + migrate + seed (host DB path):** `uv run kira dev setup` — same as **`make dev-setup`**.
+- **Docker-first path** (migrate/seed inside containers): **`uv run kira dev bootstrap`** — same as **`make bootstrap`**.
+- **Isolated Postgres database name per developer:** **`uv run kira dev init`** (CLI only) — see **[Per-developer database isolation](./per-developer-db.md)**.
+
+Manual copy remains: **`cp services/<svc>/.env.example services/<svc>/.env.local`** for each service.
+:::
 
 ## Shared Variables
 

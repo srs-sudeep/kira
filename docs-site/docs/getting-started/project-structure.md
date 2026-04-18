@@ -41,7 +41,7 @@ kira/
 ├── cli/               # `kira` CLI (Python); see [CLI Reference](./cli-reference.md#installation) and [bin/kira](./cli-reference.md#bin-kira)
 ├── .github/
 │   └── workflows/     # GitHub Actions CI/CD (one workflow per service)
-├── Makefile
+├── Makefile           # Thin `make` → `uv run kira …` wrappers + `test-pre-push` orchestrator; see Makefile, CLI, and Compose
 └── CLAUDE.md          # AI assistant instructions for this repo
 ```
 
@@ -245,18 +245,27 @@ k8s/
 │   ├── admin-service/
 │   └── web-app/
 └── overlays/
-    ├── staging/               # namespace: kira-staging, 1 replica, debug log level
-    │   └── kustomization.yaml
-    └── production/            # namespace: kira, 2 replicas, higher resource limits
+    ├── staging/
+    │   ├── kustomization.yaml
+    │   └── configmap-patch.yaml
+    ├── production/
+    │   ├── kustomization.yaml
+    │   └── patches/
+    │       ├── replicas.yaml
+    │       └── resources.yaml
+    └── minikube/              # local cluster: Postgres, Redis, Kafka in-cluster + dev Secrets
         ├── kustomization.yaml
-        └── patches/
-            ├── replicas.yaml  # Set all deployments to 2 replicas
-            └── resources.yaml # Higher CPU/memory limits for API pods
+        ├── configmap-patch.yaml
+        ├── secrets.yaml
+        └── infra/
+            ├── postgres.yaml
+            ├── redis.yaml
+            └── kafka.yaml
 ```
 
 **How Kustomize overlays work:**
 
-The `base/` directory defines everything at its simplest (1 replica, base resource limits, `latest` image tag). Each overlay _patches_ the base without duplicating it:
+The `base/` directory defines everything at its simplest (1 replica, base resource limits, `latest` image tag). **Staging** and **production** target EKS with external RDS/Redis/Kafka. The **`minikube`** overlay adds in-cluster data services for local cluster testing — see [Local Kubernetes validation](../deployment/local-kubernetes.md). Each overlay _patches_ the base without duplicating it:
 
 ```bash
 # What staging will apply:
@@ -271,6 +280,9 @@ kubectl apply -k k8s/overlays/production
 kubectl set image deployment/kira-identity-service \
   kira-identity-service=${ECR_REGISTRY}/kira-identity-service:abc12345 \
   -n kira
+
+# Local minikube (after building/loading :local images):
+kubectl apply -k k8s/overlays/minikube
 ```
 
 Image tags are set to `latest` in the kustomization files but overridden with a git SHA by the CI workflow immediately after `kubectl apply`. This means the manifest files don't need to change on every deploy — only `kubectl set image` is called.

@@ -16,6 +16,7 @@ from cli.utils import (
     run,
     success,
     validate_service,
+    wait_for_postgres,
     warn,
 )
 
@@ -110,25 +111,10 @@ def _test_web() -> bool:
 
 def _run_integration() -> None:
     """Spin up infra, run integration-marked tests, tear down."""
-    import time
-
     info("Starting infrastructure for integration tests…")
     run(compose("up", "-d", "postgres", "redis", "kafka"))
 
-    info("Waiting for Postgres…")
-    for _ in range(30):
-        result = run(
-            compose(
-                "exec", "-T", "postgres", "pg_isready", "-U", "postgres", "-d", "kira"
-            ),
-            check=False,
-            capture=True,
-        )
-        if result.returncode == 0:
-            break
-        time.sleep(1)
-    else:
-        error("Postgres did not become ready")
+    wait_for_postgres(timeout_s=30)
 
     success("Infrastructure ready")
 

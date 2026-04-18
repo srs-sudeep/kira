@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # Kubernetes
 
-For **checking a local/dev Kubernetes cluster** and **limits of validating `k8s/` without EKS**, see **[Local Kubernetes validation](./local-kubernetes.md)**.
+For **local clusters** (minikube / kind / Docker Desktop), **dry-runs**, and the **`minikube` overlay** (in-cluster Postgres, Redis, Kafka), see **[Local Kubernetes validation](./local-kubernetes.md)**.
 
 **What you'll learn:**
 - The K8s concepts KIRA uses and why
@@ -55,12 +55,21 @@ k8s/
 │   └── web-app/
 └── overlays/
     ├── staging/
-    │   └── kustomization.yaml      # patches: namespace kira-staging, 1 replica, max 3 HPA
-    └── production/
-        ├── kustomization.yaml      # patches: namespace kira, 2 replicas, max 5 HPA
-        └── patches/
-            ├── replicas.yaml       # sets replicas: 2 on all Deployments
-            └── resources.yaml      # higher CPU/memory limits for API pods
+    │   ├── kustomization.yaml      # namespace kira-staging, 1 replica, ECR images, configmap patch
+    │   └── configmap-patch.yaml
+    ├── production/
+    │   ├── kustomization.yaml      # namespace kira, 2 replicas, max 5 HPA
+    │   └── patches/
+    │       ├── replicas.yaml       # sets replicas: 2 on all Deployments
+    │       └── resources.yaml      # higher CPU/memory limits for API pods
+    └── minikube/                   # local cluster: in-cluster Postgres, Redis, Kafka + dev Secrets
+        ├── kustomization.yaml
+        ├── configmap-patch.yaml
+        ├── secrets.yaml
+        └── infra/
+            ├── postgres.yaml
+            ├── redis.yaml
+            └── kafka.yaml
 ```
 
 ---
@@ -173,6 +182,8 @@ The scale-down stabilisation window (300s) prevents thrashing — if a burst of 
 
 The staging overlay keeps costs low — 1 replica per service, capped at 3 by HPA. The production overlay ensures HA — always 2 pods minimum.
 
+The **`minikube`** overlay uses namespace **`kira-minikube`**, pins HPAs to a single replica, sets **`imagePullPolicy: Never`** for app images tagged **`:local`**, and ships StatefulSet Postgres plus Redis and Kafka — see [Local Kubernetes validation](./local-kubernetes.md).
+
 ---
 
 ## Applying Manifests
@@ -188,6 +199,16 @@ kubectl apply -k k8s/overlays/staging/
 ```bash
 kubectl apply -k k8s/overlays/production/
 ```
+
+### Minikube (local full stack)
+
+The **`minikube`** overlay deploys Postgres, Redis, and Kafka **inside** the cluster and dev Secrets so all services can start without AWS. Build or load **`kira-*:local`** images first, then:
+
+```bash
+kubectl apply -k k8s/overlays/minikube/
+```
+
+Full walkthrough: **[Local Kubernetes validation](./local-kubernetes.md)**.
 
 ### Preview what Kustomize will generate (dry run)
 

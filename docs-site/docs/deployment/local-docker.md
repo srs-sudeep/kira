@@ -6,6 +6,10 @@ sidebar_position: 1
 
 # Local Docker Development
 
+:::tip Prefer the CLI for everyday commands
+**`uv run kira dev up`**, **`kira dev up --full`**, **`kira dev logs`**, **`kira migrate --all --docker`**, and **`kira dev bootstrap`** apply the same Compose files documented here (with absolute **`-f`** paths). The root **`Makefile`** is optional thin wrappers around those commands — see [Makefile, CLI, and Compose](../getting-started/makefile-and-cli.md).
+:::
+
 **What you'll learn:**
 
 - How this file fits with **`kira` / Make** (see [Makefile, CLI, and Compose](../getting-started/makefile-and-cli.md))
@@ -38,12 +42,17 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.dummy-ota.y
 Start the core stack from the **repository root**:
 
 ```bash
+uv run kira dev up
+# Make: make up
+# Raw Compose (same files):
 docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 Start with observability dashboards:
 
 ```bash
+uv run kira dev up --full
+# Make: make up-full
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up -d --build
 ```
 

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import time
 from typing import Optional
 
 import typer
@@ -19,6 +18,7 @@ from cli.utils import (
     run,
     success,
     sync_poetry_service_env,
+    wait_for_postgres,
     warn,
 )
 
@@ -66,21 +66,7 @@ def _run_dev_setup_core() -> None:
     success("Infrastructure containers started")
 
     # 6 — Wait for Postgres
-    info("Waiting for Postgres to accept connections…")
-    for i in range(30):
-        result = run(
-            compose(
-                "exec", "-T", "postgres", "pg_isready", "-U", "postgres", "-d", "kira"
-            ),
-            check=False,
-            capture=True,
-        )
-        if result.returncode == 0:
-            break
-        time.sleep(1)
-    else:
-        error("Postgres did not become ready in 30 seconds")
-    success("Postgres is ready")
+    wait_for_postgres(timeout_s=30)
 
     # 7 — Run migrations
     info("Running database migrations…")
@@ -99,26 +85,48 @@ def _run_dev_setup_core() -> None:
     success("Development data seeded")
 
 
-def _start_stack(*, full: bool) -> None:
-    """Bring up Docker Compose (optionally with observability)."""
+def _compose_full_files() -> list[str]:
+    return [
+        "docker/docker-compose.yml",
+        "docker/docker-compose.observability.yml",
+    ]
+
+
+def _start_stack(*, full: bool, docs: bool = False) -> None:
+    """Bring up Docker Compose (core, or core + observability; optional docs profile)."""
     if full:
-        info("Starting full stack (core + observability + docs)…")
+        info(
+            "Starting full stack (core + observability"
+            + (" + docs-site" if docs else "")
+            + ")…"
+        )
+        extra: list[str] = []
+        if docs:
+            extra.extend(["--profile", "docs"])
         run(
             compose(
-                "--profile",
-                "docs",
+                *extra,
                 "up",
                 "-d",
                 "--build",
-                files=[
-                    "docker/docker-compose.yml",
-                    "docker/docker-compose.observability.yml",
-                ],
+                files=_compose_full_files(),
             )
         )
     else:
-        info("Starting core stack…")
-        run(compose("up", "-d", "--build"))
+        if docs:
+            info("Starting core stack + docs-site profile…")
+            run(
+                compose(
+                    "--profile",
+                    "docs",
+                    "up",
+                    "-d",
+                    "--build",
+                )
+            )
+        else:
+            info("Starting core stack…")
+            run(compose("up", "-d", "--build"))
 
 
 @app.command()
@@ -154,8 +162,8 @@ def init(
     override.write_text(content)
     success(f"Override file written — database will be: kira_{dev_name}")
     info("Next steps:")
-    info("  kira dev clean       # remove old volume if switching DBs")
-    info("  kira dev up          # creates the new DB automatically")
+    info("  kira dev clean --yes   # remove old volume if switching DBs")
+    info("  kira dev up            # creates the new DB automatically")
     info("  kira migrate --all --docker")
     info("  kira seed --docker")
 
@@ -225,10 +233,40 @@ def e2e() -> None:
 @app.command()
 def up(
     full: bool = typer.Option(False, "--full", help="Include observability stack"),
+    docs: bool = typer.Option(
+        False,
+        "--docs",
+        help="Also enable the docs-site compose profile (with --full: same as make docs-docker-up stack slice)",
+    ),
 ) -> None:
-    """Start the Docker Compose stack."""
-    _start_stack(full=full)
+    """Start the Docker Compose stack (same defaults as ``make up`` / ``make up-full``)."""
+    _start_stack(full=full, docs=docs)
     success("Stack is up")
+
+
+@app.command("wait-postgres")
+def wait_postgres_cmd() -> None:
+    """Wait until Postgres in the core Compose stack accepts connections."""
+    wait_for_postgres(timeout_s=30)
+
+
+@app.command()
+def bootstrap() -> None:
+    """First-time Docker path: full stack, wait for Postgres, migrate + seed in containers.
+
+    Equivalent to ``make bootstrap`` (matches Husky/Makefile expectations).
+    """
+    _start_stack(full=True, docs=False)
+    wait_for_postgres(timeout_s=30)
+    info("Running migrations inside service containers…")
+    run(["uv", "run", "kira", "migrate", "--all", "--docker"], cwd=ROOT)
+    info("Seeding via Docker…")
+    run(["uv", "run", "kira", "seed", "--docker"], cwd=ROOT)
+    success("Bootstrap complete")
+    info("Web UI: http://localhost:3000  |  Kong: http://localhost:8000")
+    info(
+        "OpenAPI is on each service port (e.g. http://localhost:8001/docs), not on Kong."
+    )
 
 
 @app.command()
@@ -267,12 +305,19 @@ def status() -> None:
 
 
 @app.command()
-def clean() -> None:
+def clean(
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip confirmation (used by Makefile / automation)",
+    ),
+) -> None:
     """Stop everything and remove containers, volumes, and orphans."""
-    warn("This will remove all containers and volumes!")
-    confirm = typer.confirm("Continue?")
-    if not confirm:
-        raise typer.Abort()
+    if not yes:
+        warn("This will remove all containers and volumes!")
+        if not typer.confirm("Continue?"):
+            raise typer.Abort()
     run(
         compose(
             "down",

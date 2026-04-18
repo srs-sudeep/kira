@@ -10,6 +10,17 @@ You can run the same work through **`uv run kira`**, plain **`kira`** (after `uv
 
 ---
 
+## CLI + Make in docs and copy-paste blocks
+
+Across this site, when **both** interfaces exist you will usually see:
+
+1. **`uv run kira …`** first (or **`kira …`** on your PATH) — this is the **source of truth** (`cli/`).
+2. **`make …`** on the next line or as a comment — same behavior from the **repo root** (thin Makefile wrapper).
+
+**CLI-only today (no `make` alias):** for example **`kira dev init`** (per-developer DB override). Use **`uv run kira dev init`** or **`./bin/kira dev init`**.
+
+---
+
 ## Compose files (source of truth)
 
 | File | Role |
@@ -29,58 +40,61 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.observabili
 
 If `docker/docker-compose.override.yml` exists, Compose loads it **automatically** (same directory as the first `-f` file).
 
-The **Makefile** and **`kira`** CLI embed these `-f` paths so you do not have to remember them.
+The **`kira`** CLI builds the same `docker compose -f …` commands (absolute paths) so you do not have to remember them. The **Makefile** is a **thin wrapper** around `uv run kira …` for muscle memory, CI, and tools that only know `make`.
 
 ---
 
 ## `kira` vs `make` — do you need both?
 
-**No.** For your own workflow you can use **only** `kira` (plus `docker compose` when you need something ad hoc).
+**No.** For your own workflow you can use **only** `uv run kira` (plus raw **`docker compose`** when you need something ad hoc).
 
-**Yes, keep Make in the repo** for discoverability (`make help`), CI or scripts that call `make test-all`, and contributors who prefer four-letter commands.
+**Yes, keep Make in the repo** for discoverability (`make help`), Husky (`make test-pre-push`), CI that already calls `make …`, and contributors who prefer four-letter commands. Every common `make` target delegates to the CLI.
 
 | You want | Prefer |
 |----------|--------|
-| One-shot bootstrap (envs, deps, infra, migrate, seed on **host** DB) | `uv run kira dev setup` — same idea as `make dev-setup` |
+| One-shot bootstrap (envs, deps, infra, migrate, seed on **host** DB) | `uv run kira dev setup` — same as `make dev-setup` |
 | Bring up **core** stack in Docker | `uv run kira dev up` or `make up` |
 | Core **+** Grafana/Prometheus/Loki/… | `uv run kira dev up --full` or `make up-full` |
 | Setup **then** full stack (automation) | `uv run kira dev e2e` |
-| First-time **Docker-only** DB path | `make bootstrap` (= `up-full` → wait Postgres → `migrate-docker-all` → `seed-docker`) — overlaps `setup` + `up` but migrations run **inside** containers |
-| Open browser tabs | `uv run kira dashboards` / `--full` — `make dashboards` delegates here |
-| Tail logs | `uv run kira dev logs [service]` — `make logs` / `make logs-<service>` |
-| Container list | `uv run kira dev status` — `make stack-status` |
-| Wipe volumes | `uv run kira dev clean` (asks confirmation) — `make clean` (no prompt; uses full compose files) |
+| First-time **Docker-only** DB path | `uv run kira dev bootstrap` or `make bootstrap` |
+| Open browser tabs | `uv run kira dashboards` / `--full` |
+| Tail logs | `uv run kira dev logs [service]` |
+| Container list | `uv run kira dev status` |
+| Wipe volumes | `uv run kira dev clean` (prompts) or `make clean` / `kira dev clean --yes` (no prompt) |
 
 ---
 
 ## Makefile targets (reference)
 
-| Target | What it does |
+Each target runs the **`uv run kira …`** command in the second column (same effect from the repo root).
+
+| Target | Under the hood |
 |--------|----------------|
-| `make up` | Core stack `up -d --build` |
-| `make up-full` | Core + observability `up -d --build` |
-| `make down` | `down` on **both** compose files (keeps volumes) |
-| `make clean` | `down -v --remove-orphans` on both files |
-| `make logs` / `make logs-<service>` | `docker compose … logs -f` |
-| `make stack-status` | `docker compose … ps -a` |
-| `make test-<service>` | `cd services/<service> && uv run pytest -v` |
-| `make test-all` | All six services sequentially |
-| `make test-web` | Vitest in `web-app/` |
-| `make test-coverage` | Pytest with coverage gate per service |
-| `make test-integration` | `scripts/test_integration.sh` |
-| `make migrate-<service>` | Host: Poetry env + `alembic upgrade head` in that service |
-| `make migrate-all` | Host migrations for all services |
-| `make migrate-docker-<service>` | `compose exec <service> python -m alembic upgrade head` |
-| `make migrate-docker-all` | Same for all six services |
-| `make seed` | Host: `uv run python scripts/seed_data.py` (Postgres on `localhost:5432`) |
-| `make seed-docker` | One-off `seed-data` container (`--profile tools`) |
-| `make bootstrap` | `up-full` → wait Postgres → `migrate-docker-all` → `seed-docker` |
-| `make wait-postgres` | Poll `pg_isready` in Postgres container |
-| `make superadmin` | Interactive `scripts/create_superadmin.py` on host |
-| `make dashboards` / `make dashboards-full` | `uv run kira dashboards` / `--full` |
-| `make docs-dev` / `docs-build` / `docs-docker-up` | Docusaurus or static docs in Docker (`--profile docs`) |
+| `make up` | `uv run kira dev up` |
+| `make up-full` | `uv run kira dev up --full` |
+| `make down` | `uv run kira dev down` |
+| `make clean` | `uv run kira dev clean --yes` |
+| `make logs` / `make logs-<service>` | `uv run kira dev logs` / `… logs <service>` |
+| `make stack-status` | `uv run kira dev status` |
+| `make test-<service>` | `uv run kira test <service>` |
+| `make test-all` | `uv run kira test --all --no-web` |
+| `make test-web` | `uv run kira test --web` |
+| `make test-coverage` | `uv run kira test --all --coverage --no-web` |
+| `make test-integration` | `uv run kira test --integration` |
+| `make test-pre-push` | Shell orchestrator calling the three test targets above (skip envs; see `.husky/pre-push`) |
+| `make migrate-<service>` | `uv run kira migrate <service>` |
+| `make migrate-all` | `uv run kira migrate --all` |
+| `make migrate-docker-<service>` | `uv run kira migrate <service> --docker` |
+| `make migrate-docker-all` | `uv run kira migrate --all --docker` |
+| `make seed` | `uv run kira seed` |
+| `make seed-docker` | `uv run kira seed --docker` |
+| `make bootstrap` | `uv run kira dev bootstrap` |
+| `make wait-postgres` | `uv run kira dev wait-postgres` |
+| `make superadmin` | `uv run kira seed superadmin` |
+| `make dashboards` / `make dashboards-full` | `uv run kira dashboards` / `… --full` |
+| `make docs-dev` / `docs-build` / `docs-docker-up` | `uv run kira docs dev` / `build` / `docker-up` |
 | `make dev-setup` | `uv run kira dev setup` |
-| `make help` | Short catalog of targets |
+| `make help` | Printed catalog (also lists CLI equivalents) |
 
 Run **`make help`** anytime for the in-terminal summary.
 

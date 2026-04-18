@@ -103,10 +103,10 @@ Three hooks run automatically:
 
 ### `pre-commit`
 
-Runs before every commit:
+Runs before every commit is finalized:
 
-- TypeScript type-check (`tsc --noEmit`) on `web-app/`
-- ESLint on `web-app/`
+1. **`bunx lint-staged`** — Ruff on staged Python, ESLint / TS on staged `web-app` files (see `package.json` / lint-staged config).
+2. **`uv run kira lint --all`** — full monorepo lint gate: Ruff check + format check on every service and **`shared/`**, ESLint + **`tsc --noEmit`** on **`web-app/`**.
 
 ### `commit-msg`
 
@@ -117,9 +117,14 @@ Runs after you write the commit message:
 
 ### `pre-push`
 
-Runs before every push:
+Runs before **`git push`** sends objects:
 
-- Runs `make test-all` (all backend service tests)
+- **`make test-pre-push`** — one shell script that runs (unless skipped via env vars):
+  - **`make test-all`** → **`uv run kira test --all --no-web`**
+  - **`make test-web`** → **`uv run kira test --web`**
+  - **`make test-integration`** → **`uv run kira test --integration`**
+
+Use **`uv run kira push`** to run the same gate interactively (or with flags), then push with **`SKIP_TEST_PRE_PUSH=1`** so the hook does not repeat the work. Details: **[Git, Husky hooks, and pushes](./git-hooks-and-pushes.md)**.
 
 ### Bypassing Hooks
 

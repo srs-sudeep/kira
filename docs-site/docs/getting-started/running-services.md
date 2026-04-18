@@ -6,6 +6,27 @@ sidebar_position: 7
 
 How to run individual services during development.
 
+## Monorepo commands (prefer the CLI)
+
+From the **repository root**, the **`kira`** CLI is the primary interface; **`make`** targets are thin wrappers around **`uv run kira …`** (same flags). See **[Makefile, CLI, and Compose](./makefile-and-cli.md)** and **[CLI Reference](./cli-reference.md)**.
+
+| Goal | CLI | Make (optional) |
+|------|-----|------------------|
+| Core stack | `uv run kira dev up` | `make up` |
+| + Observability | `uv run kira dev up --full` | `make up-full` |
+| Stop (keep volumes) | `uv run kira dev down` | `make down` |
+| Wipe volumes | `uv run kira dev clean --yes` | `make clean` |
+| Logs | `uv run kira dev logs [service]` | `make logs` / `make logs-<service>` |
+| Container status | `uv run kira dev status` | `make stack-status` |
+| All backend tests | `uv run kira test --all --no-web` | `make test-all` |
+| Web tests | `uv run kira test --web` | `make test-web` |
+| Integration tests | `uv run kira test --integration` | `make test-integration` |
+| Full monorepo lint | `uv run kira lint --all` | (run via Husky pre-commit; no `make lint-*`) |
+| Migrate all (Docker) | `uv run kira migrate --all --docker` | `make migrate-docker-all` |
+| Docs dev server | `uv run kira docs dev` | `make docs-dev` |
+
+---
+
 ## Running a Single Backend Service
 
 Use `uv run` to execute Poetry-managed commands without activating a virtual environment manually:
@@ -36,6 +57,10 @@ uv run alembic upgrade head
 uv run alembic revision --autogenerate -m "add column foo"
 ```
 
+From the **repo root** you can also run **`uv run kira test identity-service`**, **`uv run kira lint identity-service`**, etc.
+
+---
+
 ## Running the Frontend
 
 ```bash
@@ -57,31 +82,19 @@ bun run build
 bun run preview
 ```
 
+---
+
 ## Running the documentation site
 
-From the repo root (or `cd docs-site`):
+From the repo root:
 
 ```bash
-bun install
-bun run start   # http://localhost:4000 — fixed in package.json; same port as Docker host mapping
+uv run kira docs dev        # Make: make docs-dev
+uv run kira docs build      # Make: make docs-build
+uv run kira docs docker-up  # Make: make docs-docker-up
 ```
 
-Or use **`kira docs dev`** / **`make docs-dev`** from the monorepo root.
-
-## Makefile Shortcuts
-
-The root `Makefile` provides convenience targets:
-
-```bash
-make up           # docker compose -f docker/docker-compose.yml up -d --build
-make down         # docker compose … down (see Makefile COMPOSE_FULL)
-make logs         # docker compose -f docker/docker-compose.yml logs -f
-make migrate-all  # alembic upgrade head for all services
-make test-all     # run pytest for all services
-make lint-all     # ruff check + format check for all services
-make docs-dev     # start Docusaurus dev server
-make docs-build   # build static docs site
-```
+---
 
 ## Accessing Service APIs
 

@@ -403,27 +403,32 @@ The KIRA CLI provides a unified interface for all test commands:
 # Test a single backend service
 uv run kira test identity-service
 
-# Test all services + web-app
+# All six backends only (same as make test-all / pre-push Python stage)
+uv run kira test --all --no-web
+
+# All backends + web-app Vitest
 uv run kira test --all
 
 # Web-app only
 uv run kira test --web
 
-# With coverage gate (70% minimum)
-uv run kira test --coverage
+# Coverage gate (70% minimum) on all backends — same as make test-coverage
+uv run kira test --all --coverage --no-web
 
-# Integration tests (starts Postgres, Redis, Kafka)
+# Integration tests (Compose up Postgres, Redis, Kafka; pytest -m integration; tear down)
 uv run kira test --integration
 ```
 
-Or use Makefile equivalents:
+**Skip specific services** (pre-push / manual runs): `SKIP_TEST_SERVICES="admin-service channel-engine"`.
+
+Makefile equivalents (each delegates to `kira`):
 
 ```bash
-make test-identity-service     # Single service
-make test-all                  # All services
-make test-web                  # Web-app (Vitest)
-make test-coverage             # With coverage
-make test-integration          # Integration with infra
+make test-identity-service
+make test-all
+make test-web
+make test-coverage
+make test-integration
 ```
 
-See the [CLI Reference](../getting-started/cli-reference.md) for the full command list.
+See the [CLI Reference](../getting-started/cli-reference.md) and [Git, Husky hooks, and pushes](./git-hooks-and-pushes.md) for pre-push behavior.

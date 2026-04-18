@@ -21,7 +21,7 @@ Complete the [Prerequisites](./prerequisites.md) guide before continuing. You ne
 :::tip `kira` vs `uv run kira`, Make, and Compose
 
 - **`kira …`** works the same as **`uv run kira …`** after **`uv tool install --editable .`** from the repo root ([CLI Reference](./cli-reference.md#installation)).
-- See [Makefile, CLI, and Compose](./makefile-and-cli.md) for **`make bootstrap`**, compose **profiles**, Celery **workers**, and **host vs Docker** migrations.
+- See [Makefile, CLI, and Compose](./makefile-and-cli.md) for **`uv run kira dev bootstrap`** (same as **`make bootstrap`**), compose **profiles**, Celery **workers**, and **host vs Docker** migrations.
 
 :::
 
@@ -35,6 +35,7 @@ The fastest way to get everything running:
 git clone https://github.com/abodeab/kira.git
 cd kira
 uv run kira dev setup
+# Make (same): make dev-setup
 ```
 
 This single command will:
@@ -49,8 +50,8 @@ This single command will:
 After setup completes, start the stack:
 
 ```bash
-uv run kira dev up          # Start all services (core stack)
-uv run kira dashboards      # Open browser tabs: web :3000, docs :4000, Mailhog, Kong, every /docs
+uv run kira dev up          # Start all services (core stack)  |  Make: make up
+uv run kira dashboards      # Open browser tabs                  |  Make: make dashboards
 ```
 
 After **`kira dev up --full`** (or `make up-full`), open observability UIs too:
@@ -110,8 +111,18 @@ For the full list of variables and what each one does, see [Environment Variable
 
 ## Step 3 — Start the Stack
 
+From the repo root, prefer the CLI (absolute compose paths are built in):
+
 ```bash
-docker compose up -d --build
+uv run kira dev up          # core stack, same as make up
+# or full stack + observability:
+uv run kira dev up --full   # same as make up-full
+```
+
+Raw Compose (always pass **`-f docker/docker-compose.yml`** from the clone root so paths resolve correctly):
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 **What happens during this command:**
@@ -144,19 +155,22 @@ Each service manages its own PostgreSQL schema with Alembic.
 
 ### Option A — Everything in Docker (recommended)
 
-With the stack running (`make up`), apply migrations **inside** the containers so they use the `postgres` hostname from `.env.local`:
+With the stack running, apply migrations **inside** the containers so they use the `postgres` hostname from `.env.local`:
 
 ```bash
+uv run kira migrate --all --docker
+# same as:
 make migrate-docker-all
 ```
 
-Single service: `make migrate-docker-identity-service` (replace with the service name).
+Single service: **`uv run kira migrate identity-service --docker`** (or **`make migrate-docker-identity-service`**).
 
 ### Option B — On your host (uv + localhost)
 
 If Postgres is reachable at `localhost:5432`:
 
 ```bash
+uv run kira migrate --all
 make migrate-all
 ```
 
@@ -174,8 +188,8 @@ INFO  [alembic.runtime.migration] Running upgrade  -> b2c3d4e5f6a1, initial sche
 If you prefer to migrate one service at a time:
 
 ```bash
-make migrate-identity-service
-make migrate-rate-inventory-service
+uv run kira migrate identity-service
+uv run kira migrate rate-inventory-service
 # ... etc
 ```
 
@@ -186,16 +200,18 @@ make migrate-rate-inventory-service
 **Docker (uses the Compose network to reach Postgres):**
 
 ```bash
+uv run kira seed --docker
 make seed-docker
 ```
 
 **Host (requires `uv`, same DSN as localhost:5432):**
 
 ```bash
+uv run kira seed
 make seed
 ```
 
-**All-in-one** after a fresh clone: `make bootstrap` runs `up`, waits for Postgres, `migrate-docker-all`, and `make seed-docker`.
+**All-in-one** after a fresh clone: **`uv run kira dev bootstrap`** (same as **`make bootstrap`**) — full stack up, wait for Postgres, migrate all services in Docker, seed in Docker.
 
 This runs `scripts/seed_data.py` which creates:
 
@@ -204,7 +220,7 @@ This runs `scripts/seed_data.py` which creates:
 - One hotel admin user: `manager@grandhotel.example.com` / `Manager1234!`
 
 :::caution Login emails and `.local`
-Use addresses that pass API validation (e.g. `@example.com`, `@grandhotel.example.com`). The identity service uses Pydantic **`EmailStr`**, which **rejects** domains like **`*.local`** (reserved for mDNS). If you see `422` with “not a valid email address” for `@kira.local`, switch to the addresses above or run `make superadmin` with an allowed email.
+Use addresses that pass API validation (e.g. `@example.com`, `@grandhotel.example.com`). The identity service uses Pydantic **`EmailStr`**, which **rejects** domains like **`*.local`** (reserved for mDNS). If you see `422` with “not a valid email address” for `@kira.local`, switch to the addresses above or run **`uv run kira seed superadmin`** with an allowed email.
 :::
 
 - Three room types: Standard Twin, Deluxe King, Suite
@@ -214,6 +230,7 @@ Use addresses that pass API validation (e.g. `@example.com`, `@grandhotel.exampl
 To also create a super-admin outside of seeding (e.g., to reset credentials):
 
 ```bash
+uv run kira seed superadmin
 make superadmin
 ```
 
@@ -224,13 +241,13 @@ If you switched to `admin@example.com` / `manager@grandhotel.example.com` (or up
 - **Docker Compose Postgres** (stack running, migrations already applied):
 
   ```bash
-  make seed-docker
+  uv run kira seed --docker
   ```
 
 - **Postgres on localhost:5432** (from repo root, with `uv`):
 
   ```bash
-  make seed
+  uv run kira seed
   ```
 
 The script **upserts** those two users by email, so passwords and roles refresh even if the rows already exist. It does not delete old accounts (e.g. `admin@kira.local`); remove those manually in Postgres if you no longer need them.
@@ -240,7 +257,8 @@ The script **upserts** those two users by email, so passwords and roles refresh 
 ## Step 6 — Confirm Everything Is Healthy
 
 ```bash
-docker compose ps
+uv run kira dev status
+# or: docker compose -f docker/docker-compose.yml ps -a
 ```
 
 All containers should show `healthy` in the `STATUS` column. Then ping each service health endpoint:
@@ -289,17 +307,17 @@ To log in as super-admin (full platform access, including the admin-service):
 Add Grafana, Prometheus, Loki, Kafka UI, pgAdmin, etc.:
 
 ```bash
-make up-full
+uv run kira dev up --full
 ```
 
 Then open the observability URLs in your browser:
 
 ```bash
-make dashboards-full
-# equivalent: uv run kira dashboards --full   (alias --all)
+uv run kira dashboards --full
+# same as: make dashboards-full   (Make delegates to kira)
 ```
 
-For the **core** stack only: `make dashboards` or `uv run kira dashboards` after `make up` — opens web, docs :4000, Mailhog, Kong proxy + admin, and **each** service OpenAPI tab (`8001`–`8006` `/docs`). See [Dev dashboards & ports](./dev-dashboards.md) for details and troubleshooting.
+For the **core** stack only: **`uv run kira dashboards`** after **`uv run kira dev up`** — opens web, docs :4000, Mailhog, Kong proxy + admin, and **each** service OpenAPI tab (`8001`–`8006` `/docs`). See [Dev dashboards & ports](./dev-dashboards.md) for details and troubleshooting.
 
 | Dashboard      | URL                                      | Purpose                                                                                  |
 | -------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -320,14 +338,17 @@ For the **core** stack only: `make dashboards` or `uv run kira dashboards` after
 
 ```bash
 # Stop all containers (data persists in Docker volumes)
+uv run kira dev down
 make down
 
 # Stop and delete all data (wipes PostgreSQL, Redis, Kafka)
-make clean
+uv run kira dev clean --yes    # or: make clean  (non-interactive)
+# Interactive wipe (prompts):
+uv run kira dev clean
 ```
 
-:::danger `make clean` is destructive
-`make clean` runs `docker compose down -v`, which deletes all named volumes including your PostgreSQL data. You will need to re-run migrations and seeding after this.
+:::danger `kira dev clean` / `make clean` is destructive
+This runs **`docker compose … down -v`**, which deletes all named volumes including your PostgreSQL data. Re-run migrations and seeding afterward.
 :::
 
 ---
@@ -371,23 +392,22 @@ This usually means the service started before PostgreSQL finished its initialisa
 Fix:
 
 ```bash
-docker compose down
-docker compose up -d --build
+docker compose -f docker/docker-compose.yml down
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 The second start is always faster because the PostgreSQL data volume is already initialised.
 
 ---
 
-### `make migrate-all` fails with "relation already exists"
+### `kira migrate --all` / `make migrate-all` fails with "relation already exists"
 
 This happens if you run migrations against a database that already has those tables (e.g., from a previous run). It is safe to ignore — Alembic only applies new migrations, and "already exists" means you are already up to date.
 
 If you see actual errors (not warnings), run:
 
 ```bash
-# Reset a specific service's schema and re-migrate
-make migrate-identity-service
+uv run kira migrate identity-service --docker
 ```
 
 ---

@@ -24,11 +24,15 @@ cp .env.example .env
 
 ## Start Infrastructure Only
 
-If you want to run a single service locally (outside Docker) while keeping the rest containerized:
+If you want to run a single service locally (outside Docker) while keeping the rest containerized, start the stack from the **repo root** (Compose needs **`-f docker/docker-compose.yml`**):
 
 ```bash
-# Start infrastructure and all other services
-docker compose up -d postgres redis kafka zookeeper kong
+# Full core stack (simplest — includes Kong + APIs + web; stop what you do not need)
+uv run kira dev up
+# Make: make up
+
+# Or: infra only
+docker compose -f docker/docker-compose.yml up -d postgres redis kafka
 
 # Run your service locally (e.g., identity-service)
 cd services/identity-service
@@ -72,37 +76,38 @@ uv run which python  # copy this path
 
 ## Running Tests Locally
 
+From the **repo root** (same commands Husky uses via Make):
+
 ```bash
-# Single service
+uv run kira test identity-service    # Make: make test-identity-service
+uv run kira test --all --no-web      # Make: make test-all
+uv run kira test --web               # Make: make test-web
+uv run kira test --integration       # Make: make test-integration
+```
+
+Inside a single service directory:
+
+```bash
 cd services/identity-service
 uv run pytest -v
-
-# With coverage
-uv run pytest --cov=app --cov-report=html
-# Open htmlcov/index.html
-
-# Watch mode
-uv run pytest -f
+uv run pytest --cov=app --cov-report=html   # open htmlcov/index.html
+uv run pytest -f   # watch mode
 ```
 
 A test database is created automatically by the test fixtures — no manual setup needed as long as PostgreSQL is running.
 
 ## Pre-commit Checks
 
-Before pushing, ensure your changes pass:
+Before pushing, mirror what **Husky** runs:
 
 ```bash
-# Lint
-uv run ruff check .
+# Full monorepo lint (pre-commit runs this after lint-staged)
+uv run kira lint --all
+uv run kira lint --all --fix
 
-# Format
-uv run ruff format .
-
-# Type check (if mypy is configured)
-uv run mypy app/
-
-# Tests
-uv run pytest --cov=app --cov-fail-under=70
+# Or per service / web (when iterating)
+cd services/identity-service && uv run ruff check . && uv run ruff format --check .
+cd web-app && bun run lint
 ```
 
-The CI will fail if any of these fail.
+Full pre-push gate from root: **`make test-pre-push`** or **`uv run kira push -y`** (then push). See **[Git, Husky hooks, and pushes](./git-hooks-and-pushes.md)**.

@@ -22,6 +22,21 @@ Runbooks with commands: **[Runbooks](./runbooks.md)**.
 
 ---
 
+## Local dev (Docker on your laptop)
+
+| Goal | Command |
+|------|---------|
+| Core stack | `uv run kira dev up` |
+| + Observability | `uv run kira dev up --full` |
+| Status | `uv run kira dev status` |
+| Logs | `uv run kira dev logs [service]` |
+| Migrate in containers | `uv run kira migrate --all --docker` |
+| Full reset + seed (Docker DB) | `uv run kira dev bootstrap` |
+
+Longer narrative: **[Makefile, CLI, and Compose](../getting-started/makefile-and-cli.md)**, **[Local Docker](../deployment/local-docker.md)**.
+
+---
+
 ## kubectl (production `kira` namespace)
 
 | Goal | Command |

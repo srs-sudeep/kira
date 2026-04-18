@@ -8,6 +8,11 @@ description: Complete reference for the KIRA CLI tool
 
 KIRA ships a unified CLI tool that wraps every monorepo operation — Docker, testing, migrations, deployment, linting, and more.
 
+:::info CLI is the source of truth
+
+Behavior for stack, tests, migrations, seed, docs, and lint lives in **`cli/`**. The root **`Makefile`** is a thin convenience layer: most targets run **`uv run kira …`** so CI, Husky, and `make` users get the same logic. Prefer **`uv run kira`** (or **`./bin/kira`**) for day-to-day work; see **[Makefile, CLI, and Compose](./makefile-and-cli.md)**.
+:::
+
 :::info How commands are written here
 
 Examples use **`uv run kira …`** from the **repository root** (where the root `pyproject.toml` lives). If you installed the CLI with **`uv tool install --editable .`** from that same root, the executable is on your **`PATH`** and every command works as **`kira …`** instead — same flags, no `uv run` prefix.
@@ -104,24 +109,28 @@ uv run kira --install-completion fish
 
 ### `kira dev` — Local Development
 
-| Command                   | Description                                                                             |
-| ------------------------- | --------------------------------------------------------------------------------------- |
-| `kira dev setup`          | Bootstrap local dev: check prereqs, copy envs, install deps, start infra, migrate, seed |
-| `kira dev up`             | Start core Docker Compose stack                                                         |
-| `kira dev up --full`      | Start core + observability + docs-site (enables Docker Compose `docs` profile)         |
-| `kira dev e2e`            | Run setup flow, then start full stack (core + observability + docs-site)               |
-| `kira dev down`           | Stop and remove containers (keep volumes)                                               |
-| `kira dev logs [SERVICE]` | Follow container logs (all or one service)                                              |
-| `kira dev status`         | Show container status                                                                   |
-| `kira dev clean`          | Stop everything, remove containers + volumes + orphans                                  |
+| Command                     | Description                                                                                          |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `kira dev setup`            | Bootstrap local dev: check prereqs, copy envs, install deps, start infra, migrate on **host**, seed |
+| `kira dev up`               | Start core Docker Compose stack (same as `make up`)                                                  |
+| `kira dev up --full`        | Core + observability compose files (same as `make up-full`; **no** docs profile unless you add `--docs`) |
+| `kira dev up --docs`        | With `--full` or core `up`: also enable Compose **`docs`** profile (docs-site container)             |
+| `kira dev e2e`              | Run `setup`, then `up --full` (observability; use `kira docs docker-up` separately if you want docs in Docker) |
+| `kira dev bootstrap`        | **Docker-first path:** `up --full` → wait Postgres → `kira migrate --all --docker` → `kira seed --docker` (same as `make bootstrap`) |
+| `kira dev wait-postgres`    | Poll `pg_isready` in the core Postgres container (same as `make wait-postgres`)                      |
+| `kira dev down`             | Stop and remove containers (keep volumes)                                                            |
+| `kira dev logs [SERVICE]`   | Follow container logs (all or one Compose service name)                                              |
+| `kira dev status`           | `docker compose ps -a` for the core file                                                             |
+| `kira dev clean`            | Stop everything, remove volumes + orphans (**prompts**; use `--yes` / `-y` for automation / `make clean`) |
+| `kira dev init`             | Write per-developer `docker-compose.override.yml` (DB name isolation)                                |
 
 **Quick start from a fresh clone:**
 
 ```bash
-uv run kira dev setup    # One command to rule them all
-uv run kira dev up       # Start services
-uv run kira dev e2e      # Setup + full stack (includes docs-site)
-uv run kira dashboards   # Open browser tabs (core URLs)
+uv run kira dev setup       # Host-side migrate + seed after infra is up
+uv run kira dev up          # Start all app containers (core)
+uv run kira dev bootstrap   # Or: full Docker path (migrate + seed in containers) — see Makefile, CLI, and Compose
+uv run kira dashboards      # Open browser tabs (core URLs)
 # After `kira dev up --full`:  uv run kira dashboards --full   # or --all — adds Grafana, Prometheus, …
 ```
 
@@ -129,18 +138,23 @@ uv run kira dashboards   # Open browser tabs (core URLs)
 
 ### `kira test` — Testing
 
-| Command                   | Description                                                    |
-| ------------------------- | -------------------------------------------------------------- |
-| `kira test <service>`     | Run pytest for one service (e.g. `kira test identity-service`) |
-| `kira test --all`         | Run all 6 service tests + web-app tests                        |
-| `kira test --web`         | Run web-app tests only (Vitest)                                |
-| `kira test --coverage`    | Run pytest with `--cov --cov-fail-under=70%` for all services  |
-| `kira test --integration` | Start infra containers, run `pytest -m integration`, tear down |
+| Command                     | Description                                                                 |
+| --------------------------- | --------------------------------------------------------------------------- |
+| `kira test <service>`       | Run pytest for one service (e.g. `kira test identity-service`)              |
+| `kira test --all`           | All six **backend** services **and** web-app (Vitest)                       |
+| `kira test --all --no-web`  | Backend only (matches **`make test-all`** and pre-push Python stage)       |
+| `kira test --web`           | Web-app tests only (Vitest)                                                 |
+| `kira test --all --coverage --no-web` | All services with coverage gate (matches **`make test-coverage`**) |
+| `kira test --integration`   | Compose up Postgres/Redis/Kafka, `pytest -m integration` per service, tear down |
+
+**Environment:** `SKIP_TEST_SERVICES="svc1 svc2"` skips those service directories in **`--all`** and **`--integration`**.
 
 ```bash
-uv run kira test identity-service          # Single service
-uv run kira test --all                     # Everything
-uv run kira test --coverage                # With coverage gate
+uv run kira test identity-service
+uv run kira test --all --no-web          # Same as make test-all
+uv run kira test --all                   # Backend + web
+uv run kira test --all --coverage --no-web
+uv run kira test --integration
 ```
 
 ---
@@ -206,10 +220,11 @@ uv run kira deploy production --skip-terraform --services identity-service,admin
 
 ### `kira docs` — Documentation
 
-| Command           | Description                             |
-| ----------------- | --------------------------------------- |
-| `kira docs dev`   | Start Docusaurus dev server (port 4000) |
-| `kira docs build` | Build static documentation site         |
+| Command              | Description                                                                 |
+| -------------------- | --------------------------------------------------------------------------- |
+| `kira docs dev`        | `bun install` in `docs-site/`, then Docusaurus dev server (port **4000**)   |
+| `kira docs build`      | `bun install`, then static build → `docs-site/build/`                       |
+| `kira docs docker-up`  | `docker compose --profile docs up -d --build docs-site` (same as `make docs-docker-up`) |
 
 ---
 
@@ -276,21 +291,26 @@ Many tasks exist in both places. **`make help`** lists all Make targets. For com
 | `kira dev down` | `make down` |
 | `kira dev logs` / `kira dev logs <service>` | `make logs` / `make logs-<service>` |
 | `kira dev status` | `make stack-status` |
-| `kira dev clean` | `make clean` (Make does not prompt; `kira dev clean` asks for confirmation) |
+| `kira dev clean` | `make clean` (Make calls `kira dev clean --yes`; interactive use: `kira dev clean` prompts) |
+| `kira dev bootstrap` | `make bootstrap` |
+| `kira dev wait-postgres` | `make wait-postgres` |
+| `kira dev up --docs` | Optional docs profile on core or full stack (see `kira dev up --help`) |
 | `kira test <service>` | `make test-<service>` |
-| `kira test --all` | `make test-all` |
+| `kira test --all --no-web` | `make test-all` |
 | `kira test --web` | `make test-web` |
-| `kira test --coverage` | `make test-coverage` |
+| `kira test --all --coverage --no-web` | `make test-coverage` |
 | `kira test --integration` | `make test-integration` |
 | `kira push` / `kira push -y` | Runs `make test-pre-push` (with your skips), then `git push` — not a single Make alias; see [Git hooks doc](../contributing/git-hooks-and-pushes.md) |
+| `kira migrate <service>` | `make migrate-<service>` |
 | `kira migrate --all` | `make migrate-all` |
+| `kira migrate <service> --docker` | `make migrate-docker-<service>` |
 | `kira migrate --all --docker` | `make migrate-docker-all` |
 | `kira seed` | `make seed` |
 | `kira seed --docker` | `make seed-docker` |
+| `kira seed superadmin` | `make superadmin` |
 | `kira dev setup` | `make dev-setup` |
 | `kira dashboards` | `make dashboards` |
 | `kira dashboards --full` / `--all` | `make dashboards-full` |
 | `kira docs dev` | `make docs-dev` |
 | `kira docs build` | `make docs-build` |
-
-There is **no** `kira` subcommand for **`make bootstrap`** (`up-full` → migrate in Docker → seed in Docker); use Make or run those steps by hand.
+| `kira docs docker-up` | `make docs-docker-up` |

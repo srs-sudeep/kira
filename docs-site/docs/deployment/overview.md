@@ -18,7 +18,7 @@ KIRA supports three deployment targets:
 | Staging | Kubernetes (EKS) | QA and integration testing |
 | Production | Kubernetes (EKS) | Live environment |
 
-To **smoke-test `kubectl` and a dev cluster** (Docker Desktop / kind / minikube) and see how that relates to the repo’s `k8s/` manifests, use **[Local Kubernetes validation](./local-kubernetes.md)** — the bundled manifests target EKS-style backing services, not a full laptop stack.
+To **smoke-test `kubectl` and a dev cluster** (Docker Desktop / kind / minikube), use **[Local Kubernetes validation](./local-kubernetes.md)**. The **staging/production** overlays assume **external** RDS, Redis, and Kafka. The **`k8s/overlays/minikube/`** overlay adds in-cluster Postgres, Redis, and Kafka so you can deploy the full app on a laptop cluster for manifest and networking checks — see **[How deployment fits together](./how-deployment-fits.md)**.
 
 ## Deployment Pipeline
 

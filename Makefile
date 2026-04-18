@@ -1,43 +1,37 @@
 .PHONY: up up-full down logs test-% test-all test-web test-coverage test-integration test-pre-push migrate-% migrate-all migrate-docker-% migrate-docker-all \
-	seed seed-docker bootstrap wait-postgres clean dashboards dashboards-full stack-status docs-dev docs-build docs-docker-up dev-setup help
-
-
-SERVICES := admin-service identity-service rate-inventory-service reservation-service channel-engine notification-service
-
-ROOT := $(abspath .)
-COMPOSE := docker compose -f $(ROOT)/docker/docker-compose.yml
-COMPOSE_FULL := docker compose -f $(ROOT)/docker/docker-compose.yml -f $(ROOT)/docker/docker-compose.observability.yml
+	seed seed-docker bootstrap wait-postgres clean dashboards dashboards-full stack-status docs-dev docs-build docs-docker-up dev-setup superadmin help
 
 # ---------------------------------------------------------------------------
-# Stack management
+# Primary interface: kira CLI (uv run kira …). Makefile is a thin convenience
+# layer for muscle memory, CI, and tools that only know `make`.
 # ---------------------------------------------------------------------------
 
 ## Start core stack (infra + API services + Kong + web-app on :3000)
 up:
-	$(COMPOSE) up -d --build
+	uv run kira dev up
 
 ## Start full stack with observability (Grafana, Prometheus, Loki, …)
 up-full:
-	$(COMPOSE_FULL) up -d --build
+	uv run kira dev up --full
 
 ## Stop and remove containers (keep volumes)
 down:
-	$(COMPOSE_FULL) down
+	uv run kira dev down
 
 ## Follow logs for all containers
 logs:
-	$(COMPOSE) logs -f
+	uv run kira dev logs
 
 ## Follow logs for a specific service — usage: make logs-identity-service
 logs-%:
-	$(COMPOSE) logs -f $*
+	uv run kira dev logs $*
 
 ## Show container status (use when /docs or dashboards fail to load)
 stack-status:
-	$(COMPOSE) ps -a
+	uv run kira dev status
 
 # ---------------------------------------------------------------------------
-# Testing — CLI is the single source of truth (see cli/test.py)
+# Testing — see cli/test.py
 # ---------------------------------------------------------------------------
 
 ## Run tests for a specific service — usage: make test-identity-service
@@ -64,7 +58,6 @@ test-integration:
 ## Skip flags (export or prefix the command): SKIP_TEST_PRE_PUSH=1 skips the whole suite;
 ## SKIP_TEST_ALL=1, SKIP_TEST_WEB=1, SKIP_TEST_INTEGRATION=1 skip each stage;
 ## SKIP_TEST_SERVICES="svc …" skips those dirs in test-all and in integration.
-## (One shell so SKIP_TEST_PRE_PUSH=1 exit applies to the whole target — not one line per subshell.)
 test-pre-push:
 	@set -e; \
 	if [ "$$SKIP_TEST_PRE_PUSH" = "1" ]; then \
@@ -76,68 +69,48 @@ test-pre-push:
 	if [ "$$SKIP_TEST_INTEGRATION" != "1" ]; then $(MAKE) test-integration; else echo "Skipping test-integration (SKIP_TEST_INTEGRATION=1)"; fi
 
 # ---------------------------------------------------------------------------
-# Migrations (host — requires uv; uses localhost:5432)
+# Migrations — see cli/migrate.py
 # ---------------------------------------------------------------------------
 
 ## Run Alembic migrations for a specific service — usage: make migrate-identity-service
 migrate-%:
-	cd services/$* && uv run poetry install --no-root --no-interaction && uv run python -m alembic upgrade head
+	uv run kira migrate $*
 
 ## Run migrations for all services sequentially (host)
 migrate-all:
-	@for svc in $(SERVICES); do \
-		echo "\n=== Migrating $$svc ==="; \
-		cd services/$$svc && uv run poetry install --no-root --no-interaction && uv run python -m alembic upgrade head; \
-		cd ../..; \
-	done
-
-# ---------------------------------------------------------------------------
-# Migrations (Docker — run inside each service container; uses postgres hostname)
-# Requires: make up (stack running)
-# ---------------------------------------------------------------------------
+	uv run kira migrate --all
 
 ## Run Alembic inside one container — usage: make migrate-docker-identity-service
 migrate-docker-%:
-	$(COMPOSE) exec $* sh -c "cd /app && python -m alembic upgrade head"
+	uv run kira migrate $* --docker
 
 ## Run all service migrations inside Docker (preferred after make up)
 migrate-docker-all:
-	@for svc in $(SERVICES); do \
-		echo "\n=== Migrating $$svc (Docker) ==="; \
-		$(COMPOSE) exec $$svc sh -c "cd /app && python -m alembic upgrade head" || exit 1; \
-	done
+	uv run kira migrate --all --docker
 
 # ---------------------------------------------------------------------------
-# Data
+# Data — see cli/seed.py
 # ---------------------------------------------------------------------------
 
 ## Seed dev data from the host (Postgres must be reachable at localhost:5432)
-## Set ENCRYPTION_KEY to match reservation-service / channel-engine .env.local (64-char hex).
 seed:
-	uv run python scripts/seed_data.py
+	uv run kira seed
 
 ## Seed dev data via Docker Compose (Postgres up; run migrate-docker-all first)
 seed-docker:
-	$(COMPOSE) --profile tools run --rm seed-data
-
-## First-time setup: start stack, wait for Postgres, migrate in Docker, seed in Docker
-bootstrap: up-full wait-postgres migrate-docker-all seed-docker
-	@echo ""
-	@echo "Done. Web UI: http://localhost:3000  |  Kong: http://localhost:8000"
-	@echo "OpenAPI is on each service port (e.g. http://localhost:8001/docs), not on Kong."
-
-## Wait until Postgres accepts connections
-wait-postgres:
-	@echo "Waiting for Postgres..."
-	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do \
-		$(COMPOSE) exec -T postgres pg_isready -U postgres -d kira >/dev/null 2>&1 && exit 0; \
-		sleep 1; \
-	done; \
-	echo "Postgres did not become ready in time."; exit 1
+	uv run kira seed --docker
 
 ## Create a super-admin user (interactive; run on host)
 superadmin:
-	uv run python scripts/create_superadmin.py
+	uv run kira seed superadmin
+
+## First-time setup: start stack, wait for Postgres, migrate in Docker, seed in Docker
+bootstrap:
+	uv run kira dev bootstrap
+
+## Wait until Postgres accepts connections
+wait-postgres:
+	uv run kira dev wait-postgres
 
 # ---------------------------------------------------------------------------
 # Maintenance
@@ -145,10 +118,10 @@ superadmin:
 
 ## Stop everything and remove containers, volumes, and orphans
 clean:
-	$(COMPOSE_FULL) down -v --remove-orphans
+	uv run kira dev clean --yes
 
 # ---------------------------------------------------------------------------
-# Dashboards — open UIs in the default browser (macOS/Linux)
+# Dashboards — see cli/__main__.py dashboards
 # ---------------------------------------------------------------------------
 
 ## Core stack URLs (requires: make up)
@@ -160,20 +133,20 @@ dashboards-full:
 	@uv run kira dashboards --full
 
 # ---------------------------------------------------------------------------
-# Documentation
+# Documentation — see cli/docs.py
 # ---------------------------------------------------------------------------
 
 ## Docusaurus dev server with hot reload (http://localhost:4000) — run on host
 docs-dev:
-	cd docs-site && bun install && bun run start
+	uv run kira docs dev
 
 ## Build static documentation site
 docs-build:
-	cd docs-site && bun install && bun run build
+	uv run kira docs build
 
 ## Serve built docs in Docker (http://localhost:4000) — rebuild image after doc changes
 docs-docker-up:
-	$(COMPOSE) --profile docs up -d --build docs-site
+	uv run kira docs docker-up
 
 # ---------------------------------------------------------------------------
 # Dev Setup
@@ -192,43 +165,44 @@ help:
 	@echo "KIRA — Hotel Channel Manager"
 	@echo "=============================="
 	@echo ""
+	@echo "Prefer the CLI (same behavior as these targets):"
+	@echo "  uv run kira --help"
+	@echo "  uv run kira dev --help"
+	@echo ""
 	@echo "First-time (Docker):"
-	@echo "  make bootstrap       Start stack, migrate DB in containers, seed data"
+	@echo "  make bootstrap       OR  uv run kira dev bootstrap"
 	@echo ""
 	@echo "Stack:"
-	@echo "  make up              Core: Postgres, Redis, Kafka, APIs, Kong, web :3000"
-	@echo "  make up-full         Core + Grafana, Prometheus, Loki, …"
-	@echo "  make down            Stop containers"
-	@echo "  make clean           Stop + remove volumes"
+	@echo "  make up              OR  uv run kira dev up"
+	@echo "  make up-full         OR  uv run kira dev up --full"
+	@echo "  make down            OR  uv run kira dev down"
+	@echo "  make clean           OR  uv run kira dev clean --yes"
 	@echo ""
 	@echo "DB (stack running):"
-	@echo "  make migrate-docker-all   Alembic inside each service container"
-	@echo "  make seed-docker        Seed script via Docker network"
+	@echo "  make migrate-docker-all   OR  uv run kira migrate --all --docker"
+	@echo "  make seed-docker          OR  uv run kira seed --docker"
 	@echo ""
 	@echo "DB (host, uv + localhost:5432):"
-	@echo "  make migrate-all     Alembic on host for all services"
-	@echo "  make seed            Seed script on host"
+	@echo "  make migrate-all     OR  uv run kira migrate --all"
+	@echo "  make seed            OR  uv run kira seed"
 	@echo ""
 	@echo "Logs:"
-	@echo "  make logs            Tail all logs"
-	@echo "  make logs-<service>  Tail one service"
+	@echo "  make logs            OR  uv run kira dev logs"
+	@echo "  make logs-<service>  OR  uv run kira dev logs <service>"
 	@echo ""
-	@echo "Tests (delegated to kira CLI):"
-	@echo "  make test-<service>  Run tests for one service"
-	@echo "  make test-all        Run all service tests (no web)"
-	@echo "  make test-web        Run web-app tests (Vitest)"
-	@echo "  make test-coverage   Run tests with coverage"
-	@echo "  make test-integration Run integration tests with infra"
-	@echo "  make test-pre-push   test-all + test-web + test-integration (pre-push; see skip envs)"
-	@echo ""
-	@echo "CLI:"
-	@echo "  make dev-setup       Bootstrap local dev (via kira CLI)"
+	@echo "Tests:"
+	@echo "  make test-<service>  OR  uv run kira test <service>"
+	@echo "  make test-all        OR  uv run kira test --all --no-web"
+	@echo "  make test-web        OR  uv run kira test --web"
+	@echo "  make test-coverage   OR  uv run kira test --all --coverage --no-web"
+	@echo "  make test-integration  OR  uv run kira test --integration"
+	@echo "  make test-pre-push   (orchestrator; skip envs documented in .husky/pre-push)"
 	@echo ""
 	@echo "Docs:"
-	@echo "  make docs-dev        Docusaurus dev server (host, port 4000)"
-	@echo "  make docs-docker-up  Built docs in Docker (port 4000)"
+	@echo "  make docs-dev        OR  uv run kira docs dev"
+	@echo "  make docs-docker-up  OR  uv run kira docs docker-up"
 	@echo ""
-	@echo "  make dashboards      Open core UIs"
-	@echo "  make dashboards-full Open core + observability UIs"
-	@echo "  make stack-status    docker compose ps (debug connection errors)"
+	@echo "  make dashboards      OR  uv run kira dashboards"
+	@echo "  make dashboards-full OR  uv run kira dashboards --full"
+	@echo "  make stack-status    OR  uv run kira dev status"
 	@echo ""

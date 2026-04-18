@@ -12,12 +12,18 @@ A single page covering **everything** — from a blank machine to a **fully test
 
 ```bash
 git clone https://github.com/abodeab/kira.git && cd kira
-uv run kira dev setup   # installs deps, starts infra, migrates, seeds
-uv run kira dev up      # starts all services + web app
+# Host-path setup (deps, infra, migrate+seed on host):
+uv run kira dev setup          # Make: make dev-setup
+# Then start all app containers:
+uv run kira dev up             # Make: make up
+# Optional: own Postgres DB name (CLI only — no make alias):
+# uv run kira dev init --name yourname   # see Per-developer database isolation
 open http://localhost:3000
 ```
 
-For **Make vs `kira`**, compose **profiles**, Celery **workers**, and **host vs Docker** Postgres, see [Makefile, CLI, and Compose](./makefile-and-cli.md).
+**Docker-first one-liner** after clone (full stack + migrate + seed in containers): **`uv run kira dev bootstrap`** — same as **`make bootstrap`**.
+
+For **Make vs `kira`**, compose **profiles**, Celery **workers**, **DB isolation**, and **host vs Docker** Postgres, see [Makefile, CLI, and Compose](./makefile-and-cli.md) and [Per-developer database isolation](./per-developer-db.md).
 
 Throughout this site, **`uv run kira`** and **`kira`** mean the same CLI — use whichever matches how you installed it ([CLI Reference → Installation](./cli-reference.md#installation)).
 
@@ -56,7 +62,7 @@ The `kira` CLI is a Python tool managed by uv. Verify it works:
 uv run kira --help
 ```
 
-You should see commands: `commit`, `dashboards`, `dev`, `test`, `migrate`, `seed`, `deploy`, `docs`.
+You should see top-level commands such as `commit`, `dashboards`, `dev`, `test`, `migrate`, `seed`, `deploy`, `docs`, `lint`, and `push`.
 
 Install root JS tooling (Husky hooks, Commitizen, lint-staged):
 
@@ -103,7 +109,9 @@ Each `.env.local` contains sensible defaults for local dev (localhost Postgres, 
 
 ## 5. (Manual) Per-Developer Database Isolation
 
-Optional but recommended when multiple developers share a machine:
+Optional but recommended when multiple developers share a machine — each gets a separate Postgres **database name** inside the same container. Full guide: **[Per-developer database isolation](./per-developer-db.md)**.
+
+**CLI only** (no `make` wrapper):
 
 ```bash
 uv run kira dev init --name alice
@@ -117,15 +125,17 @@ This creates `docker/docker-compose.override.yml` pointing all services to `kira
 
 ```bash
 uv run kira dev up
-# Or directly:
+# Make: make up
+
+# Or infra only, raw Compose (same files kira uses):
 docker compose -f docker/docker-compose.yml up -d postgres redis kafka
-# Always pass -f docker/docker-compose.yml when running compose from the repo root (same paths the Makefile uses).
 ```
 
 Wait for health checks:
 
 ```bash
 uv run kira dev status
+# Make: make stack-status
 # All infra containers should show "healthy"
 ```
 
@@ -135,12 +145,14 @@ uv run kira dev status
 
 ```bash
 uv run kira migrate --all --docker
+# Make: make migrate-docker-all
 ```
 
 This runs Alembic `upgrade head` inside each running service container. Alternatively, run migrations on the host (requires Postgres on localhost:5432):
 
 ```bash
 uv run kira migrate --all
+# Make: make migrate-all
 ```
 
 ---
@@ -149,6 +161,7 @@ uv run kira migrate --all
 
 ```bash
 uv run kira seed --docker
+# Make: make seed-docker
 ```
 
 Seeds: super-admin user (`admin@example.com` / `Admin1234!`), sample tenants, room types, rate plans, and test reservations.
@@ -158,14 +171,14 @@ Seeds: super-admin user (`admin@example.com` / `Admin1234!`), sample tenants, ro
 ## 9. Start the Full Stack
 
 ```bash
-uv run kira dev up          # Core: 6 services + Kong + web-app + infra
-uv run kira dev up --full   # Core + observability (Grafana, Prometheus, Loki, etc.)
+uv run kira dev up          # Core: 6 services + Kong + web-app + infra  |  Make: make up
+uv run kira dev up --full   # Core + observability                        |  Make: make up-full
 ```
 
 Verify everything is healthy:
 
 ```bash
-uv run kira dev status
+uv run kira dev status      # Make: make stack-status
 ```
 
 | Service                | URL                        | Notes                             |
@@ -184,12 +197,10 @@ uv run kira dev status
 Open local URLs in the browser (many tabs):
 
 ```bash
-uv run kira dashboards              # Core: :3000, :4000, Mailhog, Kong, all service /docs
-uv run kira dashboards --full       # Above + Grafana, Prometheus, Loki, Alloy, pgAdmin, Redis Insight, Kafka UI, Portainer
+uv run kira dashboards              # Make: make dashboards
+uv run kira dashboards --full       # Make: make dashboards-full  (alias --all)
 uv run kira dashboards --all        # Same as --full
 ```
-
-`make dashboards` / `make dashboards-full` call the same CLI from the Makefile.
 
 ---
 
@@ -198,12 +209,13 @@ uv run kira dashboards --all        # Same as --full
 ### Backend Tests (per service)
 
 ```bash
-uv run kira test identity-service        # Single service
-uv run kira test --all                   # All 6 services
-uv run kira test --all --coverage        # With coverage (fail < 70%)
+uv run kira test identity-service           # Single service
+uv run kira test --all --no-web            # All six backends (same as make test-all / pre-push Python stage)
+uv run kira test --all                     # Backends + web-app Vitest
+uv run kira test --all --coverage --no-web # Coverage gate (same as make test-coverage)
 ```
 
-Or with Make:
+Or with Make (each target delegates to `kira`):
 
 ```bash
 make test-identity-service
@@ -216,28 +228,39 @@ make test-coverage
 ```bash
 cd web-app && bun run test               # Vitest
 # Or from root:
+uv run kira test --web
 make test-web
 ```
 
 ### Linting
 
 ```bash
-# Backend (per service)
+# Same gate as Husky after lint-staged (full monorepo)
+uv run kira lint --all
+
+# Backend (single service)
 cd services/identity-service && uv run ruff check . && uv run ruff format --check .
 
-# Frontend
+# Frontend only
 cd web-app && bun run lint
 ```
 
 ### Integration Tests
 
 ```bash
-make test-integration    # Requires running infra containers
+uv run kira test --integration   # Starts Postgres/Redis/Kafka via Compose, runs pytest -m integration, tears down
+make test-integration            # Same (thin Make wrapper)
 ```
 
 ---
 
-## 11. Make a Commit
+## 11. Git push and pre-push tests
+
+Before **`git push`**, Husky runs **`make test-pre-push`** (Python services, web Vitest, integration). To choose what runs and avoid double work, use **`uv run kira push`** (interactive by default). Skip env vars (`SKIP_TEST_*`) are documented in **[Git, Husky hooks, and pushes](../contributing/git-hooks-and-pushes.md)**.
+
+---
+
+## 12. Make a Commit
 
 KIRA uses Conventional Commits enforced by Husky + Commitlint.
 
@@ -252,7 +275,7 @@ Valid prefixes: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `bui
 
 ---
 
-## 12. Observability Stack (Optional)
+## 13. Observability Stack (Optional)
 
 ```bash
 uv run kira dev up --full
@@ -272,11 +295,12 @@ uv run kira dashboards --full   # or --all
 
 ---
 
-## 13. Stop & Clean Up
+## 14. Stop & Clean Up
 
 ```bash
-uv run kira dev down     # Stop containers (keep data)
-uv run kira dev clean    # Stop + remove volumes (fresh start)
+uv run kira dev down              # Stop containers (keep data)
+uv run kira dev clean             # Stop + remove volumes (prompts for confirmation)
+uv run kira dev clean --yes       # Non-interactive (same as make clean)
 ```
 
 ---
@@ -299,17 +323,18 @@ uv run kira dev clean    # Stop + remove volumes (fresh start)
 
 ```bash
 # Daily workflow
-uv run kira dev up              # Start stack
-uv run kira dev status          # Check health
-uv run kira test --all          # Run tests
-uv run kira commit              # Commit with Conventional Commits
-uv run kira dev down            # End of day
+uv run kira dev up              #  |  make up
+uv run kira dev status          #  |  make stack-status
+uv run kira test --all --no-web #  |  make test-all
+uv run kira test --web          #  |  make test-web
+uv run kira commit              #  (no make alias)
+uv run kira dev down            #  |  make down
 
 # After pulling new code
-uv run kira migrate --all --docker
-uv run kira dev down && uv run kira dev up
+uv run kira migrate --all --docker   #  |  make migrate-docker-all
+uv run kira dev down && uv run kira dev up   #  |  make down && make up
 
-# Full reset
-uv run kira dev clean
-uv run kira dev setup
+# Full reset (host setup path)
+uv run kira dev clean           # prompts  |  make clean → kira dev clean --yes
+uv run kira dev setup           #  |  make dev-setup
 ```
