@@ -1,10 +1,10 @@
 name: kira
 
-# Usage:
-#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+# Usage (from repo root):
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up -d
 #
 # This file extends the core stack with monitoring, logging, and debug UIs.
-# All services join the kira-net network defined in docker-compose.yml.
+# All services join the kira-net network defined in docker/docker-compose.yml.
 
 services:
 

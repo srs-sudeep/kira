@@ -29,8 +29,9 @@ abodeatab-platform/          ← ONE GitHub repo
 ├── web-app/
 ├── shared/
 ├── k8s/
-├── docker-compose.yml
-├── docker-compose.observability.yml
+├── docker/
+│   ├── docker-compose.yml
+│   └── docker-compose.observability.yml
 ├── Makefile
 └── .github/workflows/
 ```
@@ -125,10 +126,10 @@ brew install --cask docker
 # - Disk: 30GB+
 ```
 
-### Main docker-compose.yml (services + infrastructure):
+### Main `docker/docker-compose.yml` (services + infrastructure):
 
 ```yaml
-# docker-compose.yml
+# docker/docker-compose.yml (paths relative to repo root in this excerpt)
 services:
 
   # ── Infrastructure ──
@@ -309,7 +310,7 @@ volumes:
 
 ```yaml
 # docker-compose.observability.yml
-# Run with: docker compose -f docker-compose.yml -f docker-compose.observability.yml up
+# Run with: docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up
 
 services:
 
@@ -489,23 +490,23 @@ scrape_configs:
 
 # Start everything (services + infra)
 up:
-	docker compose up -d --build
+	docker compose -f docker/docker-compose.yml up -d --build
 
 # Start with observability dashboards too
 up-full:
-	docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build
+	docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up -d --build
 
 # Stop everything
 down:
-	docker compose -f docker-compose.yml -f docker-compose.observability.yml down
+	docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml down
 
 # View logs (all services)
 logs:
-	docker compose logs -f --tail=100
+	docker compose -f docker/docker-compose.yml logs -f --tail=100
 
 # View logs for one service
 logs-%:
-	docker compose logs -f --tail=100 $*
+	docker compose -f docker/docker-compose.yml logs -f --tail=100 $*
 
 # Run tests for a specific service
 test-%:
@@ -533,7 +534,7 @@ seed:
 
 # Nuclear option — destroy all data and rebuild
 clean:
-	docker compose -f docker-compose.yml -f docker-compose.observability.yml down -v
+	docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml down -v
 	docker system prune -f
 
 # Open all dashboards in browser (Mac)
@@ -619,7 +620,7 @@ When the client is ready to pay for AWS (or when you hit the production mileston
 ### What does NOT change:
 - Docker images (same Dockerfile, same image)
 - Application code (zero changes)
-- docker-compose.yml (still used for local dev even after AWS migration)
+- `docker/docker-compose.yml` (still used for local dev even after AWS migration)
 - API contracts
 - Database schema
 - Kafka topics

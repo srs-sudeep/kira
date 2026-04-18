@@ -95,26 +95,26 @@ cp services/yield-optimizer/.env.example services/yield-optimizer/.env.local
 # Edit .env.local with your local values
 ```
 
-### 2. `docker-compose.yml`
+### 2. `docker/docker-compose.yml`
 
-Add the new service following the existing pattern:
+Add the new service following the existing pattern (paths are relative to the `docker/` directory):
 
 ```yaml
 yield-optimizer:
   <<: *app-defaults
   build:
-    context: .
-    dockerfile: services/yield-optimizer/Dockerfile
-  env_file: ./services/yield-optimizer/.env.local
+    context: ../services/yield-optimizer
+    dockerfile: ../docker/yield-optimizer.Dockerfile
+  env_file: ../services/yield-optimizer/.env.local
   ports:
     - "8007:8007"
   volumes:
-    - ./services/yield-optimizer/app:/app/app
-    - ./shared:/app/shared
+    - ../services/yield-optimizer:/app
+    - ../shared:/app/shared
   command: uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload
 ```
 
-Choose a port not already in use. Services are currently at 8001–8006; 8007 is next.
+Add a matching `docker/yield-optimizer.Dockerfile` (copy an existing `docker/*-service.Dockerfile` and adjust). Choose a port not already in use. Services are currently at 8001–8006; 8007 is next.
 
 ### 3. `kong/kong.yml`
 
@@ -251,4 +251,4 @@ Do not copy code from `shared/` into the service directory. If you need to exten
 - [ ] All handlers are async
 - [ ] Has a `/health` endpoint (GET, returns 200)
 - [ ] Test coverage ≥ 70% on service layer
-- [ ] Added to `docker-compose.yml`, Kong, K8s base, and CI workflow
+- [ ] Added to `docker/docker-compose.yml`, Kong, K8s base, and CI workflow

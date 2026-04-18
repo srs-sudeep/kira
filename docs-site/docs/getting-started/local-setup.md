@@ -336,7 +336,7 @@ lsof -i :5432
 sudo kill -9 $(lsof -t -i :5432)
 ```
 
-Common culprits: a local PostgreSQL installation, another Docker Compose project. You can also change the host-side port in `docker-compose.yml` (e.g., `"5433:5432"`) without affecting anything else.
+Common culprits: a local PostgreSQL installation, another Docker Compose project. You can also change the host-side port in `docker/docker-compose.yml` (e.g., `"5433:5432"`) without affecting anything else.
 
 ---
 

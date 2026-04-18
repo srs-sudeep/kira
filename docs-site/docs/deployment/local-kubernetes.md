@@ -6,7 +6,7 @@ sidebar_position: 4
 
 # Local Kubernetes validation
 
-KIRA’s **application day-to-day dev** is **Docker Compose** (`docker-compose.yml`). The **`k8s/`** tree is for **real clusters** (staging/production on **EKS**). There is **no** bundled overlay that reproduces Postgres + Redis + Kafka + all services on a laptop cluster.
+KIRA’s **application day-to-day dev** is **Docker Compose** (`docker/docker-compose.yml`). The **`k8s/`** tree is for **real clusters** (staging/production on **EKS**). There is **no** bundled overlay that reproduces Postgres + Redis + Kafka + all services on a laptop cluster.
 
 This page fills the gap: **how to check that Kubernetes itself and your `kubectl` setup work**, and **how far you can validate `k8s/` before EKS**.
 

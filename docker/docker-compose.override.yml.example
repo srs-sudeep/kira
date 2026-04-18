@@ -1,14 +1,15 @@
 # docker-compose.override.yml — Per-developer customization
 #
-# Copy this file:  cp docker-compose.override.yml.example docker-compose.override.yml
-# Docker Compose automatically merges docker-compose.override.yml with docker-compose.yml.
+# Copy:  cp docker/docker-compose.override.yml.example docker/docker-compose.override.yml
+# Docker Compose merges docker-compose.override.yml beside the base file when you use
+#   docker compose -f docker/docker-compose.yml …
 #
 # Each developer gets an isolated database by setting a unique POSTGRES_DB.
 # Convention: kira_<your-name>  (e.g. kira_alice, kira_bob)
 #
-# After changing the DB name, run:
-#   docker compose down -v   # remove old volume with stale DB
-#   docker compose up -d     # creates the new DB automatically
+# After changing the DB name, run (from repo root):
+#   docker compose -f docker/docker-compose.yml down -v   # remove old volume with stale DB
+#   docker compose -f docker/docker-compose.yml up -d     # creates the new DB automatically
 #   kira migrate --all --docker   # run Alembic migrations
 #   kira seed --docker            # seed dev data
 

@@ -26,7 +26,7 @@ def init(
 ) -> None:
     """Set up per-developer database isolation.
 
-    Creates docker-compose.override.yml so each developer gets their own
+    Creates docker/docker-compose.override.yml so each developer gets their own
     Postgres database (kira_<name>).  Run this once when you first clone
     the repo, or when you want to switch to a different personal DB.
     """

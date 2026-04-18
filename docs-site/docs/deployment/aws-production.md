@@ -473,7 +473,7 @@ done
 ```
 
 :::note Build context is the repo root
-Each Dockerfile copies from `shared/`, so the build context must be `.` (the repo root), not the service directory. This matches the docker-compose.yml pattern.
+Each Dockerfile copies from `shared/`, so the build context must be `.` (the repo root), not the service directory. This matches the `docker/docker-compose.yml` pattern (paths are written relative to the `docker/` compose file location).
 :::
 
 ---

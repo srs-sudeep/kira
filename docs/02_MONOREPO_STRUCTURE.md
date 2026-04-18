@@ -270,7 +270,7 @@ abodeatab-platform/
 │       ├── deploy-staging.yml
 │       └── deploy-production.yml
 │
-├── docker-compose.yml                 # Local dev: all services + infra
+├── docker/                            # Dockerfiles + docker/docker-compose.yml (local full stack)
 ├── Makefile                           # Shortcuts: make up, make test-all, make deploy-staging
 ├── .gitignore
 └── README.md

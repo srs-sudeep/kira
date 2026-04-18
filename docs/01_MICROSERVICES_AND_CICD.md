@@ -99,7 +99,7 @@ docker push 123456789.dkr.ecr.ap-south-1.amazonaws.com/identity-service:1.0.0
 
 In practice, CI/CD does all of this automatically (see Section 4).
 
-### docker-compose.yml for local development:
+### `docker/docker-compose.yml` for local development:
 
 ```yaml
 services:

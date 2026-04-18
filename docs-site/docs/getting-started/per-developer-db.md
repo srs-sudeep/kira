@@ -26,7 +26,7 @@ uv run kira dev init --name alice    # → DB: kira_alice
 uv run kira dev init                 # → DB: kira_<your-username>
 ```
 
-This creates `docker-compose.override.yml` from the committed template.
+This creates `docker/docker-compose.override.yml` from the committed template.
 
 ## What Changes
 
