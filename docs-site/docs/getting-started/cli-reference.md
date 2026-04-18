@@ -90,7 +90,8 @@ uv run kira --install-completion fish
 | ------------------------- | --------------------------------------------------------------------------------------- |
 | `kira dev setup`          | Bootstrap local dev: check prereqs, copy envs, install deps, start infra, migrate, seed |
 | `kira dev up`             | Start core Docker Compose stack                                                         |
-| `kira dev up --full`      | Start core + observability (Grafana, Prometheus, Loki…)                                 |
+| `kira dev up --full`      | Start core + observability + docs-site (enables Docker Compose `docs` profile)         |
+| `kira dev e2e`            | Run setup flow, then start full stack (core + observability + docs-site)               |
 | `kira dev down`           | Stop and remove containers (keep volumes)                                               |
 | `kira dev logs [SERVICE]` | Follow container logs (all or one service)                                              |
 | `kira dev status`         | Show container status                                                                   |
@@ -101,6 +102,7 @@ uv run kira --install-completion fish
 ```bash
 uv run kira dev setup    # One command to rule them all
 uv run kira dev up       # Start services
+uv run kira dev e2e      # Setup + full stack (includes docs-site)
 uv run kira dashboards   # Open browser tabs (core URLs)
 # After `kira dev up --full`:  uv run kira dashboards --full   # or --all — adds Grafana, Prometheus, …
 ```

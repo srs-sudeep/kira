@@ -102,9 +102,11 @@ def _run_dev_setup_core() -> None:
 def _start_stack(*, full: bool) -> None:
     """Bring up Docker Compose (optionally with observability)."""
     if full:
-        info("Starting full stack (core + observability)…")
+        info("Starting full stack (core + observability + docs)…")
         run(
             compose(
+                "--profile",
+                "docs",
                 "up",
                 "-d",
                 "--build",
