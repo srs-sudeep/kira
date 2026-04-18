@@ -72,13 +72,13 @@ test-integration:
 
 ## Run Alembic migrations for a specific service — usage: make migrate-identity-service
 migrate-%:
-	cd services/$* && uv run alembic upgrade head
+	cd services/$* && uv run poetry install --no-root --no-interaction && uv run python -m alembic upgrade head
 
 ## Run migrations for all services sequentially (host)
 migrate-all:
 	@for svc in $(SERVICES); do \
 		echo "\n=== Migrating $$svc ==="; \
-		cd services/$$svc && uv run alembic upgrade head; \
+		cd services/$$svc && uv run poetry install --no-root --no-interaction && uv run python -m alembic upgrade head; \
 		cd ../..; \
 	done
 

@@ -6,7 +6,16 @@ from typing import Optional
 
 import typer
 
-from cli.utils import ROOT, SERVICES, compose, info, run, success, validate_service
+from cli.utils import (
+    ROOT,
+    SERVICES,
+    compose,
+    info,
+    run,
+    success,
+    sync_poetry_service_env,
+    validate_service,
+)
 
 app = typer.Typer(invoke_without_command=True)
 
@@ -37,8 +46,11 @@ def main(
                 )
             )
         else:
+            svc_dir = ROOT / "services" / svc
+            sync_poetry_service_env(svc_dir)
             run(
-                ["uv", "run", "alembic", "upgrade", "head"], cwd=ROOT / "services" / svc
+                ["uv", "run", "python", "-m", "alembic", "upgrade", "head"],
+                cwd=svc_dir,
             )
         success(f"  {svc} migrated")
 

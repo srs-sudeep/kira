@@ -9,7 +9,18 @@ from typing import Optional
 
 import typer
 
-from cli.utils import ROOT, SERVICES, compose, error, info, require, run, success, warn
+from cli.utils import (
+    ROOT,
+    SERVICES,
+    compose,
+    error,
+    info,
+    require,
+    run,
+    success,
+    sync_poetry_service_env,
+    warn,
+)
 
 app = typer.Typer(no_args_is_help=True)
 
@@ -125,7 +136,11 @@ def setup() -> None:
     info("Running database migrations…")
     for svc in SERVICES:
         svc_dir = ROOT / "services" / svc
-        run(["uv", "run", "alembic", "upgrade", "head"], cwd=svc_dir)
+        sync_poetry_service_env(svc_dir)
+        run(
+            ["uv", "run", "python", "-m", "alembic", "upgrade", "head"],
+            cwd=svc_dir,
+        )
         success(f"  {svc} migrated")
 
     # 8 — Seed data

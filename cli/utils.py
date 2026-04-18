@@ -84,6 +84,32 @@ def validate_service(name: str) -> str:
     return name
 
 
+def sync_poetry_service_env(svc_dir: Path) -> None:
+    """Install Poetry-managed dependencies into the service ``.venv`` for ``uv run``.
+
+    Services use ``[tool.poetry]`` without a full ``[project]`` table; ``uv run`` then
+    relies on ``poetry.lock`` (or resolves on first ``poetry install``). Without this
+    step, ``uv run alembic`` can fail with "Failed to spawn: alembic" because the venv
+    has no application dependencies yet.
+    """
+    pyproject = svc_dir / "pyproject.toml"
+    if not pyproject.is_file():
+        return
+    if "[tool.poetry]" not in pyproject.read_text():
+        return
+    run(
+        [
+            "uv",
+            "run",
+            "poetry",
+            "install",
+            "--no-root",
+            "--no-interaction",
+        ],
+        cwd=svc_dir,
+    )
+
+
 def compose(*args: str, files: list[str] | None = None) -> list[str]:
     """Build a docker compose command list."""
     cmd = ["docker", "compose"]
