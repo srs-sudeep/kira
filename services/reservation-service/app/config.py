@@ -2,15 +2,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(".env", ".env.local"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     service_name: str = "reservation-service"
     port: int = 8003
     debug: bool = False
     environment: str = "development"
 
-    database_url: str = "postgresql+asyncpg://kira:kira@localhost:5432/kira_reservation_service"
-    redis_url: str = "redis://localhost:6379/0"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/kira"
+    redis_url: str = "redis://:redis-local-dev@localhost:6379/2"
     kafka_bootstrap_servers: str = "localhost:9092"
 
     secret_key: str = "change-me-in-production"
