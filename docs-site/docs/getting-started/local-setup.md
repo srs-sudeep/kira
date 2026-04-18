@@ -42,8 +42,14 @@ This single command will:
 After setup completes, start the stack:
 
 ```bash
-uv run kira dev up          # Start all services
-uv run kira dashboards      # Open UIs in browser
+uv run kira dev up          # Start all services (core stack)
+uv run kira dashboards      # Open browser tabs: web :3000, docs :4000, Mailhog, Kong, every /docs
+```
+
+After **`kira dev up --full`** (or `make up-full`), open observability UIs too:
+
+```bash
+uv run kira dashboards --full   # or: --all
 ```
 
 See the [CLI Reference](./cli-reference.md) for the full command list.
@@ -283,9 +289,10 @@ Then open the observability URLs in your browser:
 
 ```bash
 make dashboards-full
+# equivalent: uv run kira dashboards --full   (alias --all)
 ```
 
-For the **core** stack only (web, Mailhog, Kong landing, one Swagger tab): `make dashboards` after `make up`. See [Dev dashboards & ports](./dev-dashboards.md) for what each command opens.
+For the **core** stack only: `make dashboards` or `uv run kira dashboards` after `make up` — opens web, docs :4000, Mailhog, Kong proxy + admin, and **each** service OpenAPI tab (`8001`–`8006` `/docs`). See [Dev dashboards & ports](./dev-dashboards.md) for details and troubleshooting.
 
 | Dashboard      | URL                                      | Purpose                                                                                  |
 | -------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -298,7 +305,7 @@ For the **core** stack only (web, Mailhog, Kong landing, one Swagger tab): `make
 | pgAdmin        | [localhost:5050](http://localhost:5050)  | SQL browser — **`admin@kira.dev` / `admin`** (see [Dev dashboards](./dev-dashboards.md)) |
 | Redis Insight  | [localhost:5540](http://localhost:5540)  | Redis key browser                                                                        |
 | Mailhog        | [localhost:8025](http://localhost:8025)  | Outbound email trap                                                                      |
-| Portainer      | [localhost:9443](https://localhost:9443) | Container management UI                                                                  |
+| Portainer      | [localhost:9000](http://localhost:9000) (HTTP) or [localhost:9443](https://localhost:9443) (HTTPS) | Container management — see [Dev dashboards](./dev-dashboards.md) for the local admin password |
 
 ---
 

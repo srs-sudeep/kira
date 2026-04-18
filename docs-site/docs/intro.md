@@ -52,7 +52,7 @@ Set up the full stack locally and take your first tour of the platform.
 
 - [Prerequisites](./getting-started/prerequisites.md) — tools to install before you begin
 - [Local Setup](./getting-started/local-setup.md) — clone, configure, and run with Docker Compose
-- [Dev dashboards & ports](./getting-started/dev-dashboards.md) — web app :3000, docs :4000, Grafana/pgAdmin/Portainer sign-in
+- [Dev dashboards & ports](./getting-started/dev-dashboards.md) — web :3000, docs :4000, `kira dashboards` / `--full` (`--all`), Grafana/pgAdmin/Portainer sign-in
 - [First Run](./getting-started/first-run.md) — walkthrough of creating a tenant, room types, and your first reservation
 - [Project Structure](./getting-started/project-structure.md) — monorepo layout explained, folder by folder
 

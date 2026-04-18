@@ -73,7 +73,7 @@ web-app/
 ```bash
 cd web-app
 bun install
-bun run dev   # http://localhost:3000
+bun run dev   # http://localhost:3000 (override with PORT or VITE_DEV_PORT; see vite.config.ts)
 ```
 
 For production build:

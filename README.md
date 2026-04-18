@@ -17,8 +17,8 @@ The repo is a **microservices monorepo**: six FastAPI services, a **React 19** a
 
 | Command               | What it does                                                                                                                     |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `make docs-dev`       | Docusaurus **dev server** with hot reload (needs [bun](https://bun.sh)) → [http://localhost:4000](http://localhost:4000)         |
-| `make docs-docker-up` | **Built** docs served by nginx in Docker → [http://localhost:4000](http://localhost:4000) (rebuild image after editing markdown) |
+| `make docs-dev`       | Docusaurus **dev server** on **port 4000** (same as `kira docs dev`; needs [bun](https://bun.sh)) → [http://localhost:4000](http://localhost:4000) |
+| `make docs-docker-up` | **Built** docs in Docker (`--profile docs`) → host [http://localhost:4000](http://localhost:4000) (rebuild the image after editing markdown) |
 | `make docs-build`     | Static output in `docs-site/build/` only                                                                                         |
 
 ---
@@ -33,11 +33,13 @@ Full detail: [`docs-site/docs/getting-started/e2e-local-dev.md`](docs-site/docs/
 git clone https://github.com/abodeab/kira.git
 cd kira
 uv run kira dev setup      # env files, deps, infra, migrations, seed
-uv run kira dev up          # start all services
-uv run kira dashboards      # open UIs in browser
+uv run kira dev up          # start all services (core: Kong, APIs, web-app on :3000)
+uv run kira dashboards      # open many browser tabs: web :3000, docs :4000, Mailhog, Kong, each /docs
+uv run kira dashboards --full   # same as above + Grafana, Prometheus, Loki, … (use after kira dev up --full)
+# --full and --all are equivalent
 ```
 
-**Open the web app:** [http://localhost:3000](http://localhost:3000) — login as `admin@example.com` / `Admin1234!`.
+**Open the web app:** [http://localhost:3000](http://localhost:3000) — login as `admin@example.com` / `Admin1234!`. The Vite dev server defaults to **3000** (`PORT` / `VITE_DEV_PORT` in `web-app/vite.config.ts`; Compose sets `PORT=3000`).
 
 **Step by step alternative:** `make up` → `make migrate-docker-all` → `make seed-docker` (see `make help`).
 
@@ -70,7 +72,7 @@ Full detail: [`docs-site/docs/getting-started/cli-reference.md`](docs-site/docs/
 | `kira migrate <service> [--all] [--docker]` | Run Alembic migrations                                        |
 | `kira seed [--docker]`                      | Seed development data                                         |
 | `kira commit`                               | Interactive Conventional Commit (Commitizen)                  |
-| `kira dashboards [--full]`                  | Open UIs in browser                                           |
+| `kira dashboards [--full \| --all]`         | Open local dev URLs in the browser (add `--full` or `--all` for observability UIs) |
 | `kira docs dev \| build`                    | Docusaurus dev server or build                                |
 
 ---
@@ -108,7 +110,8 @@ Monorepo details: [`docs/02_MONOREPO_STRUCTURE.md`](docs/02_MONOREPO_STRUCTURE.m
 | channel-engine         | 8004                          |
 | notification-service   | 8005                          |
 | admin-service          | 8006                          |
-| web-app                | 3000                          |
+| web-app                | [3000](http://localhost:3000) |
+| docs-site (optional)   | [4000](http://localhost:4000) — `make docs-dev`, `kira docs dev`, or Compose `--profile docs` |
 
 Each backend exposes OpenAPI at `http://localhost:<port>/docs`.
 
@@ -125,8 +128,10 @@ Start the full stack with observability: `make up-full`. These URLs assume defau
 | **Loki**          | [http://localhost:3100](http://localhost:3100)   | HTTP API only; query logs in Grafana.                                                                         |
 | **Grafana Alloy** | [http://localhost:12345](http://localhost:12345) | Ships Docker logs to Loki (replaces EOL Promtail); optional debug UI.                                         |
 | **Kafka UI**      | [http://localhost:8080](http://localhost:8080)   | No login (local dev).                                                                                         |
+| **Redis Insight** | [http://localhost:5540](http://localhost:5540)   | Add a Redis connection manually (see [dev dashboards](docs-site/docs/getting-started/dev-dashboards.md)).      |
 | **pgAdmin**       | [http://localhost:5050](http://localhost:5050)   | **`admin@kira.dev` / `admin`**. Pre-registered server **KIRA Local**.                                         |
-| **Portainer**     | [http://localhost:9000](http://localhost:9000)   | Admin password in [`observability/portainer/dev-admin-password`](observability/portainer/dev-admin-password). |
+| **Loki**          | [http://localhost:3100](http://localhost:3100)   | HTTP API; query logs in Grafana → Loki.                                                                       |
+| **Portainer**     | [http://localhost:9000](http://localhost:9000)   | HTTP UI; HTTPS on [9443](https://localhost:9443). Password: [dev dashboards](docs-site/docs/getting-started/dev-dashboards.md). |
 | **Mailhog**       | [http://localhost:8025](http://localhost:8025)   | No login (starts with `make up`).                                                                             |
 
 **Postgres:** host `localhost`, port **`5432`**, database **`kira`**, user **`postgres`**, password **`postgres`**.

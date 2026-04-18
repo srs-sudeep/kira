@@ -8,7 +8,7 @@ sidebar_position: 2
 
 **What you'll learn:**
 - How KIRA services produce structured JSON logs via structlog
-- How Promtail ships logs to Loki locally, and how CloudWatch collects them in production
+- How **Grafana Alloy** ships container logs to Loki locally, and how CloudWatch collects them in production
 - How to search and filter logs in Grafana
 - Log levels and when each is appropriate
 
@@ -119,7 +119,7 @@ In production, `LOG_LEVEL=INFO` is set in the ConfigMap. `DEBUG` logs are never 
 
 ## Local Log Aggregation (Loki + Grafana Alloy)
 
-When running with `docker-compose.observability.yml`, **Grafana Alloy** collects container logs and ships them to Loki. (Promtail reached **end of life** in March 2026; Alloy is the supported agent.)
+When running with **`docker/docker-compose.observability.yml`**, **Grafana Alloy** collects container logs and ships them to Loki. (Promtail reached **end of life** in March 2026; Alloy is the supported agent.)
 
 ```
 Docker API (containers) → Grafana Alloy → Loki → Grafana

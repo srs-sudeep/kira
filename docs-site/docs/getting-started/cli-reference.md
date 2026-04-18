@@ -101,7 +101,8 @@ uv run kira --install-completion fish
 ```bash
 uv run kira dev setup    # One command to rule them all
 uv run kira dev up       # Start services
-uv run kira dashboards   # Open UIs
+uv run kira dashboards   # Open browser tabs (core URLs)
+# After `kira dev up --full`:  uv run kira dashboards --full   # or --all — adds Grafana, Prometheus, …
 ```
 
 ---
@@ -241,3 +242,5 @@ The CLI wraps the Makefile, so both work:
 | `kira migrate --all` | `make migrate-all` |
 | `kira seed`          | `make seed`        |
 | `kira dev setup`     | `make dev-setup`   |
+| `kira dashboards`    | `make dashboards`  |
+| `kira dashboards --full` | `make dashboards-full` |

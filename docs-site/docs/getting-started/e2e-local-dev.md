@@ -115,6 +115,7 @@ This creates `docker/docker-compose.override.yml` pointing all services to `kira
 uv run kira dev up
 # Or directly:
 docker compose -f docker/docker-compose.yml up -d postgres redis kafka
+# Always pass -f docker/docker-compose.yml when running compose from the repo root (same paths the Makefile uses).
 ```
 
 Wait for health checks:
@@ -165,8 +166,9 @@ uv run kira dev status
 
 | Service                | URL                        | Notes                             |
 | ---------------------- | -------------------------- | --------------------------------- |
-| **Web App**            | http://localhost:3000      | React + Vite dev server           |
-| **Kong Gateway**       | http://localhost:8000      | API gateway (proxies to services) |
+| **Web App**            | http://localhost:3000      | React + Vite dev server (`PORT` / `VITE_DEV_PORT`, default **3000**) |
+| **Docs site**          | http://localhost:4000      | Docusaurus — `kira docs dev`, `make docs-dev`, or Docker `--profile docs` (only one :4000 at a time) |
+| **Kong Gateway**       | http://localhost:8000      | API gateway (proxies to services under `/api/v1/`) |
 | **Identity API**       | http://localhost:8001/docs | Swagger UI                        |
 | **Rate/Inventory API** | http://localhost:8002/docs | Swagger UI                        |
 | **Reservation API**    | http://localhost:8003/docs | Swagger UI                        |
@@ -175,11 +177,15 @@ uv run kira dev status
 | **Admin API**          | http://localhost:8006/docs | Swagger UI                        |
 | **Mailhog**            | http://localhost:8025      | Catches outgoing emails           |
 
-Open all dashboards at once:
+Open local URLs in the browser (many tabs):
 
 ```bash
-uv run kira dashboards
+uv run kira dashboards              # Core: :3000, :4000, Mailhog, Kong, all service /docs
+uv run kira dashboards --full       # Above + Grafana, Prometheus, Loki, Alloy, pgAdmin, Redis Insight, Kafka UI, Portainer
+uv run kira dashboards --all        # Same as --full
 ```
+
+`make dashboards` / `make dashboards-full` call the same CLI from the Makefile.
 
 ---
 
@@ -246,17 +252,19 @@ Valid prefixes: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `bui
 
 ```bash
 uv run kira dev up --full
-uv run kira dashboards --full
+uv run kira dashboards --full   # or --all
 ```
 
-| Tool           | URL                    | Credentials                          |
-| -------------- | ---------------------- | ------------------------------------ |
-| **Grafana**    | http://localhost:3001  | Anonymous viewer, or `admin`/`admin` |
-| **Prometheus** | http://localhost:9090  | —                                    |
-| **Kafka UI**   | http://localhost:8080  | —                                    |
-| **pgAdmin**    | http://localhost:5050  | `admin@kira.dev` / `admin`           |
-| **Portainer**  | http://localhost:9000  | `admin` / `adminadmin`               |
-| **Alloy UI**   | http://localhost:12345 | —                                    |
+| Tool             | URL                    | Credentials / notes |
+| ---------------- | ---------------------- | ------------------- |
+| **Grafana**      | http://localhost:3001  | Anonymous **Viewer**; **Sign in** as `admin` / `admin` to edit |
+| **Prometheus**   | http://localhost:9090  | No auth (local dev) |
+| **Loki**         | http://localhost:3100  | API only; use Grafana → Explore → Loki |
+| **Kafka UI**     | http://localhost:8080  | No login |
+| **Redis Insight**| http://localhost:5540  | Add Redis manually (see [Dev dashboards](./dev-dashboards.md)) |
+| **pgAdmin**      | http://localhost:5050  | `admin@kira.dev` / `admin` |
+| **Portainer**    | http://localhost:9000  | Local admin password — [Dev dashboards & ports](./dev-dashboards.md) |
+| **Alloy UI**     | http://localhost:12345 | Log pipeline debug UI |
 
 ---
 

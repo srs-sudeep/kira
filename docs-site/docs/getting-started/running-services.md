@@ -57,14 +57,25 @@ bun run build
 bun run preview
 ```
 
+## Running the documentation site
+
+From the repo root (or `cd docs-site`):
+
+```bash
+bun install
+bun run start   # http://localhost:4000 — fixed in package.json; same port as Docker host mapping
+```
+
+Or use **`kira docs dev`** / **`make docs-dev`** from the monorepo root.
+
 ## Makefile Shortcuts
 
 The root `Makefile` provides convenience targets:
 
 ```bash
-make up           # docker compose up -d --build
-make down         # docker compose down
-make logs         # docker compose logs -f
+make up           # docker compose -f docker/docker-compose.yml up -d --build
+make down         # docker compose … down (see Makefile COMPOSE_FULL)
+make logs         # docker compose -f docker/docker-compose.yml logs -f
 make migrate-all  # alembic upgrade head for all services
 make test-all     # run pytest for all services
 make lint-all     # ruff check + format check for all services
@@ -74,16 +85,18 @@ make docs-build   # build static docs site
 
 ## Accessing Service APIs
 
-When running via Docker Compose, services are accessible through the Kong gateway at port 8000:
+When running via Docker Compose, the **Kong** proxy listens on **port 8000**. HTTP APIs are under **`/api/v1/`** (see `kong/kong.yml` for the exact paths). Examples:
 
 ```
-http://localhost:8000/identity/  → identity-service
-http://localhost:8000/rates/     → rate-inventory-service
-http://localhost:8000/bookings/  → reservation-service
-http://localhost:8000/channels/  → channel-engine
-http://localhost:8000/notify/    → notification-service
-http://localhost:8000/admin/     → admin-service
+http://localhost:8000/api/v1/auth/login     → identity-service
+http://localhost:8000/api/v1/rooms          → rate-inventory-service
+http://localhost:8000/api/v1/reservations   → reservation-service
+http://localhost:8000/api/v1/channels       → channel-engine
+http://localhost:8000/api/v1/notifications  → notification-service
+http://localhost:8000/api/v1/tenants        → admin-service
 ```
+
+OpenAPI (Swagger) is **not** routed through Kong; use each service port below.
 
 Or directly by port when running a service standalone:
 

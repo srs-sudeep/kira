@@ -28,7 +28,7 @@ kira/
 ├── k8s/               # Kubernetes manifests (Kustomize base + overlays)
 ├── kong/              # Kong API gateway declarative config
 ├── infra/             # Terraform for AWS infrastructure
-├── observability/     # Prometheus, Grafana, Loki, Promtail configs
+├── observability/     # Prometheus, Grafana, Loki, Grafana Alloy configs
 ├── docs-site/         # This documentation (Docusaurus 3)
 ├── scripts/           # One-off scripts (seed data, create super-admin)
 ├── docker/            # Dockerfiles + Compose files
