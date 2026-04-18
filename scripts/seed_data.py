@@ -9,9 +9,9 @@ Run against Docker Compose Postgres from the host (same DSN if port 5432 is publ
 From another machine / CI targeting the DB container by hostname:
   POSTGRES_DSN=postgresql://postgres:postgres@postgres:5432/kira python scripts/seed_data.py
 
-Dependencies: ``asyncpg`` is declared on the repo-root ``kira-cli`` package so
-``uv run python scripts/seed_data.py`` works from the monorepo root. The Docker
-``seed-data`` service also installs ``cryptography`` if ever needed by this script.
+Dependencies: the repo-root ``kira-cli`` package declares ``asyncpg``, ``pwdlib``,
+and ``cryptography`` so ``uv run python scripts/seed_data.py`` works from the
+monorepo root (including ``seed_crypto`` / ``seed_tenant_business`` imports).
 
 Also set ``ENCRYPTION_KEY`` to the same 64-char hex as reservation-service and channel-engine
 (see ``.env.local``) so guest PII and channel credentials match running services.
