@@ -6,6 +6,8 @@ requires-python = ">=3.13"
 dependencies = [
     "typer>=0.9",
     "rich>=13.0",
+    "asyncpg>=0.30",
+    "pwdlib[bcrypt]>=0.3",
 ]
 
 [project.scripts]
