@@ -10,20 +10,67 @@ KIRA ships a unified CLI tool that wraps every monorepo operation — Docker, te
 
 ## Installation
 
-The CLI is built with Python (Typer) and lives at the repo root. No separate install is needed:
+The CLI is Python ([Typer](https://typer.tiangolo.com/)) under `cli/` at the repo root. You can run it **without** a global install, put **`kira` on your PATH** once via uv’s tool interface, or run a **one-off** invocation with `uvx`.
+
+### Run via project (`uv run`)
+
+From the **repository root** (the directory that contains the root `pyproject.toml`):
 
 ```bash
-# Run any command via uv
 uv run kira --help
-
-# Or install in editable mode for a global `kira` command
-pip install -e .
 ```
+
+If your shell is inside `services/*`, uv picks that service’s `pyproject.toml` instead, and `uv run kira` fails. From anywhere in the clone you can use the wrapper:
+
+```bash
+./bin/kira --help
+```
+
+More causes and fixes: [E2E local dev → Troubleshooting](./e2e-local-dev.md#troubleshooting).
+
+### Global `kira` on your PATH ([uv tools](https://docs.astral.sh/uv/concepts/tools/))
+
+From the **repository root** of your clone:
+
+```bash
+cd kira   # your clone directory
+uv tool install --editable .
+```
+
+- This installs the `kira` [console script](https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#console-scripts) from the root package (`kira-cli` in `pyproject.toml`) into uv’s tool environment and symlinks it onto your PATH.
+- **`--editable` (`-e`)** — recommended while you work on the monorepo: edits under `cli/` apply immediately without reinstalling.
+- Without `-e`, you get a normal install; after `git pull`, refresh with `uv tool upgrade kira-cli` or `uv tool install . --force`.
+
+If uv warns that the executable directory is not on your `PATH`, follow its hint or run:
+
+```bash
+uv tool update-shell
+```
+
+**Uninstall:** `uv tool uninstall kira-cli`
+
+### One-off without installing (`uvx`)
+
+From the repo root:
+
+```bash
+uvx --from . kira --help
+```
+
+From another directory, point `--from` at your clone (absolute path is clearest):
+
+```bash
+uvx --from ~/src/kira kira dev status
+```
+
+:::danger Do not use plain `uvx kira`
+That command installs a **different** project named `kira` from PyPI, not this repository. Always use `uvx --from <path-to-clone> kira`, or install with `uv tool install` as above.
+:::
 
 ### Shell Completion
 
 ```bash
-# Bash
+# Bash (from repo root, or use `kira` if you installed with `uv tool install`)
 uv run kira --install-completion bash
 
 # Zsh

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Run the monorepo CLI from any directory. Plain `uv run kira` only works when
+# the current directory's nearest pyproject.toml is the repo root; service
+# folders have their own pyproject and uv would try (and fail) to spawn `kira`.
+#
+# Optional global install (from repo root): `uv tool install --editable .`
+# then `kira` is on PATH everywhere. See docs-site getting-started/cli-reference.
+
+root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -z ${root:-} || ! -f "$root/pyproject.toml" ]]; then
+  _here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+  root="$(cd "$_here/.." && pwd -P)"
+fi
+
+if [[ ! -f "$root/pyproject.toml" ]]; then
+  echo "kira: could not find repository root (no pyproject.toml)." >&2
+  exit 1
+fi
+
+exec uv run --project "$root" kira "$@"

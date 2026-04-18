@@ -49,7 +49,14 @@ Available on each **direct service port**: [http://localhost:8001/docs](http://l
 
 ## KIRA CLI
 
-The monorepo ships a **`kira`** CLI (Python, powered by [Typer](https://typer.tiangolo.com/)). Run via `uv run kira <command>`.
+The monorepo ships a **`kira`** CLI (Python, powered by [Typer](https://typer.tiangolo.com/)).
+
+- **`uv run kira <command>`** — from the **repository root** only (nearest `pyproject.toml` wins).
+- **`./bin/kira <command>`** — from anywhere in the clone; resolves the repo root and runs `uv run --project <root> kira`.
+- **Global `kira` on your PATH** (optional, one-time from the clone root): `uv tool install --editable .` using [uv’s tool interface](https://docs.astral.sh/uv/concepts/tools/). Then you can run `kira` from any directory, including under `services/`. Upgrade after pulls with `uv tool upgrade kira-cli`; remove with `uv tool uninstall kira-cli`. If uv warns about PATH, run `uv tool update-shell`.
+- **One-off without installing:** from the clone root, `uvx --from . kira <command>`. Do **not** run plain `uvx kira` — that installs a different package from PyPI.
+
+Full detail: [`docs-site/docs/getting-started/cli-reference.md`](docs-site/docs/getting-started/cli-reference.md#installation).
 
 | Command                                     | What it does                                                  |
 | ------------------------------------------- | ------------------------------------------------------------- |

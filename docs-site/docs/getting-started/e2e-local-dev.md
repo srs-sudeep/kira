@@ -278,6 +278,7 @@ uv run kira dev clean    # Stop + remove volumes (fresh start)
 | Postgres connection refused    | `uv run kira dev status` — wait for healthy        |
 | Migration fails                | Ensure Postgres is running and `.env.local` exists |
 | `kira: command not found`      | Use `uv run kira` (not just `kira`)                |
+| `Failed to spawn: kira` / `No such file or directory` | You are inside `services/*` (or another nested project). `cd` to the repo root, or run `./bin/kira …`, or `uv run --project "$(git rev-parse --show-toplevel)" kira …`, or install once with `uv tool install --editable .` from the clone root so `kira` is on your PATH ([CLI Reference](./cli-reference.md#installation)). |
 | Stale data after branch switch | `uv run kira dev clean` then re-setup              |
 
 ---

@@ -1,7 +1,17 @@
 """KIRA CLI — unified monorepo management tool.
 
 Usage:
-    uv run kira --help
+    uv run kira --help              # from repository root only
+    ./bin/kira --help               # from anywhere in the clone
+    uv tool install --editable .    # once from clone root → global `kira` on PATH
+    uvx --from . kira --help        # ephemeral; run from clone root (--from path otherwise)
+
+From a service directory, plain `uv run kira` binds to that folder's
+pyproject.toml and cannot find this entry point. Prefer `./bin/kira`, a
+global install via `uv tool install --editable .`, or
+`uv run --project /path/to/Kira kira`.
+
+Do not use bare `uvx kira`; that resolves a different PyPI project.
 """
 
 from __future__ import annotations

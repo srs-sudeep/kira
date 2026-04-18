@@ -110,6 +110,8 @@ uv --version    # uv 0.x.x
 
 After installation, restart your terminal so `uv` is in your `PATH`.
 
+If you later run [`uv tool install`](https://docs.astral.sh/uv/concepts/tools/) (for example to put the monorepo `kira` CLI on your PATH) and uv warns that tool executables are not on your `PATH`, run `uv tool update-shell` or add the directory uv prints to your shell profile. Details: [CLI Reference → Installation](./cli-reference.md#installation).
+
 ---
 
 ### Poetry

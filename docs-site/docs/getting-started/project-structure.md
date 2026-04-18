@@ -36,7 +36,7 @@ kira/
 │   ├── docker-compose.observability.yml
 │   ├── docker-compose.override.yml.example
 │   └── *.Dockerfile
-├── cli/               # `kira` CLI (Python, invoked via `uv run kira`)
+├── cli/               # `kira` CLI (Python); see [CLI Reference](./cli-reference.md#installation) for `uv run`, `bin/kira`, and `uv tool install`
 ├── .github/
 │   └── workflows/     # GitHub Actions CI/CD (one workflow per service)
 ├── Makefile

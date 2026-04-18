@@ -48,6 +48,10 @@ uv run kira dashboards      # Open UIs in browser
 
 See the [CLI Reference](./cli-reference.md) for the full command list.
 
+:::tip Optional: `kira` on your PATH everywhere
+If you want to type `kira` (not `uv run kira`) from any directory—including inside `services/*`—install once from the clone root: `uv tool install --editable .`. See [CLI Reference → Installation](./cli-reference.md#installation) for PATH notes, upgrades, `uvx --from`, and what **not** to run (`uvx kira` alone pulls the wrong PyPI package).
+:::
+
 :::tip Prefer the manual route?
 The step-by-step instructions below do the same thing — use them if you want to understand each stage, or if you hit issues with the CLI setup.
 :::
