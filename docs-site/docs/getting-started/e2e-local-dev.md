@@ -19,6 +19,8 @@ open http://localhost:3000
 
 For **Make vs `kira`**, compose **profiles**, Celery **workers**, and **host vs Docker** Postgres, see [Makefile, CLI, and Compose](./makefile-and-cli.md).
 
+Throughout this site, **`uv run kira`** and **`kira`** mean the same CLI — use whichever matches how you installed it ([CLI Reference → Installation](./cli-reference.md#installation)).
+
 :::
 
 ---

@@ -267,6 +267,19 @@ eksctl version           # 0.x.x
 
 ---
 
+## KIRA CLI on your PATH (optional)
+
+After you clone the repo, you can install the monorepo CLI once from the **clone root**:
+
+```bash
+cd kira   # your clone
+uv tool install --editable .
+```
+
+Then you type **`kira`** instead of **`uv run kira`** (same subcommands and flags). This avoids the common mistake of running `uv run kira` from inside `services/…`, where uv resolves the wrong `pyproject.toml`. Details: **[CLI Reference → Installation](./cli-reference.md#installation)**.
+
+---
+
 ## Next Step
 
 → **[Local Setup](./local-setup.md)** — clone the repo, configure environment variables, and start the full stack.

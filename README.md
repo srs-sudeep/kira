@@ -32,11 +32,12 @@ Full detail: [`docs-site/docs/getting-started/e2e-local-dev.md`](docs-site/docs/
 ```bash
 git clone https://github.com/abodeab/kira.git
 cd kira
-uv run kira dev setup      # env files, deps, infra, migrations, seed
+uv run kira dev setup      # env files, deps, infra, migrations, seed  (or: kira dev setup — see KIRA CLI below)
 uv run kira dev up          # start all services (core: Kong, APIs, web-app on :3000)
 uv run kira dashboards      # open many browser tabs: web :3000, docs :4000, Mailhog, Kong, each /docs
 uv run kira dashboards --full   # same as above + Grafana, Prometheus, Loki, … (use after kira dev up --full)
 # --full and --all are equivalent
+# If you ran: uv tool install --editable .   then you can drop "uv run" and use: kira dev setup
 ```
 
 **Open the web app:** [http://localhost:3000](http://localhost:3000) — login as `admin@example.com` / `Admin1234!`. The Vite dev server defaults to **3000** (`PORT` / `VITE_DEV_PORT` in `web-app/vite.config.ts`; Compose sets `PORT=3000`).
@@ -59,12 +60,16 @@ You can use **either** [Make](Makefile) **or** `uv run kira` for most tasks; the
 
 ## KIRA CLI
 
-The monorepo ships a **`kira`** CLI (Python, powered by [Typer](https://typer.tiangolo.com/)).
+The monorepo ships a **`kira`** CLI (Python, powered by [Typer](https://typer.tiangolo.com/)). Docs often show **`uv run kira`** so copy-paste works from the repo root without a global install — **the same commands work as plain `kira`** once the tool is on your `PATH` (see below).
 
-- **`uv run kira <command>`** — from the **repository root** only (nearest `pyproject.toml` wins).
-- **`./bin/kira <command>`** — from anywhere in the clone; resolves the repo root and runs `uv run --project <root> kira`.
-- **Global `kira` on your PATH** (optional, one-time from the clone root): `uv tool install --editable .` using [uv’s tool interface](https://docs.astral.sh/uv/concepts/tools/). Then you can run `kira` from any directory, including under `services/`. Upgrade after pulls with `uv tool upgrade kira-cli`; remove with `uv tool uninstall kira-cli`. If uv warns about PATH, run `uv tool update-shell`.
-- **One-off without installing:** from the clone root, `uvx --from . kira <command>`. Do **not** run plain `uvx kira` — that installs a different package from PyPI.
+| How you run it | When to use it |
+|----------------|----------------|
+| **`uv run kira …`** | Default in docs; must run from **repo root** (otherwise uv picks `services/<name>/pyproject.toml` and the entry point is missing). |
+| **`kira …`** | After **`uv tool install --editable .`** from the clone root — same commands from **any directory**, including under `services/`. |
+| **`./bin/kira …`** | From anywhere **inside the clone** without a global install; wrapper resolves root and runs `uv run --project <root> kira`. |
+| **`uvx --from . kira …`** | One-off from repo root, or `uvx --from /abs/path/to/kira kira …` from elsewhere. **Never** plain `uvx kira` (wrong PyPI package). |
+
+Upgrade / remove global install: `uv tool upgrade kira-cli` · `uv tool uninstall kira-cli`. If uv warns about PATH: `uv tool update-shell`.
 
 Full detail: [`docs-site/docs/getting-started/cli-reference.md`](docs-site/docs/getting-started/cli-reference.md#installation).
 

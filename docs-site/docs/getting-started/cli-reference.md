@@ -8,6 +8,12 @@ description: Complete reference for the KIRA CLI tool
 
 KIRA ships a unified CLI tool that wraps every monorepo operation — Docker, testing, migrations, deployment, linting, and more.
 
+:::info How commands are written here
+
+Examples use **`uv run kira …`** from the **repository root** (where the root `pyproject.toml` lives). If you installed the CLI with **`uv tool install --editable .`** from that same root, the executable is on your **`PATH`** and every command works as **`kira …`** instead — same flags, no `uv run` prefix. From a service subdirectory without a global install, use **`./bin/kira …`** from the clone (it pins `--project` to the repo root).
+
+:::
+
 ## Installation
 
 The CLI is Python ([Typer](https://typer.tiangolo.com/)) under `cli/` at the repo root. You can run it **without** a global install, put **`kira` on your PATH** once via uv’s tool interface, or run a **one-off** invocation with `uvx`.

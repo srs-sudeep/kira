@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # Makefile, CLI, and Compose
 
-You can run the same work through **`uv run kira`**, **`make`**, or raw **`docker compose`**. This page explains how they relate so you can pick the shortest path and debug when something disagrees.
+You can run the same work through **`uv run kira`**, plain **`kira`** (after `uv tool install --editable .` from the repo root), **`make`**, or raw **`docker compose`**. This page explains how they relate so you can pick the shortest path and debug when something disagrees.
 
 ---
 

@@ -114,9 +114,13 @@ From Docker Compose to production on AWS EKS.
 
 Running the platform in production.
 
+- [Operations cheat sheet](./operations/operations-cheat-sheet.md) — kubectl, logs, metrics, DLQ, deep links
 - [Monitoring](./operations/monitoring.md) — Prometheus metrics, Grafana dashboards, SLOs, alerts
 - [Logging](./operations/logging.md) — structlog JSON format, Loki, LogQL query examples
-- [Runbooks](./operations/runbooks.md) — OTA sync failures, pod crashes, Kafka lag, rollbacks
+- [Alerting](./operations/alerting.md) — rules, PagerDuty/OpsGenie, escalation
+- [Backup and recovery](./operations/backup-and-recovery.md) — RDS, retention, restore drills
+- [Scaling](./operations/scaling.md) — HPA, Kafka, capacity planning
+- [Runbooks](./operations/runbooks.md) — OTA sync failures, pod crashes, Kafka lag, rollbacks, DLQ replay, TLS
 
 ### Contributing
 

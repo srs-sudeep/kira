@@ -341,7 +341,7 @@ erDiagram
 
 ---
 
-## PII Encryption Strategy
+## PII Encryption Strategy {#pii-encryption}
 
 Guest email addresses, phone numbers, and OTA API credentials are PII or secrets that must be protected at rest. KIRA uses field-level encryption via `shared/utils/crypto.py`.
 

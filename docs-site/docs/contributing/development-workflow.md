@@ -86,7 +86,7 @@ chore(deps): bump fastapi from 0.111 to 0.115
 ```
 
 :::tip Commit conventions are enforced
-Husky git hooks run **commitlint** on every commit message. If the format is wrong, the commit is rejected. Use `uv run kira commit` or `bun run commit` for an interactive prompt. See [Commit Conventions](./commit-conventions.md) for the full reference.
+Husky git hooks run **commitlint** on every commit message. If the format is wrong, the commit is rejected. Use **`uv run kira commit`** or **`kira commit`** (same command if you installed the CLI with `uv tool install --editable .`) or `bun run commit` for an interactive prompt. See [Commit Conventions](./commit-conventions.md) for the full reference.
 :::
 
 ---
@@ -125,7 +125,7 @@ git checkout -b feat/rate-inventory-seasonal-blackout
 
 ```bash
 # Via CLI
-uv run kira dev up
+uv run kira dev up          # or: kira dev up
 uv run kira dev logs rate-inventory-service
 
 # Or directly with docker compose

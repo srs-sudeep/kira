@@ -279,6 +279,41 @@ aws cloudwatch get-metric-statistics \
 
 ---
 
+## Replay dead letter queue messages {#replay-dead-letter-queue-messages}
+
+### When to use
+
+Consumer-level failures route poison messages to Kafka **DLQ** topics (for example `ari.updated.dlq` — naming follows `{original-topic}.dlq`). Replay only **after** the root cause is fixed (schema bug, bad payload, downstream outage).
+
+### Diagnosis
+
+```bash
+# Replace bootstrap with your broker (EKS: internal Kafka listener; local: localhost:9092)
+kafka-topics --bootstrap-server <broker:9092> --list | grep -E '\.dlq$|dlq'
+
+# Inspect a few messages (read-only)
+kafka-console-consumer --bootstrap-server <broker:9092> \
+  --topic <topic-name>.dlq --from-beginning --max-messages 5
+```
+
+Check **consumer group lag** for the primary consumer on the original topic — Prometheus alert `KafkaConsumerLag` should return to normal once processing resumes.
+
+### Resolution
+
+1. **Stop amplifying damage:** pause or scale down the failing consumer deployment if messages are retry-looping.
+2. **Fix the code or data** that caused the DLQ routing (deploy a patched image, repair bad rows, restore downstream).
+3. **Replay safely:** use a controlled job or script that reads from `<topic>.dlq`, validates each payload, and produces back to the **original** topic — or use your org’s approved replay tooling. Do **not** blindly pipe DLQ → primary without validation.
+4. **Verify:** lag on DLQ decreases, primary topic processing resumes, and dashboards show healthy sync/reservation rates.
+
+Local Docker: run Kafka CLI **inside** the broker container, for example:
+
+```bash
+docker compose -f docker/docker-compose.yml exec kafka \
+  kafka-topics --bootstrap-server localhost:9092 --list
+```
+
+---
+
 ## SSL Certificate Expiring {#ssl-certificate-expiring}
 
 ### Symptoms

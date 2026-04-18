@@ -14,7 +14,7 @@ sidebar_position: 2
 
 ---
 
-## Structured JSON Logging
+## Structured JSON Logging {#structured-json-logging}
 
 All KIRA services use [structlog](https://www.structlog.org/) to emit structured JSON logs. Every log line is a JSON object, never a plain string.
 

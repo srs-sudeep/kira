@@ -85,6 +85,7 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Operations",
       items: [
+        "operations/operations-cheat-sheet",
         "operations/monitoring",
         "operations/logging",
         "operations/alerting",
