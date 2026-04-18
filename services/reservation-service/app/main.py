@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.config import settings
-from app.events.consumer import reservation_consumer
+from app.events.consumer import channel_booking_consumer
 from app.events.producer import kafka_producer
 from app.exception_handlers import register_exception_handlers
 from app.health import router as health_router
@@ -22,9 +22,9 @@ logger = structlog.get_logger()
 async def lifespan(app: FastAPI):
     logger.info("reservation-service starting", port=settings.port)
     await kafka_producer.start()
-    await reservation_consumer.start()
+    await channel_booking_consumer.start()
     yield
-    await reservation_consumer.stop()
+    await channel_booking_consumer.stop()
     await kafka_producer.stop()
     logger.info("reservation-service stopped")
 
