@@ -46,6 +46,8 @@ git commit -m "feat(identity): add MFA backup codes"
 
 ### Scopes
 
+Commitlint **only** allows the scopes below. Do **not** use a filename (e.g. `bun.lockb`) as the scope — use **`deps`** for root or package lockfiles, or the area the change belongs to.
+
 | Scope            | Maps to                           |
 | ---------------- | --------------------------------- |
 | `identity`       | `services/identity-service`       |
@@ -55,11 +57,12 @@ git commit -m "feat(identity): add MFA backup codes"
 | `channel`        | `services/channel-engine`         |
 | `notification`   | `services/notification-service`   |
 | `web`            | `web-app/`                        |
-| `infra`          | `infra/`, `k8s/`, Terraform       |
-| `docs`           | `docs-site/`, `docs/`             |
+| `infra`          | `docker/`, `infra/`, `k8s/`, `observability/`, Terraform |
+| `docs`           | Markdown in `docs/` (blueprint)   |
+| `docs-site`      | Docusaurus site under `docs-site/` |
 | `shared`         | `shared/`                         |
 | `cli`            | `cli/`                            |
-| `deps`           | Dependency updates                |
+| `deps`           | Lockfiles and dependency bumps — **root** `package.json` / `bun.lockb`, `uv.lock`, service `poetry.lock`, `web-app/bun.lock`, etc. |
 
 ### Examples
 
@@ -70,6 +73,7 @@ docs(web): update routing documentation
 test(reservation): add integration tests for booking flow
 ci(infra): add staging deploy workflow
 chore(deps): bump fastapi to 0.116
+build(deps): update bun.lockb for package versions and structure
 refactor(shared): extract tenant middleware to separate module
 ```
 
@@ -114,7 +118,7 @@ CI also validates commit messages on pull requests. Use `--no-verify` sparingly.
 | File                   | Purpose                                  |
 | ---------------------- | ---------------------------------------- |
 | `package.json` (root)  | Husky + Commitizen + Commitlint packages |
-| `commitlint.config.js` | Commitlint rules and allowed scopes      |
+| `commitlint.config.mjs` | Commitlint rules and allowed scopes     |
 | `.husky/pre-commit`    | Pre-commit hook script                   |
 | `.husky/commit-msg`    | Commit message validation hook           |
 | `.husky/pre-push`      | Pre-push test hook                       |
