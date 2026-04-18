@@ -3,6 +3,7 @@
 Re-exports the type aliases defined in core.tenant so routers can import from
 a single, consistent location.
 """
+
 from app.core.tenant import (  # noqa: F401
     CurrentTenantID,
     CurrentUserID,

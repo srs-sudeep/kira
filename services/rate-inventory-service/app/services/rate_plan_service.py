@@ -1,4 +1,5 @@
 """Rate plan CRUD + derived-rate recalculation."""
+
 import uuid
 from decimal import Decimal
 
@@ -22,9 +23,7 @@ logger = structlog.get_logger(__name__)
 def _compute_derived_amount(parent_amount: Decimal, derived_type: str, derived_value: Decimal) -> Decimal:
     """Recalculate a child rate plan's base_amount from its parent."""
     if derived_type == "percentage":
-        return (parent_amount * (Decimal("100") + derived_value) / Decimal("100")).quantize(
-            Decimal("0.01")
-        )
+        return (parent_amount * (Decimal("100") + derived_value) / Decimal("100")).quantize(Decimal("0.01"))
     # fixed offset
     return (parent_amount + derived_value).quantize(Decimal("0.01"))
 
@@ -65,9 +64,7 @@ class RatePlanService:
                 raise NotFoundError("RatePlan (parent)", str(req.derived_from_id))
             if parent.room_type_id != room_type_id:
                 raise ValidationError("Parent rate plan must belong to the same room type.")
-            data["base_amount"] = _compute_derived_amount(
-                parent.base_amount, req.derived_type, req.derived_value
-            )
+            data["base_amount"] = _compute_derived_amount(parent.base_amount, req.derived_type, req.derived_value)
 
         rp = await self._repo.create(**data)
         logger.info("rate_plan_created", id=str(rp.id), room_type_id=str(room_type_id))
@@ -111,9 +108,7 @@ class RatePlanService:
         for child in parent.derived_plans:
             if not child.is_active or not child.derived_type or child.derived_value is None:
                 continue
-            new_amount = _compute_derived_amount(
-                parent.base_amount, child.derived_type, child.derived_value
-            )
+            new_amount = _compute_derived_amount(parent.base_amount, child.derived_type, child.derived_value)
             child = await self._repo.update(child, base_amount=new_amount)
             # Recurse — load grandchildren
             grandchildren = await self._repo.get_children(child.id)

@@ -1,9 +1,9 @@
 """Repository for reservations — inbox queries, CRUD, duplicate detection."""
-import math
+
 import random
 import string
 import uuid
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import asc, desc, func, or_, select
@@ -32,9 +32,7 @@ class ReservationRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._s = session
 
-    async def get_by_id(
-        self, reservation_id: uuid.UUID, *, load_relations: bool = False
-    ) -> Reservation | None:
+    async def get_by_id(self, reservation_id: uuid.UUID, *, load_relations: bool = False) -> Reservation | None:
         stmt = select(Reservation).where(Reservation.id == reservation_id)
         if load_relations:
             stmt = stmt.options(
@@ -45,11 +43,7 @@ class ReservationRepository:
 
     async def get_by_confirmation(self, confirmation_number: str) -> Reservation | None:
         return (
-            await self._s.execute(
-                select(Reservation).where(
-                    Reservation.confirmation_number == confirmation_number
-                )
-            )
+            await self._s.execute(select(Reservation).where(Reservation.confirmation_number == confirmation_number))
         ).scalar_one_or_none()
 
     async def _unique_confirmation_number(self) -> str:
@@ -109,9 +103,7 @@ class ReservationRepository:
         await self._s.refresh(reservation)
         return reservation
 
-    async def get_inbox(
-        self, filters: InboxFilters
-    ) -> tuple[list[Reservation], int]:
+    async def get_inbox(self, filters: InboxFilters) -> tuple[list[Reservation], int]:
         stmt = (
             select(Reservation)
             .join(GuestProfile, Reservation.guest_profile_id == GuestProfile.id)
@@ -143,18 +135,14 @@ class ReservationRepository:
             )
 
         sort_col = _SORT_COLS.get(filters.sort_by, Reservation.created_at)
-        stmt = stmt.order_by(
-            asc(sort_col) if filters.sort_dir == "asc" else desc(sort_col)
-        )
+        stmt = stmt.order_by(asc(sort_col) if filters.sort_dir == "asc" else desc(sort_col))
 
-        total = (
-            await self._s.execute(select(func.count()).select_from(stmt.subquery()))
-        ).scalar_one()
+        total = (await self._s.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                stmt.offset((filters.page - 1) * filters.page_size).limit(filters.page_size)
-            )
-        ).scalars().all()
+            (await self._s.execute(stmt.offset((filters.page - 1) * filters.page_size).limit(filters.page_size)))
+            .scalars()
+            .all()
+        )
         return list(rows), total
 
     async def find_duplicates(
@@ -189,13 +177,7 @@ class ReservationRepository:
         Return groups of (email_hash, room_type_id, [reservations]) where
         the same guest has overlapping active reservations in the same room type.
         """
-        # Use a self-join to find reservations that overlap with others for the same guest+room
-        r1 = Reservation.__table__.alias("r1")
-        r2 = Reservation.__table__.alias("r2")
-        g1 = GuestProfile.__table__.alias("g1")
-        g2 = GuestProfile.__table__.alias("g2")
-
-        from sqlalchemy import and_, text
+        from sqlalchemy import text
 
         # Raw query for readability; returns (reservation_id, email_hash, room_type_id)
         raw = text("""
@@ -218,13 +200,17 @@ class ReservationRepository:
             return []
 
         rows = (
-            await self._s.execute(
-                select(Reservation)
-                .options(selectinload(Reservation.guest_profile))
-                .where(Reservation.id.in_(dup_ids))
-                .order_by(Reservation.check_in)
+            (
+                await self._s.execute(
+                    select(Reservation)
+                    .options(selectinload(Reservation.guest_profile))
+                    .where(Reservation.id.in_(dup_ids))
+                    .order_by(Reservation.check_in)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         # Group by (email_hash, room_type_id)
         groups: dict[tuple[str, uuid.UUID], list[Reservation]] = {}

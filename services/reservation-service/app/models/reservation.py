@@ -1,4 +1,5 @@
 """ORM model for reservations (tenant schema)."""
+
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -29,22 +30,12 @@ class Reservation(Base):
         Index("idx_res_source", "source"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    confirmation_number: Mapped[str] = mapped_column(
-        String(20), unique=True, nullable=False
-    )
-    channel_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    confirmation_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    channel_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     source: Mapped[str] = mapped_column(String(20), nullable=False)
-    room_type_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False
-    )
-    rate_plan_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False
-    )
+    room_type_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    rate_plan_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     check_in: Mapped[date] = mapped_column(Date, nullable=False)
     check_out: Mapped[date] = mapped_column(Date, nullable=False)
     # Computed column — PostgreSQL calculates (check_out - check_in)
@@ -62,21 +53,13 @@ class Reservation(Base):
     children: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False, default="INR")
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="confirmed"
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="confirmed")
     cancellation_policy: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    cancelled_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     cancellation_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    channel_reservation_id: Mapped[str | None] = mapped_column(
-        String(100), nullable=True
-    )
+    channel_reservation_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     special_requests: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

@@ -1,4 +1,5 @@
 """pytest fixtures for reservation-service tests."""
+
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -14,11 +15,8 @@ from app.database import Base, get_db
 from app.main import app
 from app.models.guest_profile import GuestProfile
 from app.models.reservation import Reservation
-from app.models.reservation_note import ReservationNote
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_reservation_test"
-)
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_reservation_test"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
@@ -45,6 +43,7 @@ async def db(setup_db):
 
 # ── Kafka mock — applied to all tests ────────────────────────────────────────
 
+
 @pytest.fixture(autouse=True)
 def mock_kafka():
     with patch("app.events.producer.kafka_producer") as mock:
@@ -55,6 +54,7 @@ def mock_kafka():
 
 
 # ── ARI client mock ───────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def mock_ari_available():
@@ -86,6 +86,7 @@ def mock_ari_unavailable():
 
 # ── Email task mock ───────────────────────────────────────────────────────────
 
+
 @pytest.fixture(autouse=True)
 def mock_email_tasks():
     with (
@@ -100,6 +101,7 @@ def mock_email_tasks():
 
 
 # ── HTTP test client ──────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 async def client(db: AsyncSession):
@@ -133,6 +135,7 @@ async def client(db: AsyncSession):
 
 
 # ── ORM factories ─────────────────────────────────────────────────────────────
+
 
 async def make_guest(
     session: AsyncSession,
@@ -179,6 +182,7 @@ async def make_reservation(
 ) -> Reservation:
     import random
     import string
+
     conf_num = "RES-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
     res = Reservation(
         confirmation_number=conf_num,

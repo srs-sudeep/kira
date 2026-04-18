@@ -1,4 +1,5 @@
 """Celery application for the reservation-service."""
+
 from celery import Celery
 
 from app.config import settings

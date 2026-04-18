@@ -1,4 +1,5 @@
 """ARI calendar, bulk update, stop-sell, seasonal rules, blackout dates, history."""
+
 import uuid
 from datetime import date
 from typing import Annotated
@@ -38,6 +39,7 @@ def _ari(db: TenantDB, user_id: CurrentUserID) -> tuple:
 
 # ── ARI calendar ──────────────────────────────────────────────────────────────
 
+
 @router.get("/calendar", response_model=ARICalendarResponse)
 async def get_calendar(
     db: TenantDB,
@@ -63,6 +65,7 @@ async def update_calendar(
 
 # ── Bulk operations ───────────────────────────────────────────────────────────
 
+
 @router.post("/bulk-update", response_model=BulkUpdateResponse)
 async def bulk_update(
     req: BulkUpdateRequest,
@@ -86,6 +89,7 @@ async def stop_sell(
 
 
 # ── Seasonal rules ────────────────────────────────────────────────────────────
+
 
 @router.get("/seasonal-rules", response_model=SeasonalRuleListResponse)
 async def list_seasonal_rules(
@@ -126,6 +130,7 @@ async def delete_seasonal_rule(
 
 # ── Blackout dates ────────────────────────────────────────────────────────────
 
+
 @router.get("/blackout-dates", response_model=BlackoutDateListResponse)
 async def list_blackout_dates(
     db: TenantDB,
@@ -157,6 +162,7 @@ async def delete_blackout_date(
 
 
 # ── Inventory history ─────────────────────────────────────────────────────────
+
 
 @router.get("/history", response_model=InventoryHistoryListResponse)
 async def get_history(

@@ -1,4 +1,5 @@
 """ARI calendar, bulk updates, stop-sell, seasonal rules, blackout dates."""
+
 import math
 import uuid
 from datetime import date, timedelta
@@ -85,9 +86,7 @@ class ARIService:
         snapshots = await self._ari.get_range([room_type_id], rp_ids, start_date, end_date)
 
         # Index snapshots by (rate_plan_id, date)
-        snap_index: dict[tuple[uuid.UUID, date], Any] = {
-            (s.rate_plan_id, s.date): s for s in snapshots
-        }
+        snap_index: dict[tuple[uuid.UUID, date], Any] = {(s.rate_plan_id, s.date): s for s in snapshots}
         dates = _date_range(start_date, end_date)
         date_strs = [d.isoformat() for d in dates]
 
@@ -132,15 +131,9 @@ class ARIService:
     ) -> int:
         updated = 0
         for cell_req in req.cells:
-            existing = await self._ari.get(
-                cell_req.room_type_id, cell_req.rate_plan_id, cell_req.date
-            )
-            updates = cell_req.model_dump(
-                exclude={"room_type_id", "rate_plan_id", "date"}, exclude_none=True
-            )
-            await self._ari.upsert(
-                cell_req.room_type_id, cell_req.rate_plan_id, cell_req.date, updates
-            )
+            existing = await self._ari.get(cell_req.room_type_id, cell_req.rate_plan_id, cell_req.date)
+            updates = cell_req.model_dump(exclude={"room_type_id", "rate_plan_id", "date"}, exclude_none=True)
+            await self._ari.upsert(cell_req.room_type_id, cell_req.rate_plan_id, cell_req.date, updates)
             # History entries for each changed field
             history_rows = [
                 InventoryHistory(
@@ -181,9 +174,7 @@ class ARIService:
     ) -> BulkUpdateResponse:
         updates: dict[str, Any] = {
             k: v
-            for k, v in req.model_dump(
-                exclude={"room_type_ids", "rate_plan_ids", "start_date", "end_date"}
-            ).items()
+            for k, v in req.model_dump(exclude={"room_type_ids", "rate_plan_ids", "start_date", "end_date"}).items()
             if v is not None
         }
         count = await self._ari.bulk_update_fields(
@@ -224,9 +215,7 @@ class ARIService:
             date_range=f"{req.start_date}/{req.end_date}",
             rows_updated=count,
         )
-        return BulkUpdateResponse(
-            updated_cells=count, start_date=req.start_date, end_date=req.end_date
-        )
+        return BulkUpdateResponse(updated_cells=count, start_date=req.start_date, end_date=req.end_date)
 
     # ── Stop-sell ─────────────────────────────────────────────────────────────
 
@@ -260,7 +249,7 @@ class ARIService:
         await self._hist.bulk_record(history_rows)
 
         for rt_id in req.room_type_ids:
-            for rp_id in (req.rate_plan_ids or [rt_id]):
+            for rp_id in req.rate_plan_ids or [rt_id]:
                 await kafka_producer.publish_ari_updated(
                     ARIUpdatedEvent(
                         tenant_id=tenant_id,
@@ -273,9 +262,7 @@ class ARIService:
                     )
                 )
         logger.info("stop_sell_applied", rows=count, date_range=f"{req.start_date}/{req.end_date}")
-        return BulkUpdateResponse(
-            updated_cells=count, start_date=req.start_date, end_date=req.end_date
-        )
+        return BulkUpdateResponse(updated_cells=count, start_date=req.start_date, end_date=req.end_date)
 
     # ── Seasonal rules ────────────────────────────────────────────────────────
 
@@ -291,9 +278,7 @@ class ARIService:
         logger.info("seasonal_rule_created", id=str(rule.id))
         return SeasonalRuleResponse.model_validate(rule)
 
-    async def update_seasonal_rule(
-        self, rule_id: uuid.UUID, req: SeasonalRuleUpdate
-    ) -> SeasonalRuleResponse:
+    async def update_seasonal_rule(self, rule_id: uuid.UUID, req: SeasonalRuleUpdate) -> SeasonalRuleResponse:
         rule = await self._rules.get_by_id(rule_id)
         if rule is None:
             raise NotFoundError("SeasonalRule", str(rule_id))
@@ -336,18 +321,13 @@ class ARIService:
 
             for rt_id in rt_ids:
                 rps = await self._rp.list_by_room_type(rt_id)
-                target_rp_ids = (
-                    [rule.rate_plan_id] if rule.rate_plan_id
-                    else [rp.id for rp in rps]
-                )
+                target_rp_ids = [rule.rate_plan_id] if rule.rate_plan_id else [rp.id for rp in rps]
 
                 for rp_id in target_rp_ids:
                     rp = next((rp for rp in rps if rp.id == rp_id), None)
                     if rp is None:
                         continue
-                    new_amount = _apply_adjustment(
-                        rp.base_amount, rule.adjustment_type, rule.adjustment_value
-                    )
+                    new_amount = _apply_adjustment(rp.base_amount, rule.adjustment_type, rule.adjustment_value)
                     count = await self._ari.bulk_update_fields(
                         [rt_id], [rp_id], rule_start, rule_end, {"rate_amount": new_amount}
                     )
@@ -417,6 +397,7 @@ class ARIService:
 
 
 # ── Module-level helpers ──────────────────────────────────────────────────────
+
 
 def _apply_adjustment(base: Decimal, adj_type: str, adj_value: Decimal) -> Decimal:
     if adj_type == "percentage":

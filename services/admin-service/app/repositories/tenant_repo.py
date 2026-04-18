@@ -1,4 +1,5 @@
 """Repository for public.tenants — CRUD + raw-schema provisioning."""
+
 import math
 import uuid
 from datetime import UTC, datetime
@@ -30,32 +31,23 @@ class TenantRepository:
         self._s = session
 
     async def get_by_id(self, tenant_id: uuid.UUID) -> Tenant | None:
-        return (
-            await self._s.execute(
-                select(Tenant).where(Tenant.id == tenant_id)
-            )
-        ).scalar_one_or_none()
+        return (await self._s.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
 
     async def get_by_schema_name(self, schema_name: str) -> Tenant | None:
-        return (
-            await self._s.execute(
-                select(Tenant).where(Tenant.schema_name == schema_name)
-            )
-        ).scalar_one_or_none()
+        return (await self._s.execute(select(Tenant).where(Tenant.schema_name == schema_name))).scalar_one_or_none()
 
     async def list_all(self, *, page: int = 1, page_size: int = 50) -> TenantListResponse:
-        total: int = (
-            await self._s.execute(select(func.count()).select_from(Tenant))
-        ).scalar_one()
+        total: int = (await self._s.execute(select(func.count()).select_from(Tenant))).scalar_one()
 
         rows = (
-            await self._s.execute(
-                select(Tenant)
-                .order_by(Tenant.created_at.desc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
+            (
+                await self._s.execute(
+                    select(Tenant).order_by(Tenant.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         return TenantListResponse(
             items=[TenantResponse.model_validate(r) for r in rows],
@@ -111,14 +103,8 @@ class TenantRepository:
         await self._s.refresh(tenant)
         return tenant
 
-    async def update(
-        self, tenant_id: uuid.UUID, fields: dict[str, Any]
-    ) -> Tenant | None:
-        await self._s.execute(
-            update(Tenant)
-            .where(Tenant.id == tenant_id)
-            .values(**fields)
-        )
+    async def update(self, tenant_id: uuid.UUID, fields: dict[str, Any]) -> Tenant | None:
+        await self._s.execute(update(Tenant).where(Tenant.id == tenant_id).values(**fields))
         return await self.get_by_id(tenant_id)
 
     async def provision_schema(self, schema_name: str) -> None:
@@ -132,15 +118,11 @@ class TenantRepository:
         if not all(c.isalnum() or c == "_" for c in schema_name):
             raise ValueError(f"Invalid schema name: {schema_name!r}")
 
-        await self._s.execute(
-            text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}")
-        )
+        await self._s.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
         logger.info("schema_created", schema_name=schema_name)
 
         # Create all per-tenant business tables within the new schema.
         # search_path is set so FK references resolve within the schema.
-        await self._s.execute(
-            text(f"SET LOCAL search_path TO {schema_name}, public")
-        )
+        await self._s.execute(text(f"SET LOCAL search_path TO {schema_name}, public"))
         await self._s.execute(text(_tenant_tables_ddl()))
         logger.info("tenant_tables_created", schema_name=schema_name)

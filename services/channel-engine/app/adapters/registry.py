@@ -4,6 +4,7 @@ Usage:
     adapter = get_adapter(ota_code, credentials, config)
     ok = await adapter.test_connection()
 """
+
 from typing import Any
 
 from app.adapters.base import ChannelAdapter
@@ -30,10 +31,7 @@ def get_adapter(
     """
     cls = _REGISTRY.get(ota_code)
     if cls is None:
-        raise ValidationError(
-            f"No adapter registered for OTA '{ota_code}'. "
-            f"Supported: {sorted(_REGISTRY.keys())}"
-        )
+        raise ValidationError(f"No adapter registered for OTA '{ota_code}'. Supported: {sorted(_REGISTRY.keys())}")
     return cls(credentials=credentials, config=config or {})
 
 

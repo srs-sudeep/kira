@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for tenant management."""
+
 import uuid
 from datetime import datetime
 from typing import Literal
@@ -29,6 +30,7 @@ class TenantCreate(BaseModel):
 
 class TenantMeUpdate(BaseModel):
     """Fields a property_owner can update on their own tenant."""
+
     name: str | None = Field(None, min_length=1, max_length=255)
     legal_name: str | None = None
     address_line1: str | None = None
@@ -48,6 +50,7 @@ class TenantMeUpdate(BaseModel):
 
 class TenantAdminUpdate(BaseModel):
     """Fields a super_admin can update on any tenant."""
+
     name: str | None = Field(None, min_length=1, max_length=255)
     subscription_tier: SubscriptionTier | None = None
     is_active: bool | None = None

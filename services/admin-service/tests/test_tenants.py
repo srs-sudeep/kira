@@ -1,6 +1,6 @@
 """Tests for tenant CRUD: create, list, get, update, schema provisioning."""
+
 import uuid
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +13,7 @@ from tests.conftest import FAKE_TENANT_ID, make_tenant
 
 
 # ── Schema name generation ────────────────────────────────────────────────────
+
 
 class TestSchemaNameGeneration:
     def test_schema_name_format(self):
@@ -32,12 +33,11 @@ class TestSchemaNameGeneration:
 
 # ── TenantService — service layer ─────────────────────────────────────────────
 
+
 class TestCreateTenant:
     async def test_creates_tenant_record(self, db: AsyncSession, mock_provision_schema):
         svc = TenantService(db)
-        result = await svc.create_tenant(
-            TenantCreate(name="Grand Hyatt Mumbai", subscription_tier="professional")
-        )
+        result = await svc.create_tenant(TenantCreate(name="Grand Hyatt Mumbai", subscription_tier="professional"))
         assert result.name == "Grand Hyatt Mumbai"
         assert result.subscription_tier == "professional"
         assert result.schema_name.startswith("tenant_")
@@ -152,9 +152,7 @@ class TestUpdateTenant:
         await db.commit()
 
         svc = TenantService(db)
-        result = await svc.update_tenant(
-            tenant.id, TenantAdminUpdate(is_active=False)
-        )
+        result = await svc.update_tenant(tenant.id, TenantAdminUpdate(is_active=False))
         assert result.is_active is False
 
     async def test_no_op_when_empty_update(self, db: AsyncSession):
@@ -196,6 +194,7 @@ class TestUpdateMyTenant:
 
 # ── TenantRepository ──────────────────────────────────────────────────────────
 
+
 class TestTenantRepository:
     async def test_get_by_id_returns_none_for_unknown(self, db: AsyncSession):
         repo = TenantRepository(db)
@@ -217,12 +216,14 @@ class TestTenantRepository:
         await db.commit()
 
         from sqlalchemy.exc import IntegrityError
+
         with pytest.raises(IntegrityError):
             await make_tenant(db, schema_name=schema)
             await db.commit()
 
 
 # ── HTTP routes ───────────────────────────────────────────────────────────────
+
 
 class TestTenantRoutes:
     async def test_create_tenant_route(self, client, mock_provision_schema):
@@ -248,9 +249,7 @@ class TestTenantRoutes:
 
     async def test_get_my_tenant_route(self, client, db: AsyncSession):
         # FAKE_TENANT_ID is the override tenant — create a matching record
-        from tests.conftest import FAKE_TENANT_ID
         from app.models.tenant import Tenant
-        from datetime import UTC, datetime
 
         tenant = Tenant(
             id=FAKE_TENANT_ID,

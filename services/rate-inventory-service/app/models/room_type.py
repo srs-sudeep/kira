@@ -1,4 +1,5 @@
 """ORM model for room_types (tenant schema)."""
+
 import uuid
 
 from sqlalchemy import Boolean, Integer, String, Text
@@ -12,9 +13,7 @@ class RoomType(Base, TimestampMixin):
     __tablename__ = "room_types"
     # No schema= — search_path is set per-request by tenant middleware
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     max_occupancy: Mapped[int] = mapped_column(Integer, nullable=False, default=2)

@@ -1,7 +1,7 @@
 """Repository for sync_logs."""
+
 import math
 import uuid
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy import func, select
@@ -52,18 +52,16 @@ class SyncLogRepository:
         page_size: int = 50,
     ) -> SyncLogPageResponse:
         base_q = select(SyncLog).where(SyncLog.channel_id == channel_id)
-        total: int = (
-            await self._s.execute(
-                select(func.count()).select_from(base_q.subquery())
-            )
-        ).scalar_one()
+        total: int = (await self._s.execute(select(func.count()).select_from(base_q.subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                base_q.order_by(SyncLog.created_at.desc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
+            (
+                await self._s.execute(
+                    base_q.order_by(SyncLog.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return SyncLogPageResponse(
             items=[SyncLogResponse.model_validate(r) for r in rows],
             total=total,

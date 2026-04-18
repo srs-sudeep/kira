@@ -1,8 +1,8 @@
 """Pydantic v2 schemas for ARI calendar operations."""
+
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -48,6 +48,7 @@ class ARICalendarResponse(BaseModel):
 
 # ── Write requests ────────────────────────────────────────────────────────────
 
+
 class ARICellUpdate(BaseModel):
     """Update payload for a single (room_type, rate_plan, date) cell."""
 
@@ -66,8 +67,13 @@ class ARICellUpdate(BaseModel):
     @model_validator(mode="after")
     def at_least_one_field(self) -> "ARICellUpdate":
         fields = [
-            self.available_rooms, self.rate_amount, self.is_closed,
-            self.cta_closed, self.ctd_closed, self.min_los, self.max_los,
+            self.available_rooms,
+            self.rate_amount,
+            self.is_closed,
+            self.cta_closed,
+            self.ctd_closed,
+            self.min_los,
+            self.max_los,
             self.overbooking_buffer,
         ]
         if all(f is None for f in fields):
@@ -104,8 +110,13 @@ class BulkUpdateRequest(BaseModel):
     @model_validator(mode="after")
     def at_least_one_update_field(self) -> "BulkUpdateRequest":
         fields = [
-            self.available_rooms, self.rate_amount, self.is_closed,
-            self.cta_closed, self.ctd_closed, self.min_los, self.max_los,
+            self.available_rooms,
+            self.rate_amount,
+            self.is_closed,
+            self.cta_closed,
+            self.ctd_closed,
+            self.min_los,
+            self.max_los,
             self.overbooking_buffer,
         ]
         if all(f is None for f in fields):

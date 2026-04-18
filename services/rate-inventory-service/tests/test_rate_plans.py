@@ -1,4 +1,5 @@
 """Tests for rate plan CRUD and derived-rate cascade."""
+
 import uuid
 from decimal import Decimal
 

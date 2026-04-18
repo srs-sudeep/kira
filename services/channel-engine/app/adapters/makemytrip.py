@@ -3,6 +3,7 @@
 Real implementation would use the MakeMyTrip Partner API.
 Credentials expected: {"access_key": "...", "secret_key": "...", "property_id": "..."}
 """
+
 from datetime import datetime
 
 import structlog

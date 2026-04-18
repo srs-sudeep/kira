@@ -1,4 +1,5 @@
 """Repository for guest_profiles."""
+
 import uuid
 
 from sqlalchemy import select
@@ -12,9 +13,7 @@ class GuestRepository:
         self._s = session
 
     async def get_by_id(self, guest_id: uuid.UUID) -> GuestProfile | None:
-        return (
-            await self._s.execute(select(GuestProfile).where(GuestProfile.id == guest_id))
-        ).scalar_one_or_none()
+        return (await self._s.execute(select(GuestProfile).where(GuestProfile.id == guest_id))).scalar_one_or_none()
 
     async def get_by_email_hash(self, email_hash: str) -> GuestProfile | None:
         """Return the most-recently-created guest with this email hash."""
@@ -29,10 +28,8 @@ class GuestRepository:
 
     async def list_by_email_hash(self, email_hash: str) -> list[GuestProfile]:
         rows = (
-            await self._s.execute(
-                select(GuestProfile).where(GuestProfile.email_hash == email_hash)
-            )
-        ).scalars().all()
+            (await self._s.execute(select(GuestProfile).where(GuestProfile.email_hash == email_hash))).scalars().all()
+        )
         return list(rows)
 
     async def create(

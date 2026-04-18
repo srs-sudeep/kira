@@ -1,4 +1,5 @@
 """Repository for rate_plans."""
+
 import uuid
 
 from sqlalchemy import select
@@ -15,29 +16,27 @@ class RatePlanRepository:
     async def get_by_id(self, rate_plan_id: uuid.UUID) -> RatePlan | None:
         return (
             await self._s.execute(
-                select(RatePlan)
-                .where(RatePlan.id == rate_plan_id)
-                .options(selectinload(RatePlan.derived_plans))
+                select(RatePlan).where(RatePlan.id == rate_plan_id).options(selectinload(RatePlan.derived_plans))
             )
         ).scalar_one_or_none()
 
     async def list_by_room_type(self, room_type_id: uuid.UUID) -> list[RatePlan]:
         rows = (
-            await self._s.execute(
-                select(RatePlan)
-                .where(RatePlan.room_type_id == room_type_id, RatePlan.is_active.is_(True))
-                .order_by(RatePlan.name)
-                .options(selectinload(RatePlan.derived_plans))
+            (
+                await self._s.execute(
+                    select(RatePlan)
+                    .where(RatePlan.room_type_id == room_type_id, RatePlan.is_active.is_(True))
+                    .order_by(RatePlan.name)
+                    .options(selectinload(RatePlan.derived_plans))
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
 
     async def get_children(self, parent_id: uuid.UUID) -> list[RatePlan]:
-        rows = (
-            await self._s.execute(
-                select(RatePlan).where(RatePlan.derived_from_id == parent_id)
-            )
-        ).scalars().all()
+        rows = (await self._s.execute(select(RatePlan).where(RatePlan.derived_from_id == parent_id))).scalars().all()
         return list(rows)
 
     async def create(self, **kwargs) -> RatePlan:

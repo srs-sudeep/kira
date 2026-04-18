@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for the RBAC permission system."""
+
 import uuid
 from datetime import datetime
 
@@ -55,17 +56,20 @@ class RolePermissionResponse(BaseModel):
 
 class AssignPermissionRequest(BaseModel):
     """Assign a permission to a role."""
+
     role: UserRole
     permission_id: uuid.UUID
 
 
 class RevokePermissionRequest(BaseModel):
     """Revoke a permission from a role."""
+
     role: UserRole
     permission_id: uuid.UUID
 
 
 class RolePermissionsResponse(BaseModel):
     """All permissions for a given role."""
+
     role: str
     permissions: list[PermissionBrief]

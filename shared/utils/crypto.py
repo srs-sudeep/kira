@@ -1,4 +1,5 @@
 """KIRA crypto utilities — field-level encryption for PII storage."""
+
 from __future__ import annotations
 
 import base64

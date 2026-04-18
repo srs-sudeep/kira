@@ -3,6 +3,7 @@
 PII fields (email, phone) are stored as AES-256-GCM encrypted BYTEA.
 email_hash (SHA-256) is the only lookupable identifier for email searches.
 """
+
 import uuid
 from datetime import datetime
 
@@ -17,9 +18,7 @@ class GuestProfile(Base):
     __tablename__ = "guest_profiles"
     __table_args__ = (Index("idx_guest_email", "email_hash"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     # AES-256-GCM encrypted bytes — None if not provided
@@ -29,9 +28,7 @@ class GuestProfile(Base):
     email_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     nationality: Mapped[str | None] = mapped_column(String(3), nullable=True)
     preferences: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

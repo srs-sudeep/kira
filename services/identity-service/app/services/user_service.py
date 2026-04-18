@@ -1,4 +1,5 @@
 """User management business logic: list, invite, update, delete."""
+
 import math
 import secrets
 import uuid

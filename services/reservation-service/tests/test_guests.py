@@ -1,7 +1,7 @@
 """Tests for guest PII encryption, decryption, and guest profile operations."""
+
 import uuid
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import decrypt_pii, encrypt_pii, hash_email
@@ -164,7 +164,7 @@ class TestPIIInReservationDetail:
 
     async def test_email_encrypted_in_db_decrypted_in_response(self, db: AsyncSession):
         from app.services.reservation_service import ReservationService
-        from tests.conftest import make_reservation, FAKE_TENANT_ID, FAKE_TOKEN, FAKE_USER_ID
+        from tests.conftest import FAKE_TENANT_ID, FAKE_TOKEN, FAKE_USER_ID
         from unittest.mock import AsyncMock, patch
         from app.core.ari_client import AvailabilityResult
         from app.schemas.reservation import ReservationCreate
@@ -173,9 +173,7 @@ class TestPIIInReservationDetail:
 
         with patch("app.services.reservation_service.ari_client") as mock_ari:
             mock_ari.check_availability = AsyncMock(
-                return_value=AvailabilityResult(
-                    available=True, total_amount=Decimal("5000"), reason=None
-                )
+                return_value=AvailabilityResult(available=True, total_amount=Decimal("5000"), reason=None)
             )
             mock_ari.adjust_inventory = AsyncMock(return_value=True)
 
@@ -204,6 +202,7 @@ class TestPIIInReservationDetail:
 
         # In the DB, the email field on GuestProfile should be bytes (encrypted)
         from app.repositories.guest_repo import GuestRepository
+
         repo = GuestRepository(db)
         db_guest = await repo.get_by_id(detail.guest.id)
         assert isinstance(db_guest.email, bytes)

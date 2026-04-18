@@ -1,4 +1,5 @@
 """KIRA shared Kafka event schemas — used by producers and consumers across services."""
+
 from __future__ import annotations
 
 import uuid
@@ -22,6 +23,7 @@ class KiraEvent(BaseModel):
 # ARI events (published by rate-inventory-service)
 # ---------------------------------------------------------------------------
 
+
 class ARIUpdatedPayload(BaseModel):
     room_type_id: uuid.UUID
     rate_plan_id: uuid.UUID
@@ -39,6 +41,7 @@ class ARIUpdatedEvent(KiraEvent):
 # ---------------------------------------------------------------------------
 # Reservation events (published by reservation-service)
 # ---------------------------------------------------------------------------
+
 
 class ReservationCreatedPayload(BaseModel):
     reservation_id: uuid.UUID
@@ -71,6 +74,7 @@ class ReservationCancelledEvent(KiraEvent):
 # ---------------------------------------------------------------------------
 # Channel sync events (published by channel-engine)
 # ---------------------------------------------------------------------------
+
 
 class ChannelSyncFailedPayload(BaseModel):
     channel: str

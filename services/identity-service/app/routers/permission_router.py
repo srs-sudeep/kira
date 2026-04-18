@@ -1,4 +1,5 @@
 """Permission management endpoints — super_admin only."""
+
 import uuid
 from typing import Annotated
 
@@ -23,6 +24,7 @@ _super_admin = Depends(require_roles("super_admin"))
 
 
 # ── Permission CRUD ───────────────────────────────────────────────────────────
+
 
 @router.get("/", response_model=PermissionListResponse)
 async def list_permissions(
@@ -65,6 +67,7 @@ async def delete_permission(
 
 
 # ── Role-Permission mappings ──────────────────────────────────────────────────
+
 
 @router.get("/roles/{role}", response_model=RolePermissionsResponse)
 async def get_role_permissions(

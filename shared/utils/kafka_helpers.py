@@ -1,4 +1,5 @@
 """KIRA Kafka helpers — thin wrappers around aiokafka for consistent event publishing."""
+
 from __future__ import annotations
 
 import json

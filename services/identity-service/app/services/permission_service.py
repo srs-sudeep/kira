@@ -1,9 +1,9 @@
 """Permission management business logic."""
+
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.exceptions import ConflictError, NotFoundError
-from app.models.permission import Permission
 from app.repositories.audit_repo import AuditRepository
 from app.repositories.permission_repo import PermissionRepository
 from app.schemas.permission import (
@@ -33,14 +33,10 @@ class PermissionService:
             total=len(perms),
         )
 
-    async def create_permission(
-        self, req: CreatePermissionRequest, *, actor: User
-    ) -> PermissionResponse:
+    async def create_permission(self, req: CreatePermissionRequest, *, actor: User) -> PermissionResponse:
         existing = await self._perm_repo.get_by_resource_action(req.resource, req.action)
         if existing:
-            raise ConflictError(
-                f"Permission '{req.resource}:{req.action}' already exists."
-            )
+            raise ConflictError(f"Permission '{req.resource}:{req.action}' already exists.")
 
         perm = await self._perm_repo.create(
             resource=req.resource,
@@ -104,16 +100,12 @@ class PermissionService:
             permissions=[PermissionBrief.model_validate(p) for p in perms],
         )
 
-    async def assign_permission(
-        self, req: AssignPermissionRequest, *, actor: User
-    ) -> RolePermissionsResponse:
+    async def assign_permission(self, req: AssignPermissionRequest, *, actor: User) -> RolePermissionsResponse:
         perm = await self._perm_repo.get_by_id(req.permission_id)
         if not perm:
             raise NotFoundError("Permission", str(req.permission_id))
 
-        await self._perm_repo.assign_permission_to_role(
-            role=req.role, permission_id=req.permission_id
-        )
+        await self._perm_repo.assign_permission_to_role(role=req.role, permission_id=req.permission_id)
         await self._audit_repo.create(
             action="role_permission.assigned",
             user_id=actor.id,
@@ -121,21 +113,15 @@ class PermissionService:
             resource_type="role_permission",
             after_state={"role": req.role, "permission": perm.code},
         )
-        logger.info(
-            "permission_assigned", role=req.role, permission=perm.code, by=str(actor.id)
-        )
+        logger.info("permission_assigned", role=req.role, permission=perm.code, by=str(actor.id))
         return await self.get_role_permissions(req.role)
 
-    async def revoke_permission(
-        self, req: RevokePermissionRequest, *, actor: User
-    ) -> RolePermissionsResponse:
+    async def revoke_permission(self, req: RevokePermissionRequest, *, actor: User) -> RolePermissionsResponse:
         perm = await self._perm_repo.get_by_id(req.permission_id)
         if not perm:
             raise NotFoundError("Permission", str(req.permission_id))
 
-        removed = await self._perm_repo.revoke_permission_from_role(
-            role=req.role, permission_id=req.permission_id
-        )
+        removed = await self._perm_repo.revoke_permission_from_role(role=req.role, permission_id=req.permission_id)
         if removed:
             await self._audit_repo.create(
                 action="role_permission.revoked",
@@ -144,7 +130,5 @@ class PermissionService:
                 resource_type="role_permission",
                 after_state={"role": req.role, "permission": perm.code},
             )
-            logger.info(
-                "permission_revoked", role=req.role, permission=perm.code, by=str(actor.id)
-            )
+            logger.info("permission_revoked", role=req.role, permission=perm.code, by=str(actor.id))
         return await self.get_role_permissions(req.role)

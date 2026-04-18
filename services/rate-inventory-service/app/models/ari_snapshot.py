@@ -1,4 +1,5 @@
 """ORM model for ari_snapshots (tenant schema) — no created_at by design."""
+
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -12,13 +13,9 @@ from app.database import Base
 
 class ARISnapshot(Base):
     __tablename__ = "ari_snapshots"
-    __table_args__ = (
-        UniqueConstraint("room_type_id", "rate_plan_id", "date", name="uq_ari"),
-    )
+    __table_args__ = (UniqueConstraint("room_type_id", "rate_plan_id", "date", name="uq_ari"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     room_type_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("room_types.id"),

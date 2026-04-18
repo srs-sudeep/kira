@@ -1,4 +1,5 @@
 """Repository for notifications."""
+
 import math
 import uuid
 from datetime import UTC, datetime
@@ -19,9 +20,7 @@ class NotificationRepository:
 
     async def get_by_id(self, notification_id: uuid.UUID) -> Notification | None:
         return (
-            await self._s.execute(
-                select(Notification).where(Notification.id == notification_id)
-            )
+            await self._s.execute(select(Notification).where(Notification.id == notification_id))
         ).scalar_one_or_none()
 
     async def paginate(
@@ -39,11 +38,7 @@ class NotificationRepository:
         if is_read is not None:
             base_q = base_q.where(Notification.is_read.is_(is_read))
 
-        total: int = (
-            await self._s.execute(
-                select(func.count()).select_from(base_q.subquery())
-            )
-        ).scalar_one()
+        total: int = (await self._s.execute(select(func.count()).select_from(base_q.subquery()))).scalar_one()
 
         unread: int = (
             await self._s.execute(
@@ -54,12 +49,14 @@ class NotificationRepository:
         ).scalar_one()
 
         rows = (
-            await self._s.execute(
-                base_q.order_by(Notification.created_at.desc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
+            (
+                await self._s.execute(
+                    base_q.order_by(Notification.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
 
         return NotificationListResponse(
             items=[NotificationResponse.model_validate(r) for r in rows],

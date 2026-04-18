@@ -1,4 +1,5 @@
 """ORM model for public.audit_events — append-only, no updated_at."""
+
 import uuid
 from datetime import datetime
 
@@ -19,9 +20,7 @@ class AuditEvent(Base):
         {"schema": "public"},
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("public.tenants.id"),
@@ -40,9 +39,5 @@ class AuditEvent(Base):
     ip_address: Mapped[str | None] = mapped_column(INET, nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(500), nullable=True)
     # 'metadata' is a reserved attribute on DeclarativeBase; map to 'event_metadata'
-    event_metadata: Mapped[dict | None] = mapped_column(
-        "metadata", JSONB, nullable=True
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    event_metadata: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

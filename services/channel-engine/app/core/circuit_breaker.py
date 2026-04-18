@@ -8,6 +8,7 @@ This module only contains the threshold check helpers; state is persisted on the
 Channel.consecutive_failures and Channel.status DB columns — not in memory — so
 it works correctly across multiple Celery workers.
 """
+
 from app.config import settings
 
 CIRCUIT_BREAKER_THRESHOLD: int = settings.circuit_breaker_threshold

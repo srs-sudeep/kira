@@ -1,4 +1,5 @@
 """Repository for public.permissions and public.role_permissions."""
+
 import uuid
 
 from sqlalchemy import delete, func, select
@@ -15,15 +16,11 @@ class PermissionRepository:
     # ── Permission CRUD ───────────────────────────────────────────────────────
 
     async def list_all(self) -> list[Permission]:
-        result = await self._s.execute(
-            select(Permission).order_by(Permission.resource, Permission.action)
-        )
+        result = await self._s.execute(select(Permission).order_by(Permission.resource, Permission.action))
         return list(result.scalars().all())
 
     async def get_by_id(self, permission_id: uuid.UUID) -> Permission | None:
-        result = await self._s.execute(
-            select(Permission).where(Permission.id == permission_id)
-        )
+        result = await self._s.execute(select(Permission).where(Permission.id == permission_id))
         return result.scalar_one_or_none()
 
     async def get_by_resource_action(self, resource: str, action: str) -> Permission | None:
@@ -87,9 +84,7 @@ class PermissionRepository:
         )
         return result.scalar_one() > 0
 
-    async def assign_permission_to_role(
-        self, *, role: str, permission_id: uuid.UUID
-    ) -> RolePermission:
+    async def assign_permission_to_role(self, *, role: str, permission_id: uuid.UUID) -> RolePermission:
         result = await self._s.execute(
             select(RolePermission).where(
                 RolePermission.role == role,
@@ -106,9 +101,7 @@ class PermissionRepository:
         await self._s.refresh(rp, attribute_names=["permission"])
         return rp
 
-    async def revoke_permission_from_role(
-        self, *, role: str, permission_id: uuid.UUID
-    ) -> bool:
+    async def revoke_permission_from_role(self, *, role: str, permission_id: uuid.UUID) -> bool:
         result = await self._s.execute(
             delete(RolePermission).where(
                 RolePermission.role == role,
@@ -120,8 +113,6 @@ class PermissionRepository:
 
     async def get_all_role_permissions(self) -> list[RolePermission]:
         result = await self._s.execute(
-            select(RolePermission)
-            .options(selectinload(RolePermission.permission))
-            .order_by(RolePermission.role)
+            select(RolePermission).options(selectinload(RolePermission.permission)).order_by(RolePermission.role)
         )
         return list(result.scalars().all())

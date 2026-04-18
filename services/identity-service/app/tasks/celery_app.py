@@ -1,4 +1,5 @@
 """Celery application instance for the Identity Service."""
+
 from celery import Celery
 
 from app.config import settings

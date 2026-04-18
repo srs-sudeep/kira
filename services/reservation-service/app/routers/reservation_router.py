@@ -1,4 +1,5 @@
 """Reservation endpoints — create, modify, cancel, status, notes, duplicates, inbox."""
+
 import uuid
 
 from fastapi import APIRouter, Query
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/reservations", tags=["reservations"])
 
 
 # ── Inbox ─────────────────────────────────────────────────────────────────────
+
 
 @router.get("", response_model=ReservationInboxResponse)
 async def list_reservations(
@@ -63,6 +65,7 @@ async def list_reservations(
 
 # ── Detail ────────────────────────────────────────────────────────────────────
 
+
 @router.get("/{reservation_id}", response_model=ReservationDetail)
 async def get_reservation(
     reservation_id: uuid.UUID,
@@ -74,6 +77,7 @@ async def get_reservation(
 
 # ── Create ────────────────────────────────────────────────────────────────────
 
+
 @router.post("", response_model=ReservationDetail, status_code=201)
 async def create_reservation(
     req: ReservationCreate,
@@ -83,12 +87,11 @@ async def create_reservation(
     token: RawToken,
 ):
     svc = ReservationService(db)
-    return await svc.create_reservation(
-        req, actor_id=actor_id, tenant_id=tenant_id, token=token
-    )
+    return await svc.create_reservation(req, actor_id=actor_id, tenant_id=tenant_id, token=token)
 
 
 # ── Modify ────────────────────────────────────────────────────────────────────
+
 
 @router.patch("/{reservation_id}", response_model=ReservationDetail)
 async def modify_reservation(
@@ -99,12 +102,11 @@ async def modify_reservation(
     token: RawToken,
 ):
     svc = ReservationService(db)
-    return await svc.modify_reservation(
-        reservation_id, req, tenant_id=tenant_id, token=token
-    )
+    return await svc.modify_reservation(reservation_id, req, tenant_id=tenant_id, token=token)
 
 
 # ── Cancel ────────────────────────────────────────────────────────────────────
+
 
 @router.post("/{reservation_id}/cancel", response_model=ReservationDetail)
 async def cancel_reservation(
@@ -115,12 +117,11 @@ async def cancel_reservation(
     token: RawToken,
 ):
     svc = ReservationService(db)
-    return await svc.cancel_reservation(
-        reservation_id, req, tenant_id=tenant_id, token=token
-    )
+    return await svc.cancel_reservation(reservation_id, req, tenant_id=tenant_id, token=token)
 
 
 # ── Status transition ─────────────────────────────────────────────────────────
+
 
 @router.post("/{reservation_id}/status", response_model=ReservationDetail)
 async def update_status(
@@ -134,6 +135,7 @@ async def update_status(
 
 # ── Notes ─────────────────────────────────────────────────────────────────────
 
+
 @router.post("/{reservation_id}/notes", response_model=NoteResponse, status_code=201)
 async def add_note(
     reservation_id: uuid.UUID,
@@ -146,6 +148,7 @@ async def add_note(
 
 
 # ── Duplicate detection ───────────────────────────────────────────────────────
+
 
 @router.get("/duplicates/scan", response_model=DuplicatesResponse)
 async def get_duplicates(db: TenantDB):

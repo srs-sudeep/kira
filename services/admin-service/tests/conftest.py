@@ -1,6 +1,7 @@
 """pytest fixtures for admin-service tests."""
+
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -12,9 +13,7 @@ from app.database import Base, get_db
 from app.main import app
 from app.models.tenant import Tenant
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_admin_test"
-)
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_admin_test"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
@@ -79,6 +78,7 @@ async def client(db: AsyncSession, mock_provision_schema):
 
 
 # ── ORM factory ───────────────────────────────────────────────────────────────
+
 
 async def make_tenant(
     session: AsyncSession,

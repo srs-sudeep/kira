@@ -1,9 +1,10 @@
 """JWT decoding and per-request tenant search_path injection."""
+
 import uuid
 from typing import Annotated, AsyncGenerator
 
 import structlog
-from fastapi import Depends, Request
+from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy import text
@@ -95,10 +96,12 @@ async def get_current_user_role(
 
 def require_roles(*roles: str):
     """Dependency factory for role-based access control."""
+
     async def _check(role: Annotated[str, Depends(get_current_user_role)]) -> str:
         if role not in roles:
             raise ForbiddenError(f"Role '{role}' is not permitted. Required: {list(roles)}.")
         return role
+
     return _check
 
 

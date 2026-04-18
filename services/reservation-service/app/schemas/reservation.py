@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for reservations."""
+
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -9,16 +10,21 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.schemas.guest import GuestBrief, GuestCreate, GuestResponse
 from app.schemas.note import NoteResponse
 
-ReservationStatus = Literal[
-    "confirmed", "modified", "cancelled", "no_show", "checked_in", "checked_out"
-]
+ReservationStatus = Literal["confirmed", "modified", "cancelled", "no_show", "checked_in", "checked_out"]
 ReservationSource = Literal[
-    "booking_com", "expedia", "makemytrip", "airbnb", "agoda",
-    "direct", "manual", "phone",
+    "booking_com",
+    "expedia",
+    "makemytrip",
+    "airbnb",
+    "agoda",
+    "direct",
+    "manual",
+    "phone",
 ]
 
 
 # ── Write requests ────────────────────────────────────────────────────────────
+
 
 class ReservationCreate(BaseModel):
     """Payload for a manual (walk-in / phone) booking."""
@@ -68,6 +74,7 @@ class ReservationStatusUpdate(BaseModel):
 
 
 # ── Response schemas ──────────────────────────────────────────────────────────
+
 
 class ReservationBrief(BaseModel):
     """Summary row for the unified inbox."""
@@ -143,6 +150,7 @@ class DuplicatesResponse(BaseModel):
 
 
 # ── Query / filter params ─────────────────────────────────────────────────────
+
 
 class InboxFilters(BaseModel):
     status: list[str] | None = None

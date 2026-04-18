@@ -1,4 +1,5 @@
 """Repository for public.users and public.refresh_tokens."""
+
 import uuid
 from datetime import datetime
 
@@ -19,24 +20,18 @@ class UserRepository:
         return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str) -> User | None:
-        result = await self._s.execute(
-            select(User).where(User.email == email.lower())
-        )
+        result = await self._s.execute(select(User).where(User.email == email.lower()))
         return result.scalar_one_or_none()
 
-    async def list_by_tenant(
-        self, tenant_id: uuid.UUID, page: int, page_size: int
-    ) -> tuple[list[User], int]:
+    async def list_by_tenant(self, tenant_id: uuid.UUID, page: int, page_size: int) -> tuple[list[User], int]:
         offset = (page - 1) * page_size
         base = select(User).where(User.tenant_id == tenant_id, User.is_active.is_(True))
-        total = (
-            await self._s.execute(select(func.count()).select_from(base.subquery()))
-        ).scalar_one()
+        total = (await self._s.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                base.order_by(User.created_at.desc()).offset(offset).limit(page_size)
-            )
-        ).scalars().all()
+            (await self._s.execute(base.order_by(User.created_at.desc()).offset(offset).limit(page_size)))
+            .scalars()
+            .all()
+        )
         return list(rows), total
 
     async def create(
@@ -90,18 +85,14 @@ class UserRepository:
 
     # ── Refresh token queries ─────────────────────────────────────────────────
 
-    async def create_refresh_token(
-        self, *, user_id: uuid.UUID, token_hash: str, expires_at: datetime
-    ) -> RefreshToken:
+    async def create_refresh_token(self, *, user_id: uuid.UUID, token_hash: str, expires_at: datetime) -> RefreshToken:
         rt = RefreshToken(user_id=user_id, token_hash=token_hash, expires_at=expires_at)
         self._s.add(rt)
         await self._s.flush()
         return rt
 
     async def get_refresh_token_by_hash(self, token_hash: str) -> RefreshToken | None:
-        result = await self._s.execute(
-            select(RefreshToken).where(RefreshToken.token_hash == token_hash)
-        )
+        result = await self._s.execute(select(RefreshToken).where(RefreshToken.token_hash == token_hash))
         return result.scalar_one_or_none()
 
     async def revoke_refresh_token(self, rt: RefreshToken) -> None:

@@ -1,8 +1,8 @@
 """pytest fixtures for rate-inventory-service tests."""
+
 import uuid
-from datetime import date
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -14,9 +14,7 @@ from app.main import app
 from app.models.rate_plan import RatePlan
 from app.models.room_type import RoomType
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_rate_inventory_test"
-)
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_rate_inventory_test"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
@@ -43,6 +41,7 @@ async def db(setup_db):
 
 
 # ── Mock kafka and tenant resolution for all tests ────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 def mock_kafka():
@@ -78,6 +77,7 @@ async def client(db: AsyncSession):
 
 
 # ── ORM factories ─────────────────────────────────────────────────────────────
+
 
 async def make_room_type(
     session: AsyncSession,

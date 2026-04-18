@@ -1,11 +1,12 @@
 """Room type CRUD business logic."""
+
 import math
 import uuid
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions import ConflictError, NotFoundError
+from app.exceptions import NotFoundError
 from app.repositories.room_type_repo import RoomTypeRepository
 from app.schemas.room_type import (
     RoomTypeCreate,

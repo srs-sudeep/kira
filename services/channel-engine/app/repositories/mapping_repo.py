@@ -1,4 +1,5 @@
 """Repository for channel_mappings."""
+
 import uuid
 
 from sqlalchemy import func, select
@@ -13,9 +14,7 @@ class MappingRepository:
 
     async def get_by_id(self, mapping_id: uuid.UUID) -> ChannelMapping | None:
         return (
-            await self._s.execute(
-                select(ChannelMapping).where(ChannelMapping.id == mapping_id)
-            )
+            await self._s.execute(select(ChannelMapping).where(ChannelMapping.id == mapping_id))
         ).scalar_one_or_none()
 
     async def list_by_channel(self, channel_id: uuid.UUID, *, active_only: bool = False) -> list[ChannelMapping]:
@@ -98,8 +97,6 @@ class MappingRepository:
     async def count_by_channel(self, channel_id: uuid.UUID) -> int:
         return (
             await self._s.execute(
-                select(func.count()).select_from(ChannelMapping).where(
-                    ChannelMapping.channel_id == channel_id
-                )
+                select(func.count()).select_from(ChannelMapping).where(ChannelMapping.channel_id == channel_id)
             )
         ).scalar_one()

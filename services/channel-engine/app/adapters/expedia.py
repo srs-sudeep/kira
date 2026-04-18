@@ -3,8 +3,8 @@
 Real implementation would use the Expedia Rapid API (EQC) or Expedia Partner Central API.
 Credentials expected: {"client_id": "...", "api_secret": "...", "hotel_id": "..."}
 """
+
 from datetime import datetime
-from decimal import Decimal
 
 import structlog
 

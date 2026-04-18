@@ -1,4 +1,5 @@
 """Tests for notification CRUD: list, unread count, mark read, mark-all-read."""
+
 import uuid
 
 import pytest
@@ -56,9 +57,7 @@ class TestListNotifications:
         await db.commit()
 
         svc = NotificationService(db)
-        result = await svc.list_notifications(
-            FAKE_USER_ID, type_filter=["new_booking", "cancellation"]
-        )
+        result = await svc.list_notifications(FAKE_USER_ID, type_filter=["new_booking", "cancellation"])
         assert result.total == 2
 
     async def test_filter_by_is_read_false(self, db: AsyncSession):
@@ -199,6 +198,7 @@ class TestMarkAllRead:
 
 
 # ── HTTP routes ───────────────────────────────────────────────────────────────
+
 
 class TestNotificationRoutes:
     async def test_list_route(self, client, db: AsyncSession):

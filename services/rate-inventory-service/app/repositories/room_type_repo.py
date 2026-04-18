@@ -1,5 +1,5 @@
 """Repository for room_types."""
-import math
+
 import uuid
 
 from sqlalchemy import func, select
@@ -13,22 +13,20 @@ class RoomTypeRepository:
         self._s = session
 
     async def get_by_id(self, room_type_id: uuid.UUID) -> RoomType | None:
-        return (
-            await self._s.execute(select(RoomType).where(RoomType.id == room_type_id))
-        ).scalar_one_or_none()
+        return (await self._s.execute(select(RoomType).where(RoomType.id == room_type_id))).scalar_one_or_none()
 
     async def list_active(self, page: int, page_size: int) -> tuple[list[RoomType], int]:
         base = select(RoomType).where(RoomType.is_active.is_(True))
-        total = (
-            await self._s.execute(select(func.count()).select_from(base.subquery()))
-        ).scalar_one()
+        total = (await self._s.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                base.order_by(RoomType.sort_order, RoomType.name)
-                .offset((page - 1) * page_size)
-                .limit(page_size)
+            (
+                await self._s.execute(
+                    base.order_by(RoomType.sort_order, RoomType.name).offset((page - 1) * page_size).limit(page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows), total
 
     async def create(self, **kwargs) -> RoomType:

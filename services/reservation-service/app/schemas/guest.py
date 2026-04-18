@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for guest profiles."""
+
 import uuid
 from datetime import datetime
 from typing import Any

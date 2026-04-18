@@ -1,4 +1,5 @@
 """KIRA security helpers — JWT creation/verification and password hashing."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -18,6 +19,7 @@ ALGORITHM = "HS256"
 # Password helpers
 # ---------------------------------------------------------------------------
 
+
 def hash_password(plain: str) -> str:
     return pwd_hash.hash(plain)
 
@@ -29,6 +31,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 # ---------------------------------------------------------------------------
 # JWT helpers
 # ---------------------------------------------------------------------------
+
 
 def create_access_token(
     subject: str,

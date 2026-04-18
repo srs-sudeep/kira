@@ -1,4 +1,5 @@
 """Email types for local/dev — no DNS deliverability check (allows *.local, etc.)."""
+
 from __future__ import annotations
 
 from typing import Annotated

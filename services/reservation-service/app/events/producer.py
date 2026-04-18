@@ -1,4 +1,5 @@
 """Kafka producer — publishes reservation.created / modified / cancelled."""
+
 import json
 import uuid
 from datetime import date, datetime

@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for authentication flows."""
+
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field

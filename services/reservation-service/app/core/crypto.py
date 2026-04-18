@@ -4,6 +4,7 @@ Wire format: nonce (12 bytes) || GCM ciphertext+tag
 The 12-byte nonce is generated fresh per encryption so identical plaintexts
 produce different ciphertexts — safe to store in BYTEA columns.
 """
+
 import hashlib
 import os
 

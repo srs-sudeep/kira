@@ -8,6 +8,7 @@ Retry strategy: exponential back-off — 1s, 4s, 16s (max 3 retries).
 Circuit breaker: after CIRCUIT_BREAKER_THRESHOLD consecutive failures the
 channel.status is set to 'error' and further pushes are skipped.
 """
+
 import asyncio
 import hashlib
 import json
@@ -35,7 +36,7 @@ async def _run_push(
     retry_count: int,
 ) -> None:
     from sqlalchemy import text
-    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.adapters.base import ARIUpdate
     from app.adapters.registry import get_adapter
@@ -104,7 +105,7 @@ async def _run_push(
                     ota_room_type_id=mapping.ota_room_type_id,
                     ota_rate_plan_id=mapping.ota_rate_plan_id,
                     date=d,
-                    available_rooms=10,   # real value from ARISnapshot in production
+                    available_rooms=10,  # real value from ARISnapshot in production
                     rate_amount=Decimal("5000.00"),  # real value from ARISnapshot in production
                     is_closed=False,
                 )
@@ -112,9 +113,7 @@ async def _run_push(
             ]
 
             payload_hash = hashlib.sha256(
-                json.dumps(
-                    [f"{u.date}:{u.available_rooms}" for u in updates], sort_keys=True
-                ).encode()
+                json.dumps([f"{u.date}:{u.available_rooms}" for u in updates], sort_keys=True).encode()
             ).hexdigest()
 
             try:

@@ -1,16 +1,14 @@
 """Channel business logic: create, update, delete, health, sync, mappings."""
+
 import uuid
 from collections import Counter
-from datetime import UTC, datetime
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters.registry import get_adapter
-from app.core.circuit_breaker import CIRCUIT_BREAKER_THRESHOLD
-from app.core.crypto import decrypt_credentials, encrypt_credentials
+from app.core.crypto import encrypt_credentials
 from app.exceptions import ConflictError, NotFoundError, ValidationError
-from app.models.channel import Channel
 from app.repositories.channel_repo import ChannelRepository
 from app.repositories.mapping_repo import MappingRepository
 from app.repositories.sync_log_repo import SyncLogRepository
@@ -48,7 +46,6 @@ class ChannelService:
 
         # Test connection
         connected = await adapter.test_connection()
-        status = "connected" if connected else "error"
         error_message = None if connected else "Connection test failed during channel creation."
 
         credentials_enc = encrypt_credentials(req.credentials)
@@ -161,6 +158,7 @@ class ChannelService:
             raise ValidationError("Cannot sync an inactive channel.")
 
         from app.tasks.booking_pull import pull_bookings_all_channels
+
         # Enqueue a one-off booking pull for this channel
         task = pull_bookings_all_channels.apply_async()
 

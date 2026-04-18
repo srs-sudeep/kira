@@ -1,4 +1,5 @@
 """Repository for seasonal_rules."""
+
 import uuid
 from datetime import date
 
@@ -13,48 +14,53 @@ class SeasonalRuleRepository:
         self._s = session
 
     async def get_by_id(self, rule_id: uuid.UUID) -> SeasonalRule | None:
-        return (
-            await self._s.execute(select(SeasonalRule).where(SeasonalRule.id == rule_id))
-        ).scalar_one_or_none()
+        return (await self._s.execute(select(SeasonalRule).where(SeasonalRule.id == rule_id))).scalar_one_or_none()
 
     async def list_active(self) -> list[SeasonalRule]:
         rows = (
-            await self._s.execute(
-                select(SeasonalRule)
-                .where(SeasonalRule.is_active.is_(True))
-                .order_by(SeasonalRule.start_date)
+            (
+                await self._s.execute(
+                    select(SeasonalRule).where(SeasonalRule.is_active.is_(True)).order_by(SeasonalRule.start_date)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
 
     async def list_active_covering(self, d: date) -> list[SeasonalRule]:
         """Return rules that are active and whose date range covers the given date."""
         rows = (
-            await self._s.execute(
-                select(SeasonalRule).where(
-                    SeasonalRule.is_active.is_(True),
-                    SeasonalRule.start_date <= d,
-                    SeasonalRule.end_date >= d,
+            (
+                await self._s.execute(
+                    select(SeasonalRule).where(
+                        SeasonalRule.is_active.is_(True),
+                        SeasonalRule.start_date <= d,
+                        SeasonalRule.end_date >= d,
+                    )
                 )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
 
     async def list_all(self, page: int, page_size: int) -> tuple[list[SeasonalRule], int]:
         from sqlalchemy import func
-        total = (
-            await self._s.execute(
-                select(func.count()).select_from(select(SeasonalRule).subquery())
-            )
-        ).scalar_one()
+
+        total = (await self._s.execute(select(func.count()).select_from(select(SeasonalRule).subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                select(SeasonalRule)
-                .order_by(SeasonalRule.start_date)
-                .offset((page - 1) * page_size)
-                .limit(page_size)
+            (
+                await self._s.execute(
+                    select(SeasonalRule)
+                    .order_by(SeasonalRule.start_date)
+                    .offset((page - 1) * page_size)
+                    .limit(page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows), total
 
     async def create(self, **kwargs) -> SeasonalRule:

@@ -1,4 +1,5 @@
 """JWT decoding and per-request tenant search_path injection (same pattern as rate-inventory)."""
+
 import uuid
 from typing import Annotated, AsyncGenerator
 
@@ -102,6 +103,7 @@ def require_roles(*roles: str):
         if role not in roles:
             raise ForbiddenError(f"Role '{role}' not permitted. Required: {list(roles)}.")
         return role
+
     return _check
 
 

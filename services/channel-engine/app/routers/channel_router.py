@@ -1,4 +1,5 @@
 """Channel endpoints — CRUD, mappings, sync log, health, manual sync."""
+
 import uuid
 
 from fastapi import APIRouter, Query
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/channels", tags=["channels"])
 
 # ── Health dashboard (no channel ID required) ─────────────────────────────────
 
+
 @router.get("/health", response_model=HealthDashboardResponse)
 async def get_health_dashboard(db: TenantDB):
     svc = ChannelService(db)
@@ -33,6 +35,7 @@ async def get_health_dashboard(db: TenantDB):
 
 
 # ── Channel CRUD ──────────────────────────────────────────────────────────────
+
 
 @router.get("", response_model=ChannelListResponse)
 async def list_channels(db: TenantDB):
@@ -66,6 +69,7 @@ async def delete_channel(channel_id: uuid.UUID, db: TenantDB):
 
 # ── Manual sync trigger ───────────────────────────────────────────────────────
 
+
 @router.post("/{channel_id}/sync", response_model=SyncTriggeredResponse)
 async def trigger_sync(
     channel_id: uuid.UUID,
@@ -73,6 +77,7 @@ async def trigger_sync(
     tenant_id: CurrentTenantID,
 ):
     from sqlalchemy import text
+
     svc = ChannelService(db)
     # Resolve schema_name for the task
     result = await db.execute(
@@ -86,6 +91,7 @@ async def trigger_sync(
 
 # ── Sync log ──────────────────────────────────────────────────────────────────
 
+
 @router.get("/{channel_id}/sync-log", response_model=SyncLogPageResponse)
 async def get_sync_log(
     channel_id: uuid.UUID,
@@ -98,6 +104,7 @@ async def get_sync_log(
 
 
 # ── Channel mappings ──────────────────────────────────────────────────────────
+
 
 @router.get("/{channel_id}/mapping", response_model=MappingListResponse)
 async def list_mappings(channel_id: uuid.UUID, db: TenantDB):

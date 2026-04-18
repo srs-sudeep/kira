@@ -1,4 +1,5 @@
 """Repository for public.audit_events — append-only writes, filtered reads."""
+
 import uuid
 from typing import Any
 
@@ -43,9 +44,7 @@ class AuditRepository:
         await self._s.flush()
         return event
 
-    async def list_filtered(
-        self, filters: AuditFilterParams
-    ) -> tuple[list[AuditEvent], int]:
+    async def list_filtered(self, filters: AuditFilterParams) -> tuple[list[AuditEvent], int]:
         base = select(AuditEvent)
 
         if filters.tenant_id is not None:
@@ -63,14 +62,16 @@ class AuditRepository:
         if filters.to_dt is not None:
             base = base.where(AuditEvent.created_at <= filters.to_dt)
 
-        total = (
-            await self._s.execute(select(func.count()).select_from(base.subquery()))
-        ).scalar_one()
+        total = (await self._s.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                base.order_by(AuditEvent.created_at.desc())
-                .offset((filters.page - 1) * filters.page_size)
-                .limit(filters.page_size)
+            (
+                await self._s.execute(
+                    base.order_by(AuditEvent.created_at.desc())
+                    .offset((filters.page - 1) * filters.page_size)
+                    .limit(filters.page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows), total

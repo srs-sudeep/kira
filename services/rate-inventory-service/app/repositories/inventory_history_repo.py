@@ -1,4 +1,5 @@
 """Repository for inventory_history — append-only."""
+
 import uuid
 from datetime import date
 
@@ -40,9 +41,7 @@ class InventoryHistoryRepository:
         self._s.add_all(entries)
         await self._s.flush()
 
-    async def list_filtered(
-        self, q: InventoryHistoryQuery
-    ) -> tuple[list[InventoryHistory], int]:
+    async def list_filtered(self, q: InventoryHistoryQuery) -> tuple[list[InventoryHistory], int]:
         base = select(InventoryHistory)
         if q.room_type_id:
             base = base.where(InventoryHistory.room_type_id == q.room_type_id)
@@ -55,14 +54,16 @@ class InventoryHistoryRepository:
         if q.changed_by:
             base = base.where(InventoryHistory.changed_by == q.changed_by)
 
-        total = (
-            await self._s.execute(select(func.count()).select_from(base.subquery()))
-        ).scalar_one()
+        total = (await self._s.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                base.order_by(InventoryHistory.changed_at.desc())
-                .offset((q.page - 1) * q.page_size)
-                .limit(q.page_size)
+            (
+                await self._s.execute(
+                    base.order_by(InventoryHistory.changed_at.desc())
+                    .offset((q.page - 1) * q.page_size)
+                    .limit(q.page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows), total

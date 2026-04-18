@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for notification preferences."""
+
 import uuid
 from datetime import datetime
 
@@ -18,6 +19,7 @@ class PreferenceResponse(BaseModel):
 
 class PreferenceUpsert(BaseModel):
     """Single event-type preference to create or update."""
+
     event_type: str
     email_enabled: bool = True
     in_app_enabled: bool = True
@@ -25,6 +27,7 @@ class PreferenceUpsert(BaseModel):
 
 class PreferencesUpdateRequest(BaseModel):
     """Batch upsert — pass one or many preferences at once."""
+
     preferences: list[PreferenceUpsert]
 
 

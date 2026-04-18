@@ -1,4 +1,5 @@
 """Repository for reservation_notes — append-only."""
+
 import uuid
 
 from sqlalchemy import select
@@ -13,12 +14,16 @@ class NoteRepository:
 
     async def list_for_reservation(self, reservation_id: uuid.UUID) -> list[ReservationNote]:
         rows = (
-            await self._s.execute(
-                select(ReservationNote)
-                .where(ReservationNote.reservation_id == reservation_id)
-                .order_by(ReservationNote.created_at)
+            (
+                await self._s.execute(
+                    select(ReservationNote)
+                    .where(ReservationNote.reservation_id == reservation_id)
+                    .order_by(ReservationNote.created_at)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows)
 
     async def create(

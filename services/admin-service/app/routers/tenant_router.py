@@ -1,11 +1,11 @@
 """Tenant management endpoints."""
+
 import uuid
 
 from fastapi import APIRouter, Query
 
 from app.core.tenant import (
     CurrentTenantID,
-    CurrentUserID,
     DB,
     require_roles,
 )
@@ -52,6 +52,7 @@ async def list_tenants(
 
 # ── Current-tenant endpoints (property_owner + super_admin) ──────────────────
 
+
 @router.get("/me", response_model=TenantResponse)
 async def get_my_tenant(db: DB, tenant_id: CurrentTenantID):
     svc = TenantService(db)
@@ -73,6 +74,7 @@ async def update_my_tenant(
 
 
 # ── Per-tenant super_admin endpoints ─────────────────────────────────────────
+
 
 @router.get(
     "/{tenant_id}",

@@ -3,6 +3,7 @@
 Publishes:
   - ari.updated  — every time ARI changes (calendar edit, bulk, stop-sell, seasonal apply)
 """
+
 import json
 import uuid
 from datetime import date

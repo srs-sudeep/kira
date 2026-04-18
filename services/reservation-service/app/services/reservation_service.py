@@ -1,21 +1,21 @@
 """Reservation business logic: create, modify, cancel, notes, duplicates."""
+
 import math
 import uuid
 from datetime import UTC, datetime
-from decimal import Decimal
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.ari_client import AvailabilityResult, ari_client
+from app.core.ari_client import ari_client
 from app.core.crypto import decrypt_pii, encrypt_pii, hash_email
 from app.events.producer import kafka_producer
-from app.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
+from app.exceptions import NotFoundError, ValidationError
 from app.models.reservation import Reservation
 from app.repositories.guest_repo import GuestRepository
 from app.repositories.note_repo import NoteRepository
 from app.repositories.reservation_repo import ReservationRepository
-from app.schemas.guest import GuestBrief, GuestCreate, GuestResponse
+from app.schemas.guest import GuestBrief, GuestResponse
 from app.schemas.note import NoteCreate, NoteResponse
 from app.schemas.reservation import (
     DuplicateGroup,
@@ -153,14 +153,15 @@ class ReservationService:
     ) -> ReservationDetail:
         # 1. Availability check
         avail = await ari_client.check_availability(
-            req.room_type_id, req.rate_plan_id,
-            req.check_in, req.check_out,
-            token, tenant_id,
+            req.room_type_id,
+            req.rate_plan_id,
+            req.check_in,
+            req.check_out,
+            token,
+            tenant_id,
         )
         if not avail.available:
-            raise ValidationError(
-                f"Room not available: {avail.reason or 'no inventory for requested dates'}"
-            )
+            raise ValidationError(f"Room not available: {avail.reason or 'no inventory for requested dates'}")
 
         # 2. Resolve or create guest profile
         email_plain = req.guest.email
@@ -202,9 +203,13 @@ class ReservationService:
 
         # 4. Decrement ARI (best-effort — reservation is committed regardless)
         ok = await ari_client.adjust_inventory(
-            req.room_type_id, req.rate_plan_id,
-            req.check_in, req.check_out,
-            delta=-1, token=token, tenant_id=tenant_id,
+            req.room_type_id,
+            req.rate_plan_id,
+            req.check_in,
+            req.check_out,
+            delta=-1,
+            token=token,
+            tenant_id=tenant_id,
         )
         if not ok:
             logger.warning(
@@ -265,9 +270,7 @@ class ReservationService:
         if res is None:
             raise NotFoundError("Reservation", str(reservation_id))
         if res.status not in _MODIFIABLE_STATUSES:
-            raise ValidationError(
-                f"Cannot modify a reservation with status '{res.status}'."
-            )
+            raise ValidationError(f"Cannot modify a reservation with status '{res.status}'.")
 
         updates = req.model_dump(exclude_none=True)
         if not updates:
@@ -277,8 +280,12 @@ class ReservationService:
         new_check_out = req.check_out or res.check_out
         new_room_type = req.room_type_id or res.room_type_id
         new_rate_plan = req.rate_plan_id or res.rate_plan_id
-        dates_changed = (new_check_in != res.check_in or new_check_out != res.check_out
-                         or new_room_type != res.room_type_id or new_rate_plan != res.rate_plan_id)
+        dates_changed = (
+            new_check_in != res.check_in
+            or new_check_out != res.check_out
+            or new_room_type != res.room_type_id
+            or new_rate_plan != res.rate_plan_id
+        )
 
         new_total = res.total_amount
         if dates_changed:
@@ -286,19 +293,25 @@ class ReservationService:
                 new_room_type, new_rate_plan, new_check_in, new_check_out, token, tenant_id
             )
             if not avail.available:
-                raise ValidationError(
-                    f"New dates/room not available: {avail.reason}"
-                )
+                raise ValidationError(f"New dates/room not available: {avail.reason}")
             # Release old inventory, book new
             await ari_client.adjust_inventory(
-                res.room_type_id, res.rate_plan_id,
-                res.check_in, res.check_out,
-                delta=+1, token=token, tenant_id=tenant_id,
+                res.room_type_id,
+                res.rate_plan_id,
+                res.check_in,
+                res.check_out,
+                delta=+1,
+                token=token,
+                tenant_id=tenant_id,
             )
             await ari_client.adjust_inventory(
-                new_room_type, new_rate_plan,
-                new_check_in, new_check_out,
-                delta=-1, token=token, tenant_id=tenant_id,
+                new_room_type,
+                new_rate_plan,
+                new_check_in,
+                new_check_out,
+                delta=-1,
+                token=token,
+                tenant_id=tenant_id,
             )
             new_total = avail.total_amount
             updates["total_amount"] = new_total
@@ -346,9 +359,7 @@ class ReservationService:
         if res is None:
             raise NotFoundError("Reservation", str(reservation_id))
         if res.status not in _CANCELLABLE_STATUSES:
-            raise ValidationError(
-                f"Cannot cancel a reservation with status '{res.status}'."
-            )
+            raise ValidationError(f"Cannot cancel a reservation with status '{res.status}'.")
 
         now = datetime.now(UTC)
         updates = {
@@ -360,9 +371,13 @@ class ReservationService:
 
         # Release inventory (best-effort)
         await ari_client.adjust_inventory(
-            res.room_type_id, res.rate_plan_id,
-            res.check_in, res.check_out,
-            delta=+1, token=token, tenant_id=tenant_id,
+            res.room_type_id,
+            res.rate_plan_id,
+            res.check_in,
+            res.check_out,
+            delta=+1,
+            token=token,
+            tenant_id=tenant_id,
         )
 
         await kafka_producer.reservation_cancelled(
@@ -411,9 +426,7 @@ class ReservationService:
         }
         allowed_from = _allowed_transitions.get(req.status, ())
         if res.status not in allowed_from:
-            raise ValidationError(
-                f"Cannot transition from '{res.status}' to '{req.status}'."
-            )
+            raise ValidationError(f"Cannot transition from '{res.status}' to '{req.status}'.")
 
         res = await self._res_repo.update(res, status=req.status)
         logger.info("reservation_status_updated", id=str(reservation_id), status=req.status)

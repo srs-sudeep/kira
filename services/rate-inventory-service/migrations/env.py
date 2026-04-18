@@ -1,4 +1,5 @@
 """Alembic environment — async SQLAlchemy setup for KIRA."""
+
 import asyncio
 from logging.config import fileConfig
 

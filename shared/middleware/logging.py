@@ -1,4 +1,5 @@
 """KIRA structured logging middleware — enriches every request log with trace context."""
+
 from __future__ import annotations
 
 import time
@@ -33,9 +34,7 @@ def configure_structlog(service_name: str, log_level: str = "INFO") -> None:
             structlog.processors.format_exc_info,
             structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            getattr(logging, log_level.upper(), logging.INFO)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, log_level.upper(), logging.INFO)),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=True,

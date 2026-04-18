@@ -1,6 +1,6 @@
 """KIRA Identity Service — pytest fixtures."""
+
 import uuid
-from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -47,6 +47,7 @@ async def client(db_session: AsyncSession):
 
 # ── User factories ────────────────────────────────────────────────────────────
 
+
 async def make_user(
     session: AsyncSession,
     *,
@@ -82,9 +83,7 @@ async def tenant_id() -> uuid.UUID:
 
 @pytest.fixture
 async def regular_user(db_session: AsyncSession, tenant_id: uuid.UUID) -> User:
-    return await make_user(
-        db_session, email="user@example.com", tenant_id=tenant_id
-    )
+    return await make_user(db_session, email="user@example.com", tenant_id=tenant_id)
 
 
 @pytest.fixture

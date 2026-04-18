@@ -17,6 +17,7 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
+
 def upgrade() -> None:
     op.create_table(
         "users",
@@ -56,9 +57,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.CheckConstraint(
-            "role IN ("
-            "'super_admin', 'property_owner', 'revenue_manager', "
-            "'front_desk', 'read_only')",
+            "role IN ('super_admin', 'property_owner', 'revenue_manager', 'front_desk', 'read_only')",
             name="ck_users_role",
         ),
         schema="public",

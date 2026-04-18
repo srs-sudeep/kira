@@ -1,4 +1,5 @@
 """Tests for reservation CRUD, status transitions, notes, and duplicate detection."""
+
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -37,11 +38,13 @@ RATE_PLAN_ID = uuid.uuid4()
 
 def _avail_ok(total: Decimal = Decimal("10000.00")):
     from app.core.ari_client import AvailabilityResult
+
     return AvailabilityResult(available=True, total_amount=total, reason=None)
 
 
 def _avail_no():
     from app.core.ari_client import AvailabilityResult
+
     return AvailabilityResult(available=False, total_amount=Decimal("0"), reason="No rooms")
 
 
@@ -206,7 +209,8 @@ class TestModifyReservation:
     async def test_modify_dates_checks_new_availability(self, db: AsyncSession, mock_kafka):
         guest = await make_guest(db)
         res = await make_reservation(
-            db, guest.id,
+            db,
+            guest.id,
             room_type_id=ROOM_TYPE_ID,
             rate_plan_id=RATE_PLAN_ID,
             check_in=TODAY,
@@ -368,13 +372,16 @@ class TestCancelReservation:
 
 
 class TestStatusTransitions:
-    @pytest.mark.parametrize("initial,target", [
-        ("confirmed", "checked_in"),
-        ("modified", "checked_in"),
-        ("confirmed", "no_show"),
-        ("modified", "no_show"),
-        ("checked_in", "checked_out"),
-    ])
+    @pytest.mark.parametrize(
+        "initial,target",
+        [
+            ("confirmed", "checked_in"),
+            ("modified", "checked_in"),
+            ("confirmed", "no_show"),
+            ("modified", "no_show"),
+            ("checked_in", "checked_out"),
+        ],
+    )
     async def test_valid_transitions(self, db: AsyncSession, initial, target):
         guest = await make_guest(db)
         res = await make_reservation(db, guest.id, status=initial)
@@ -384,12 +391,15 @@ class TestStatusTransitions:
         detail = await svc.update_status(res.id, ReservationStatusUpdate(status=target))
         assert detail.status == target
 
-    @pytest.mark.parametrize("initial,target", [
-        ("confirmed", "checked_out"),
-        ("cancelled", "checked_in"),
-        ("checked_out", "checked_in"),
-        ("no_show", "checked_in"),
-    ])
+    @pytest.mark.parametrize(
+        "initial,target",
+        [
+            ("confirmed", "checked_out"),
+            ("cancelled", "checked_in"),
+            ("checked_out", "checked_in"),
+            ("no_show", "checked_in"),
+        ],
+    )
     async def test_invalid_transitions_raise(self, db: AsyncSession, initial, target):
         guest = await make_guest(db)
         res = await make_reservation(db, guest.id, status=initial)
@@ -449,15 +459,21 @@ class TestDuplicates:
         rt = uuid.uuid4()
         rp = uuid.uuid4()
         await make_reservation(
-            db, guest.id,
-            room_type_id=rt, rate_plan_id=rp,
-            check_in=TODAY, check_out=DAY3,
+            db,
+            guest.id,
+            room_type_id=rt,
+            rate_plan_id=rp,
+            check_in=TODAY,
+            check_out=DAY3,
             status="confirmed",
         )
         await make_reservation(
-            db, guest.id,
-            room_type_id=rt, rate_plan_id=rp,
-            check_in=TOMORROW, check_out=DAY5,
+            db,
+            guest.id,
+            room_type_id=rt,
+            rate_plan_id=rp,
+            check_in=TOMORROW,
+            check_out=DAY5,
             status="confirmed",
         )
         await db.commit()

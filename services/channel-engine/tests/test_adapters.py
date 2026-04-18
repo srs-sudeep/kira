@@ -1,11 +1,11 @@
 """Tests for channel adapters: base interface, registry, and stub implementations."""
-import uuid
+
 from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
 
-from app.adapters.base import ARIUpdate, BookingData, ChannelAdapter, SyncResult
+from app.adapters.base import ARIUpdate, ChannelAdapter, SyncResult
 from app.adapters.booking_com import BookingComAdapter
 from app.adapters.expedia import ExpediaAdapter
 from app.adapters.makemytrip import MakeMyTripAdapter

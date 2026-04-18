@@ -13,6 +13,7 @@ For each event:
   5. Create in-app Notification records (if in_app_enabled)
   6. Enqueue email Celery tasks (if email_enabled)
 """
+
 import asyncio
 import json
 import uuid
@@ -26,8 +27,8 @@ logger = structlog.get_logger(__name__)
 
 # Role sets per event type
 _ROLES_FOR_EVENT: dict[str, tuple[str, ...]] = {
-    "new_booking":     ("front_desk", "property_owner"),
-    "cancellation":    ("front_desk", "property_owner"),
+    "new_booking": ("front_desk", "property_owner"),
+    "cancellation": ("front_desk", "property_owner"),
     "channel_failure": ("property_owner", "revenue_manager"),
 }
 
@@ -136,7 +137,6 @@ async def _handle_reservation_created(session, payload: dict) -> None:
     schema_name = await _resolve_schema(session, tenant_id)
 
     confirmation = payload.get("confirmation_number", "N/A")
-    guest_id = payload.get("guest_id", "")
     check_in = payload.get("check_in", "")
     check_out = payload.get("check_out", "")
     total_amount = str(payload.get("total_amount", ""))
@@ -159,7 +159,9 @@ async def _handle_reservation_created(session, payload: dict) -> None:
         }
 
     await _dispatch(
-        session, tenant_id, schema_name,
+        session,
+        tenant_id,
+        schema_name,
         event_type="new_booking",
         title=title,
         message=message,
@@ -188,7 +190,9 @@ async def _handle_reservation_cancelled(session, payload: dict) -> None:
         }
 
     await _dispatch(
-        session, tenant_id, schema_name,
+        session,
+        tenant_id,
+        schema_name,
         event_type="cancellation",
         title=title,
         message=message,
@@ -218,7 +222,9 @@ async def _handle_channel_sync_failed(session, payload: dict) -> None:
         }
 
     await _dispatch(
-        session, tenant_id, schema_name,
+        session,
+        tenant_id,
+        schema_name,
         event_type="channel_failure",
         title=title,
         message=message,

@@ -5,6 +5,7 @@ when configuring ``ForeignKey("public.tenants.id")`` on ``User`` and
 ``AuditEvent``. Migrations still originate from admin-service; do not duplicate
 Alembic for this table here.
 """
+
 import uuid
 from datetime import datetime
 
@@ -19,9 +20,7 @@ class Tenant(Base):
     __tablename__ = "tenants"
     __table_args__ = {"schema": "public"}
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     legal_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     address_line1: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -40,12 +39,8 @@ class Tenant(Base):
     subscription_tier: Mapped[str] = mapped_column(String(20), nullable=False, default="starter")
     schema_name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    onboarded_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    onboarded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

@@ -1,21 +1,23 @@
 """Tests for channel CRUD, mappings, sync log, health dashboard, manual sync."""
+
 import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.exceptions import ConflictError, NotFoundError, ValidationError
+from app.exceptions import ConflictError, NotFoundError
 from app.schemas.channel import ChannelCreate, ChannelUpdate
 from app.schemas.mapping import MappingCreate, MappingUpdate
 from app.services.channel_service import ChannelService
-from tests.conftest import FAKE_TENANT_ID, make_channel, make_mapping
+from tests.conftest import make_channel, make_mapping
 
 ROOM_TYPE_ID = uuid.uuid4()
 RATE_PLAN_ID = uuid.uuid4()
 
 
 # ── Channel CRUD ──────────────────────────────────────────────────────────────
+
 
 class TestCreateChannel:
     async def test_create_channel_test_connection_success(self, db: AsyncSession):
@@ -72,12 +74,14 @@ class TestCreateChannel:
 
         # Fetch raw channel from DB and verify credentials are bytes (encrypted)
         from app.repositories.channel_repo import ChannelRepository
+
         repo = ChannelRepository(db)
         channel = await repo.get_by_id(result.id)
         assert isinstance(channel.credentials_ref, bytes)
 
         # Decrypt and verify
         from app.core.crypto import decrypt_credentials
+
         decrypted = decrypt_credentials(channel.credentials_ref)
         assert decrypted["access_key"] == "secret"
 
@@ -164,6 +168,7 @@ class TestDeleteChannel:
         await svc.delete_channel(channel.id)
 
         from app.repositories.channel_repo import ChannelRepository
+
         repo = ChannelRepository(db)
         ch = await repo.get_by_id(channel.id)
         assert ch.is_active is False
@@ -176,6 +181,7 @@ class TestDeleteChannel:
 
 
 # ── Health dashboard ──────────────────────────────────────────────────────────
+
 
 class TestHealthDashboard:
     async def test_health_dashboard_empty(self, db: AsyncSession):
@@ -201,6 +207,7 @@ class TestHealthDashboard:
 
 # ── Sync log ──────────────────────────────────────────────────────────────────
 
+
 class TestSyncLog:
     async def test_sync_log_empty_for_new_channel(self, db: AsyncSession):
         channel = await make_channel(db)
@@ -216,6 +223,7 @@ class TestSyncLog:
         await db.commit()
 
         from app.repositories.sync_log_repo import SyncLogRepository
+
         repo = SyncLogRepository(db)
         for i in range(5):
             await repo.create(
@@ -240,6 +248,7 @@ class TestSyncLog:
 
 # ── Channel mappings ──────────────────────────────────────────────────────────
 
+
 class TestChannelMappings:
     async def test_create_mapping(self, db: AsyncSession):
         channel = await make_channel(db)
@@ -263,7 +272,8 @@ class TestChannelMappings:
         room_type_id = uuid.uuid4()
         rate_plan_id = uuid.uuid4()
         await make_mapping(
-            db, channel.id,
+            db,
+            channel.id,
             internal_room_type_id=room_type_id,
             internal_rate_plan_id=rate_plan_id,
         )
@@ -297,9 +307,7 @@ class TestChannelMappings:
         await db.commit()
 
         svc = ChannelService(db)
-        result = await svc.update_mapping(
-            channel.id, mapping.id, MappingUpdate(ota_room_type_id="NEW_RT")
-        )
+        result = await svc.update_mapping(channel.id, mapping.id, MappingUpdate(ota_room_type_id="NEW_RT"))
         assert result.ota_room_type_id == "NEW_RT"
 
     async def test_delete_mapping(self, db: AsyncSession):
@@ -326,6 +334,7 @@ class TestChannelMappings:
 
 
 # ── HTTP routes ───────────────────────────────────────────────────────────────
+
 
 class TestChannelRoutes:
     async def test_get_health_route(self, client):

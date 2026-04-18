@@ -11,6 +11,7 @@ For each active channel with status='connected':
 Retry: exponential 1s → 4s → 16s, max 3 retries per channel.
 Circuit breaker: consecutive failures checked before each pull.
 """
+
 import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -38,7 +39,6 @@ async def _pull_for_channel(
     from app.core.crypto import decrypt_credentials
     from app.events.producer import kafka_producer
     from app.repositories.channel_repo import ChannelRepository
-    from app.repositories.mapping_repo import MappingRepository
     from app.repositories.sync_log_repo import SyncLogRepository
 
     engine = create_async_engine(settings.database_url, echo=False)
@@ -48,7 +48,6 @@ async def _pull_for_channel(
         await session.execute(text(f"SET LOCAL search_path TO {schema_name}, public"))
 
         channel_repo = ChannelRepository(session)
-        mapping_repo = MappingRepository(session)
         sync_repo = SyncLogRepository(session)
 
         channel = await channel_repo.get_by_id(channel_id)
@@ -88,9 +87,7 @@ async def _pull_for_channel(
                 response_summary={"error": err_msg},
                 retry_count=0,
             )
-            await channel_repo.record_failure(
-                channel_id, error_message=err_msg, threshold=CIRCUIT_BREAKER_THRESHOLD
-            )
+            await channel_repo.record_failure(channel_id, error_message=err_msg, threshold=CIRCUIT_BREAKER_THRESHOLD)
             await session.commit()
             await engine.dispose()
             return
@@ -117,13 +114,8 @@ async def _pull_for_channel(
         # Process each booking
         published = 0
         for booking in bookings:
-            mapping = await mapping_repo.get_by_internal_ids(
-                channel_id,
-                internal_room_type_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),  # looked up by ota_room_type_id in prod
-                internal_rate_plan_id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
-            )
-            # In production: find mapping by booking.ota_room_type_id and booking.ota_rate_plan_id
-            # and resolve internal IDs.  For now, emit the raw event without resolved IDs.
+            # In production: resolve internal IDs via channel_mappings from booking.ota_room_type_id
+            # and booking.ota_rate_plan_id. For now, emit the raw event without resolved IDs.
             await kafka_producer.booking_raw(
                 tenant_id=tenant_id,
                 channel_id=channel_id,
@@ -186,9 +178,7 @@ async def _run_all() -> dict:
     # Iterate all active tenants
     async with SessionLocal() as session:
         tenants = (
-            await session.execute(
-                text("SELECT id, schema_name FROM public.tenants WHERE is_active = true")
-            )
+            await session.execute(text("SELECT id, schema_name FROM public.tenants WHERE is_active = true"))
         ).fetchall()
 
     for tenant_row in tenants:
@@ -198,13 +188,17 @@ async def _run_all() -> dict:
         async with SessionLocal() as session:
             await session.execute(text(f"SET LOCAL search_path TO {schema_name}, public"))
             channels = (
-                await session.execute(
-                    select(Channel).where(
-                        Channel.is_active.is_(True),
-                        Channel.status == "connected",
+                (
+                    await session.execute(
+                        select(Channel).where(
+                            Channel.is_active.is_(True),
+                            Channel.status == "connected",
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
         for channel in channels:
             try:

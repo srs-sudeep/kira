@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for seasonal rules."""
+
 import uuid
 from datetime import date, datetime
 from decimal import Decimal

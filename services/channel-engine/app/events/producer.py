@@ -4,6 +4,7 @@ Publishes:
   - channel.sync.result  — success/failure of each ARI push or booking pull
   - channel.booking.raw  — normalised booking data for reservation-service to consume
 """
+
 import json
 import uuid
 from datetime import date, datetime

@@ -1,4 +1,5 @@
 """JWT creation/verification, password hashing, and TOTP utilities."""
+
 import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
@@ -23,6 +24,7 @@ pwd_hash = PasswordHash([BcryptHasher()])
 
 # ── Password helpers ──────────────────────────────────────────────────────────
 
+
 def hash_password(plain: str) -> str:
     return pwd_hash.hash(plain)
 
@@ -33,6 +35,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 # ── JWT helpers ───────────────────────────────────────────────────────────────
 
+
 def create_access_token(
     *,
     user_id: str,
@@ -42,9 +45,7 @@ def create_access_token(
     token_type: str = "access",
     expires_delta: timedelta | None = None,
 ) -> str:
-    expire = datetime.now(UTC) + (
-        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    )
+    expire = datetime.now(UTC) + (expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES))
     payload = {
         "sub": user_id,
         "email": email,
@@ -93,6 +94,7 @@ def decode_mfa_pending_token(token: str) -> dict:
 
 # ── Refresh token helpers ─────────────────────────────────────────────────────
 
+
 def create_refresh_token() -> tuple[str, str]:
     """Return (raw_token, sha256_hash). Only the hash is persisted in the DB."""
     raw = secrets.token_urlsafe(64)
@@ -105,14 +107,13 @@ def hash_token(raw: str) -> str:
 
 # ── TOTP / MFA helpers ────────────────────────────────────────────────────────
 
+
 def generate_totp_secret() -> str:
     return pyotp.random_base32()
 
 
 def get_totp_provisioning_uri(secret: str, email: str) -> str:
-    return pyotp.TOTP(secret).provisioning_uri(
-        name=email, issuer_name=settings.MFA_ISSUER
-    )
+    return pyotp.TOTP(secret).provisioning_uri(name=email, issuer_name=settings.MFA_ISSUER)
 
 
 def verify_totp(secret: str, code: str) -> bool:

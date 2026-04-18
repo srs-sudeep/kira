@@ -1,6 +1,6 @@
 """Notification endpoints — list, unread count, mark read, preferences."""
+
 import uuid
-from typing import Annotated
 
 from fastapi import APIRouter, Query
 
@@ -18,6 +18,7 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 # ── Notification list ─────────────────────────────────────────────────────────
+
 
 @router.get("", response_model=NotificationListResponse)
 async def list_notifications(
@@ -40,6 +41,7 @@ async def list_notifications(
 
 # ── Unread count ──────────────────────────────────────────────────────────────
 
+
 @router.get("/unread-count", response_model=UnreadCountResponse)
 async def get_unread_count(db: TenantDB, current_user: CurrentUserID):
     svc = NotificationService(db)
@@ -48,6 +50,7 @@ async def get_unread_count(db: TenantDB, current_user: CurrentUserID):
 
 # ── Mark all read ─────────────────────────────────────────────────────────────
 
+
 @router.post("/mark-all-read", response_model=MarkAllReadResponse)
 async def mark_all_read(db: TenantDB, current_user: CurrentUserID):
     svc = NotificationService(db)
@@ -55,6 +58,7 @@ async def mark_all_read(db: TenantDB, current_user: CurrentUserID):
 
 
 # ── Mark single read ──────────────────────────────────────────────────────────
+
 
 @router.patch("/{notification_id}/read", response_model=NotificationResponse)
 async def mark_read(
@@ -67,6 +71,7 @@ async def mark_read(
 
 
 # ── Preferences ───────────────────────────────────────────────────────────────
+
 
 @router.get("/preferences", response_model=PreferencesListResponse)
 async def get_preferences(db: TenantDB, current_user: CurrentUserID):

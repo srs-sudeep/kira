@@ -1,4 +1,5 @@
 """Repository for blackout_dates."""
+
 import uuid
 from datetime import date
 
@@ -13,29 +14,22 @@ class BlackoutDateRepository:
         self._s = session
 
     async def get_by_id(self, bd_id: uuid.UUID) -> BlackoutDate | None:
-        return (
-            await self._s.execute(select(BlackoutDate).where(BlackoutDate.id == bd_id))
-        ).scalar_one_or_none()
+        return (await self._s.execute(select(BlackoutDate).where(BlackoutDate.id == bd_id))).scalar_one_or_none()
 
     async def get_by_date(self, d: date) -> BlackoutDate | None:
-        return (
-            await self._s.execute(select(BlackoutDate).where(BlackoutDate.date == d))
-        ).scalar_one_or_none()
+        return (await self._s.execute(select(BlackoutDate).where(BlackoutDate.date == d))).scalar_one_or_none()
 
     async def list_all(self, page: int, page_size: int) -> tuple[list[BlackoutDate], int]:
-        total = (
-            await self._s.execute(
-                select(func.count()).select_from(select(BlackoutDate).subquery())
-            )
-        ).scalar_one()
+        total = (await self._s.execute(select(func.count()).select_from(select(BlackoutDate).subquery()))).scalar_one()
         rows = (
-            await self._s.execute(
-                select(BlackoutDate)
-                .order_by(BlackoutDate.date)
-                .offset((page - 1) * page_size)
-                .limit(page_size)
+            (
+                await self._s.execute(
+                    select(BlackoutDate).order_by(BlackoutDate.date).offset((page - 1) * page_size).limit(page_size)
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         return list(rows), total
 
     async def create(self, d: date, reason: str | None) -> BlackoutDate:

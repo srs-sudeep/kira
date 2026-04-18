@@ -3,6 +3,7 @@
 Real implementation would use the Booking.com Connectivity API (XML/JSON over HTTPS).
 Credentials expected: {"api_key": "...", "hotel_id": "..."}
 """
+
 from datetime import datetime
 from decimal import Decimal
 

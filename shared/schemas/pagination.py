@@ -1,4 +1,5 @@
 """KIRA shared pagination schemas — standard page/cursor responses."""
+
 from __future__ import annotations
 
 from typing import Generic, TypeVar

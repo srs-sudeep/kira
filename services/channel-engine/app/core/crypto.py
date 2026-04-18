@@ -2,7 +2,7 @@
 
 Wire format: nonce (12 bytes) || GCM ciphertext+tag — identical to reservation-service PII crypto.
 """
-import hashlib
+
 import json
 import os
 from typing import Any

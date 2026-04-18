@@ -1,4 +1,5 @@
 """Shared FastAPI dependencies for notification-service."""
+
 from app.core.tenant import (  # noqa: F401
     CurrentTenantID,
     CurrentUserID,

@@ -1,6 +1,6 @@
 """Tests for room type CRUD."""
+
 import uuid
-from decimal import Decimal
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -122,9 +122,7 @@ class TestRoomTypeRoutes:
 
     async def test_patch(self, client, db: AsyncSession):
         rt = await make_room_type(db, name="Before")
-        resp = await client.patch(
-            f"/api/v1/rooms/types/{rt.id}", json={"name": "After"}
-        )
+        resp = await client.patch(f"/api/v1/rooms/types/{rt.id}", json={"name": "After"})
         assert resp.status_code == 200
         assert resp.json()["name"] == "After"
 

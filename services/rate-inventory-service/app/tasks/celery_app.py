@@ -1,4 +1,5 @@
 """Celery application for the rate-inventory-service."""
+
 from celery import Celery
 from celery.schedules import crontab
 

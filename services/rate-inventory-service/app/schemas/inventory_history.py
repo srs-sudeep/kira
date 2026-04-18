@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for inventory history log."""
+
 import uuid
 from datetime import date, datetime
 

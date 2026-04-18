@@ -42,21 +42,23 @@ class DashboardService:
 
     async def _total_room_inventory(self) -> int:
         row = (
-            await self._s.execute(
-                text(
-                    "SELECT COALESCE(SUM(physical_inventory), 0)::int AS t "
-                    "FROM room_types WHERE is_active = true"
+            (
+                await self._s.execute(
+                    text("SELECT COALESCE(SUM(physical_inventory), 0)::int AS t FROM room_types WHERE is_active = true")
                 )
             )
-        ).mappings().first()
+            .mappings()
+            .first()
+        )
         return int(row["t"] if row else 0)
 
     async def _room_nights_in_range(self, start: date, end: date) -> tuple[int, float, int, int]:
         """Sum overlapping room-nights, revenue (excl. cancelled), res count, cancelled count."""
         row = (
-            await self._s.execute(
-                text(
-                    """
+            (
+                await self._s.execute(
+                    text(
+                        """
                     SELECT
                       COALESCE(SUM(
                         CASE WHEN r.status = 'cancelled' THEN 0
@@ -74,10 +76,13 @@ class DashboardService:
                     WHERE r.check_in < CAST(:end AS date)
                       AND r.check_out > CAST(:start AS date)
                     """
-                ),
-                {"start": start, "end": end},
+                    ),
+                    {"start": start, "end": end},
+                )
             )
-        ).mappings().first()
+            .mappings()
+            .first()
+        )
         if not row:
             return 0, 0.0, 0, 0
         return (
@@ -126,9 +131,10 @@ class DashboardService:
         inv = await self._total_room_inventory()
 
         row = (
-            await self._s.execute(
-                text(
-                    """
+            (
+                await self._s.execute(
+                    text(
+                        """
                     SELECT
                       COUNT(*) FILTER (WHERE check_in = :today AND status <> 'cancelled')::int AS arrivals,
                       COUNT(*) FILTER (WHERE check_out = :today AND status <> 'cancelled')::int AS departures,
@@ -138,24 +144,31 @@ class DashboardService:
                       COUNT(*) FILTER (WHERE status = 'no_show' AND check_in = :today)::int AS no_shows
                     FROM reservations
                     """
-                ),
-                {"today": today},
+                    ),
+                    {"today": today},
+                )
             )
-        ).mappings().first()
+            .mappings()
+            .first()
+        )
 
         occ_row = (
-            await self._s.execute(
-                text(
-                    """
+            (
+                await self._s.execute(
+                    text(
+                        """
                     SELECT COUNT(*)::int AS n
                     FROM reservations
                     WHERE status NOT IN ('cancelled', 'no_show')
                       AND check_in <= :today AND check_out > :today
                     """
-                ),
-                {"today": today},
+                    ),
+                    {"today": today},
+                )
             )
-        ).mappings().first()
+            .mappings()
+            .first()
+        )
         occupied = int(occ_row["n"] if occ_row else 0)
         occ_pct = 100.0 * occupied / inv if inv else 0.0
 
@@ -175,9 +188,10 @@ class DashboardService:
         start = end - timedelta(days=min(days, 90) - 1)
 
         rows = (
-            await self._s.execute(
-                text(
-                    """
+            (
+                await self._s.execute(
+                    text(
+                        """
                     WITH days AS (
                       SELECT generate_series(CAST(:start AS date), CAST(:end AS date), '1 day')::date AS d
                     )
@@ -194,10 +208,13 @@ class DashboardService:
                     GROUP BY d.d
                     ORDER BY d.d
                     """
-                ),
-                {"start": start, "end": end},
+                    ),
+                    {"start": start, "end": end},
+                )
             )
-        ).mappings().all()
+            .mappings()
+            .all()
+        )
 
         out: list[dict[str, Any]] = []
         for r in rows:
@@ -218,9 +235,10 @@ class DashboardService:
         today = date.today()
         start = today - timedelta(days=days - 1)
         rows = (
-            await self._s.execute(
-                text(
-                    """
+            (
+                await self._s.execute(
+                    text(
+                        """
                     SELECT
                       r.source,
                       COUNT(*)::int AS cnt,
@@ -230,10 +248,13 @@ class DashboardService:
                     GROUP BY r.source
                     ORDER BY cnt DESC
                     """
-                ),
-                {"start": datetime.combine(start, datetime.min.time(), tzinfo=timezone.utc)},
+                    ),
+                    {"start": datetime.combine(start, datetime.min.time(), tzinfo=timezone.utc)},
+                )
             )
-        ).mappings().all()
+            .mappings()
+            .all()
+        )
 
         total = sum(int(r["cnt"]) for r in rows) or 1
         out: list[dict[str, Any]] = []
@@ -255,9 +276,10 @@ class DashboardService:
 
     async def channel_health(self) -> list[dict[str, Any]]:
         rows = (
-            await self._s.execute(
-                text(
-                    """
+            (
+                await self._s.execute(
+                    text(
+                        """
                     SELECT c.id, c.ota_code, c.display_name, c.status, c.last_sync_at, c.consecutive_failures,
                            COALESCE((
                              SELECT COUNT(*)::int FROM sync_logs sl
@@ -269,9 +291,12 @@ class DashboardService:
                     WHERE c.is_active = true
                     ORDER BY c.display_name
                     """
+                    )
                 )
             )
-        ).mappings().all()
+            .mappings()
+            .all()
+        )
 
         out: list[dict[str, Any]] = []
         for r in rows:

@@ -1,10 +1,11 @@
 """Room type and rate plan endpoints."""
+
 import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from app.core.tenant import CurrentUserID, TenantDB, require_roles
+from app.core.tenant import TenantDB, require_roles
 from app.schemas.rate_plan import RatePlanCreate, RatePlanListResponse, RatePlanResponse, RatePlanUpdate
 from app.schemas.room_type import RoomTypeCreate, RoomTypeListResponse, RoomTypeResponse, RoomTypeUpdate
 from app.services.rate_plan_service import RatePlanService
@@ -16,6 +17,7 @@ _writers = Depends(require_roles("super_admin", "property_owner", "revenue_manag
 
 
 # ── Room types ────────────────────────────────────────────────────────────────
+
 
 @router.get("/types", response_model=RoomTypeListResponse)
 async def list_room_types(
@@ -61,21 +63,18 @@ async def delete_room_type(
 
 # ── Rate plans ────────────────────────────────────────────────────────────────
 
+
 @router.get("/types/{room_type_id}/rate-plans", response_model=RatePlanListResponse)
 async def list_rate_plans(room_type_id: uuid.UUID, db: TenantDB) -> RatePlanListResponse:
     return await RatePlanService(db).list(room_type_id)
 
 
 @router.get("/types/{room_type_id}/rate-plans/{rate_plan_id}", response_model=RatePlanResponse)
-async def get_rate_plan(
-    room_type_id: uuid.UUID, rate_plan_id: uuid.UUID, db: TenantDB
-) -> RatePlanResponse:
+async def get_rate_plan(room_type_id: uuid.UUID, rate_plan_id: uuid.UUID, db: TenantDB) -> RatePlanResponse:
     return await RatePlanService(db).get(rate_plan_id)
 
 
-@router.post(
-    "/types/{room_type_id}/rate-plans", response_model=RatePlanResponse, status_code=201
-)
+@router.post("/types/{room_type_id}/rate-plans", response_model=RatePlanResponse, status_code=201)
 async def create_rate_plan(
     room_type_id: uuid.UUID,
     req: RatePlanCreate,
@@ -85,9 +84,7 @@ async def create_rate_plan(
     return await RatePlanService(db).create(room_type_id, req)
 
 
-@router.patch(
-    "/types/{room_type_id}/rate-plans/{rate_plan_id}", response_model=RatePlanResponse
-)
+@router.patch("/types/{room_type_id}/rate-plans/{rate_plan_id}", response_model=RatePlanResponse)
 async def update_rate_plan(
     room_type_id: uuid.UUID,
     rate_plan_id: uuid.UUID,

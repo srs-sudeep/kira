@@ -1,7 +1,8 @@
 """Shared declarative base, timestamp mixin, and soft-delete mixin."""
+
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, func
+from sqlalchemy import DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base

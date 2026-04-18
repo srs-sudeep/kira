@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for channel mappings."""
+
 import uuid
 from datetime import datetime
 

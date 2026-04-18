@@ -5,6 +5,7 @@ email contents so local development works without any external dependencies.
 
 Retry strategy: 3 attempts with 60-second delay between each.
 """
+
 import structlog
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail

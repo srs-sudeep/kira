@@ -3,6 +3,7 @@
 Availability check: GET /api/v1/inventory/calendar
 Inventory decrement/increment: PUT /api/v1/inventory/calendar
 """
+
 import uuid
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -12,7 +13,6 @@ import httpx
 import structlog
 
 from app.config import settings
-from app.exceptions import ValidationError
 
 logger = structlog.get_logger(__name__)
 
@@ -106,19 +106,19 @@ class ARIClient:
         cells = []
         for i in range(nights):
             d = check_in + timedelta(days=i)
-            cells.append({
-                "room_type_id": str(room_type_id),
-                "rate_plan_id": str(rate_plan_id),
-                "date": d.isoformat(),
-                "available_rooms": delta,  # will be added by rate service
-            })
+            cells.append(
+                {
+                    "room_type_id": str(room_type_id),
+                    "rate_plan_id": str(rate_plan_id),
+                    "date": d.isoformat(),
+                    "available_rooms": delta,  # will be added by rate service
+                }
+            )
         params = {"tenant_id": str(tenant_id)}
         body = {"cells": cells}
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                resp = await client.put(
-                    url, json=body, params=params, headers=self._headers(token)
-                )
+                resp = await client.put(url, json=body, params=params, headers=self._headers(token))
                 resp.raise_for_status()
             return True
         except Exception as exc:

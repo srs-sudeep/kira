@@ -1,4 +1,5 @@
 """Repository for notification_preferences."""
+
 import uuid
 from typing import Any
 

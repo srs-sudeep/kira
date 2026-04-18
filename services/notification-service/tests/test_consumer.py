@@ -1,17 +1,17 @@
 """Tests for the Kafka consumer handlers: preference gating, in-app creation, email dispatch."""
-import uuid
-from unittest.mock import AsyncMock, MagicMock, call, patch
 
-import pytest
+import uuid
+from unittest.mock import AsyncMock, patch
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.notification_repo import NotificationRepository
-from app.repositories.preference_repo import PreferenceRepository
 from app.services.notification_service import NotificationService
 from tests.conftest import FAKE_TENANT_ID, FAKE_USER_ID, make_preference
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _make_reservation_created_payload(tenant_id=None):
     return {
@@ -59,6 +59,7 @@ def _make_channel_sync_failed_payload(tenant_id=None):
 
 # ── create_for_recipients — service layer ────────────────────────────────────
 
+
 class TestCreateForRecipients:
     async def test_creates_notifications_for_eligible_recipients(self, db: AsyncSession):
         # No saved preferences → defaults to in_app_enabled=True for all
@@ -78,9 +79,7 @@ class TestCreateForRecipients:
         assert page.items[0].type == "new_booking"
 
     async def test_skips_recipient_when_in_app_disabled(self, db: AsyncSession):
-        await make_preference(
-            db, event_type="new_booking", in_app_enabled=False
-        )
+        await make_preference(db, event_type="new_booking", in_app_enabled=False)
         await db.commit()
 
         svc = NotificationService(db)
@@ -125,9 +124,7 @@ class TestCreateForRecipients:
         from tests.conftest import OTHER_USER_ID
 
         # FAKE_USER_ID has in_app disabled, OTHER_USER_ID gets default (enabled)
-        await make_preference(
-            db, FAKE_USER_ID, event_type="channel_failure", in_app_enabled=False
-        )
+        await make_preference(db, FAKE_USER_ID, event_type="channel_failure", in_app_enabled=False)
         await db.commit()
 
         svc = NotificationService(db)
@@ -143,10 +140,9 @@ class TestCreateForRecipients:
 
 # ── Consumer handler functions (unit tests with mocked DB) ───────────────────
 
+
 class TestConsumerHandlers:
-    async def test_handle_reservation_created_dispatches_notifications(
-        self, db: AsyncSession
-    ):
+    async def test_handle_reservation_created_dispatches_notifications(self, db: AsyncSession):
         """The handler creates in-app notifications for found users."""
         from app.events.consumer import _handle_reservation_created
 
@@ -179,9 +175,7 @@ class TestConsumerHandlers:
         assert page.items[0].type == "new_booking"
         assert "RES-ABC123" in page.items[0].title
 
-    async def test_handle_reservation_cancelled_dispatches_notifications(
-        self, db: AsyncSession
-    ):
+    async def test_handle_reservation_cancelled_dispatches_notifications(self, db: AsyncSession):
         from app.events.consumer import _handle_reservation_cancelled
 
         recipient_id = uuid.uuid4()
@@ -212,9 +206,7 @@ class TestConsumerHandlers:
         assert page.total == 1
         assert page.items[0].type == "cancellation"
 
-    async def test_handle_channel_sync_failed_dispatches_notifications(
-        self, db: AsyncSession
-    ):
+    async def test_handle_channel_sync_failed_dispatches_notifications(self, db: AsyncSession):
         from app.events.consumer import _handle_channel_sync_failed
 
         recipient_id = uuid.uuid4()
@@ -266,9 +258,7 @@ class TestConsumerHandlers:
 
         recipient_id = FAKE_USER_ID
         # Disable in-app for this event type
-        await make_preference(
-            db, recipient_id, event_type="new_booking", in_app_enabled=False, email_enabled=True
-        )
+        await make_preference(db, recipient_id, event_type="new_booking", in_app_enabled=False, email_enabled=True)
         await db.commit()
 
         payload = _make_reservation_created_payload()
@@ -305,9 +295,7 @@ class TestConsumerHandlers:
         from app.events.consumer import _handle_reservation_created
 
         recipient_id = FAKE_USER_ID
-        await make_preference(
-            db, recipient_id, event_type="new_booking", in_app_enabled=True, email_enabled=False
-        )
+        await make_preference(db, recipient_id, event_type="new_booking", in_app_enabled=True, email_enabled=False)
         await db.commit()
 
         payload = _make_reservation_created_payload()
@@ -376,6 +364,7 @@ class TestConsumerHandlers:
 
 
 # ── _dispatch_email_task routing ─────────────────────────────────────────────
+
 
 class TestDispatchEmailTaskRouting:
     def test_routes_new_booking_to_correct_task(self, mock_email_tasks):

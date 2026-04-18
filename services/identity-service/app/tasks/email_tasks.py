@@ -1,4 +1,5 @@
 """Celery tasks for transactional email delivery (SendGrid / Mailhog fallback)."""
+
 import structlog
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail

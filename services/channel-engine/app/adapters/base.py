@@ -1,4 +1,5 @@
 """Abstract base adapter — all OTA adapters implement this interface."""
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date, datetime

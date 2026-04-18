@@ -1,13 +1,18 @@
 """Pydantic v2 schemas for notifications."""
+
 import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 NotificationType = Literal[
-    "new_booking", "cancellation", "channel_failure",
-    "low_inventory", "rate_parity", "system",
+    "new_booking",
+    "cancellation",
+    "channel_failure",
+    "low_inventory",
+    "rate_parity",
+    "system",
 ]
 
 

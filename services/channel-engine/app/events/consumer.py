@@ -7,6 +7,7 @@ enqueue Celery tasks to push the ARI to each mapped OTA.
 We intentionally keep the consumer thin — no DB writes happen here.  All
 heavy lifting (adapter calls, sync logging, circuit breaker) is in the Celery task.
 """
+
 import asyncio
 import json
 import uuid

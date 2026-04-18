@@ -1,4 +1,5 @@
 """Celery tasks for reservation transactional emails."""
+
 import structlog
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail

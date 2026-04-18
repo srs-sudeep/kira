@@ -1,4 +1,5 @@
 """User management endpoints: list, get, invite, update, delete."""
+
 import uuid
 from typing import Annotated
 

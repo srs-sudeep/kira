@@ -1,4 +1,5 @@
 """KIRA Identity Service — FastAPI dependency injection helpers."""
+
 import uuid
 from typing import Annotated, Callable
 
@@ -59,11 +60,10 @@ def require_roles(*roles: str) -> Callable:
         async def endpoint(actor: Annotated[User, Depends(require_roles("super_admin"))]):
             ...
     """
+
     async def _check(current_user: CurrentUser) -> User:
         if current_user.role not in roles:
-            raise ForbiddenError(
-                f"Role '{current_user.role}' is not permitted. Required: {list(roles)}."
-            )
+            raise ForbiddenError(f"Role '{current_user.role}' is not permitted. Required: {list(roles)}.")
         return current_user
 
     return _check
@@ -80,6 +80,7 @@ def require_permission(resource: str, action: str) -> Callable:
     or inject the user:
         actor: Annotated[User, Depends(require_permission("rooms", "create"))]
     """
+
     async def _check(current_user: CurrentUser, db: DBSession) -> User:
         if current_user.role == "super_admin":
             return current_user
@@ -87,9 +88,7 @@ def require_permission(resource: str, action: str) -> Callable:
         repo = PermissionRepository(db)
         has = await repo.role_has_permission(current_user.role, resource, action)
         if not has:
-            raise ForbiddenError(
-                f"Permission '{resource}:{action}' is not granted to role '{current_user.role}'."
-            )
+            raise ForbiddenError(f"Permission '{resource}:{action}' is not granted to role '{current_user.role}'.")
         return current_user
 
     return _check

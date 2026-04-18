@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for user management."""
+
 import uuid
 from datetime import datetime
 from typing import Literal

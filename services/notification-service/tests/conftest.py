@@ -1,6 +1,7 @@
 """pytest fixtures for notification-service tests."""
+
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -12,9 +13,7 @@ from app.main import app
 from app.models.notification import Notification
 from app.models.notification_preference import NotificationPreference
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_notification_test"
-)
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_notification_test"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
@@ -42,6 +41,7 @@ async def db(setup_db):
 
 # ── Email task mock ───────────────────────────────────────────────────────────
 
+
 @pytest.fixture(autouse=True)
 def mock_email_tasks():
     with (
@@ -56,6 +56,7 @@ def mock_email_tasks():
 
 
 # ── HTTP test client ──────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 async def client(db: AsyncSession):
@@ -89,6 +90,7 @@ async def client(db: AsyncSession):
 
 
 # ── ORM factories ─────────────────────────────────────────────────────────────
+
 
 async def make_notification(
     session: AsyncSession,

@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for blackout dates."""
+
 import uuid
 from datetime import date, datetime
 

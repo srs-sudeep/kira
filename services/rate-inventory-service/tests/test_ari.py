@@ -1,8 +1,8 @@
 """Tests for ARI calendar, bulk update, stop-sell, seasonal rules, blackout dates."""
+
 import uuid
 from datetime import date, timedelta
 from decimal import Decimal
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -237,13 +237,9 @@ class TestBlackoutDates:
 
     async def test_duplicate_blackout_raises(self, db: AsyncSession):
         svc = ARIService(db)
-        await svc.create_blackout_date(
-            BlackoutDateCreate(date=TODAY), FAKE_USER_ID, FAKE_TENANT_ID
-        )
+        await svc.create_blackout_date(BlackoutDateCreate(date=TODAY), FAKE_USER_ID, FAKE_TENANT_ID)
         with pytest.raises(ConflictError):
-            await svc.create_blackout_date(
-                BlackoutDateCreate(date=TODAY), FAKE_USER_ID, FAKE_TENANT_ID
-            )
+            await svc.create_blackout_date(BlackoutDateCreate(date=TODAY), FAKE_USER_ID, FAKE_TENANT_ID)
 
     async def test_delete_blackout_reopens_ari(self, db: AsyncSession):
         rt = await make_room_type(db)
@@ -251,9 +247,7 @@ class TestBlackoutDates:
         await seed_ari(db, rt.id, rp.id, TODAY, is_closed=False)
 
         svc = ARIService(db)
-        bd = await svc.create_blackout_date(
-            BlackoutDateCreate(date=TODAY), FAKE_USER_ID, FAKE_TENANT_ID
-        )
+        bd = await svc.create_blackout_date(BlackoutDateCreate(date=TODAY), FAKE_USER_ID, FAKE_TENANT_ID)
         await svc.delete_blackout_date(bd.id, FAKE_TENANT_ID)
 
         resp = await svc.get_calendar(rt.id, TODAY, TODAY)

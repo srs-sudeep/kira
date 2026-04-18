@@ -3,12 +3,12 @@
 Runs at 01:00 UTC every night. Iterates all active tenants, sets search_path
 per tenant, then delegates to ARIService.apply_seasonal_rules().
 """
+
 import asyncio
 import uuid
 
 import structlog
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
 from app.services.ari_service import ARIService
@@ -45,9 +45,7 @@ async def _run_all() -> dict[str, int]:
     """Fetch all active tenants and apply seasonal rules to each."""
     summary: dict[str, int] = {}
     async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            text("SELECT id, schema_name FROM public.tenants WHERE is_active = true")
-        )
+        result = await session.execute(text("SELECT id, schema_name FROM public.tenants WHERE is_active = true"))
         tenants = result.fetchall()
 
     for row in tenants:

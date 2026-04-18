@@ -1,7 +1,6 @@
 """Authentication endpoints: register, login, MFA, token management, profile."""
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 
 from app.dependencies import (
     CurrentUser,

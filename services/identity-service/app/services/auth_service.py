@@ -1,4 +1,5 @@
 """Authentication business logic: register, login, MFA, token rotation, logout."""
+
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -7,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.security import (
+    MFA_PENDING_EXPIRE_MINUTES,
     create_access_token,
     create_mfa_pending_token,
     create_refresh_token,
@@ -95,8 +97,7 @@ class AuthService:
         # ── Account lock check ────────────────────────────────────────────────
         if user.locked_until and datetime.now(UTC) < user.locked_until.replace(tzinfo=UTC):
             raise UnauthorizedError(
-                f"Account locked until {user.locked_until.isoformat()}. "
-                "Too many failed login attempts."
+                f"Account locked until {user.locked_until.isoformat()}. Too many failed login attempts."
             )
 
         if not verify_password(req.password, user.hashed_password):
@@ -109,9 +110,7 @@ class AuthService:
                     user_id=str(user.id),
                     locked_until=lock_until.isoformat(),
                 )
-                raise UnauthorizedError(
-                    f"Account locked for {LOCK_DURATION_MINUTES} minutes after too many failures."
-                )
+                raise UnauthorizedError(f"Account locked for {LOCK_DURATION_MINUTES} minutes after too many failures.")
             raise UnauthorizedError("Invalid credentials.")
 
         # Password correct — reset failure counter
@@ -130,9 +129,7 @@ class AuthService:
 
         # ── MFA check ─────────────────────────────────────────────────────────
         if user.mfa_enabled:
-            mfa_pending = create_mfa_pending_token(
-                user_id=str(user.id), email=user.email
-            )
+            mfa_pending = create_mfa_pending_token(user_id=str(user.id), email=user.email)
             return LoginResponse(
                 access_token="",
                 refresh_token="",
@@ -226,9 +223,7 @@ class AuthService:
         await self._user_repo.revoke_refresh_token(rt)
         raw_rt, rt_hash = create_refresh_token()
         expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        await self._user_repo.create_refresh_token(
-            user_id=user.id, token_hash=rt_hash, expires_at=expires_at
-        )
+        await self._user_repo.create_refresh_token(user_id=user.id, token_hash=rt_hash, expires_at=expires_at)
 
         access_token = create_access_token(
             user_id=str(user.id),
@@ -270,9 +265,7 @@ class AuthService:
     async def _issue_full_tokens(self, user: User) -> LoginResponse:
         raw_rt, rt_hash = create_refresh_token()
         expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-        await self._user_repo.create_refresh_token(
-            user_id=user.id, token_hash=rt_hash, expires_at=expires_at
-        )
+        await self._user_repo.create_refresh_token(user_id=user.id, token_hash=rt_hash, expires_at=expires_at)
         access_token = create_access_token(
             user_id=str(user.id),
             email=user.email,

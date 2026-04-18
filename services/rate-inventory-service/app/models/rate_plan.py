@@ -1,4 +1,5 @@
 """ORM model for rate_plans (tenant schema)."""
+
 import uuid
 from decimal import Decimal
 
@@ -12,9 +13,7 @@ from app.models.base import Base, TimestampMixin
 class RatePlan(Base, TimestampMixin):
     __tablename__ = "rate_plans"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     room_type_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("room_types.id", ondelete="CASCADE"),
@@ -33,7 +32,8 @@ class RatePlan(Base, TimestampMixin):
         nullable=True,
     )
     derived_type: Mapped[str | None] = mapped_column(
-        String(10), nullable=True  # 'fixed' | 'percentage'
+        String(10),
+        nullable=True,  # 'fixed' | 'percentage'
     )
     derived_value: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     min_los: Mapped[int] = mapped_column(Integer, nullable=False, default=1)

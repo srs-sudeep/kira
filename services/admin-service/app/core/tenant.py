@@ -3,6 +3,7 @@
 Admin-service works exclusively in the public schema — no tenant schema switching.
 Auth extracts user_id, role, and tenant_id from the JWT for authorization.
 """
+
 import uuid
 from typing import Annotated
 
@@ -48,9 +49,11 @@ async def get_tenant_id_from_token(token: str = Depends(oauth2_scheme)) -> uuid.
 
 def require_roles(*roles: str):
     """Dependency factory — raises ForbiddenError if the token role is not in *roles*."""
+
     async def _check(role: str = Depends(get_current_user_role)) -> None:
         if role not in roles:
             raise ForbiddenError(f"Access requires one of: {list(roles)}")
+
     return Depends(_check)
 
 

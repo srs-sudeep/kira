@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for reservation notes."""
+
 import uuid
 from datetime import datetime
 

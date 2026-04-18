@@ -1,4 +1,5 @@
 """Tests for ARI push logic, circuit breaker, crypto, and sync log."""
+
 import uuid
 from unittest.mock import AsyncMock, patch
 
@@ -13,6 +14,7 @@ from tests.conftest import make_channel
 
 
 # ── Credential encryption ────────────────────────────────────────────────────
+
 
 class TestCredentialCrypto:
     def test_roundtrip(self):
@@ -46,6 +48,7 @@ class TestCredentialCrypto:
 
 # ── Circuit breaker ──────────────────────────────────────────────────────────
 
+
 class TestCircuitBreaker:
     def test_not_tripped_below_threshold(self):
         assert not is_tripped(0)
@@ -64,18 +67,14 @@ class TestChannelRepositoryCircuitBreaker:
         await db.commit()
 
         repo = ChannelRepository(db)
-        new_count = await repo.record_failure(
-            channel.id, error_message="Timeout", threshold=CIRCUIT_BREAKER_THRESHOLD
-        )
+        new_count = await repo.record_failure(channel.id, error_message="Timeout", threshold=CIRCUIT_BREAKER_THRESHOLD)
         assert new_count == 1
         ch = await repo.get_by_id(channel.id)
         assert ch.consecutive_failures == 1
         assert ch.status == "connected"  # below threshold
 
     async def test_record_failure_trips_circuit_at_threshold(self, db: AsyncSession):
-        channel = await make_channel(
-            db, consecutive_failures=CIRCUIT_BREAKER_THRESHOLD - 1, status="connected"
-        )
+        channel = await make_channel(db, consecutive_failures=CIRCUIT_BREAKER_THRESHOLD - 1, status="connected")
         await db.commit()
 
         repo = ChannelRepository(db)
@@ -91,9 +90,7 @@ class TestChannelRepositoryCircuitBreaker:
     async def test_record_success_resets_failures(self, db: AsyncSession):
         from datetime import UTC, datetime
 
-        channel = await make_channel(
-            db, consecutive_failures=4, status="error"
-        )
+        channel = await make_channel(db, consecutive_failures=4, status="error")
         await db.commit()
 
         repo = ChannelRepository(db)
@@ -117,6 +114,7 @@ class TestChannelRepositoryCircuitBreaker:
 
 
 # ── Sync log repository ──────────────────────────────────────────────────────
+
 
 class TestSyncLogRepository:
     async def test_create_sync_log(self, db: AsyncSession):
@@ -164,9 +162,7 @@ class TestSyncLogRepository:
         await db.commit()
 
         repo = SyncLogRepository(db)
-        log1 = await repo.create(
-            channel_id=channel.id, event_type="ari_push", direction="outbound", status="success"
-        )
+        log1 = await repo.create(channel_id=channel.id, event_type="ari_push", direction="outbound", status="success")
         log2 = await repo.create(
             channel_id=channel.id, event_type="booking_pull", direction="inbound", status="success"
         )
@@ -180,11 +176,10 @@ class TestSyncLogRepository:
 
 # ── ARI push: tripped circuit skips push ────────────────────────────────────
 
+
 class TestARIPushCircuitBreaker:
     async def test_push_skipped_when_circuit_tripped(self, db: AsyncSession):
-        channel = await make_channel(
-            db, status="error", consecutive_failures=CIRCUIT_BREAKER_THRESHOLD
-        )
+        channel = await make_channel(db, status="error", consecutive_failures=CIRCUIT_BREAKER_THRESHOLD)
         await db.commit()
 
         # The push task should skip this channel because is_tripped() returns True
@@ -202,6 +197,7 @@ class TestARIPushCircuitBreaker:
 
 
 # ── Full ARI push pipeline (mocked adapter) ──────────────────────────────────
+
 
 class TestARIPushPipeline:
     async def test_successful_push_records_success_log(self, db: AsyncSession, mock_kafka):
@@ -225,11 +221,10 @@ class TestARIPushPipeline:
         await db.commit()
 
         # Manually run the push logic directly (bypassing Celery/asyncio.run)
-        from datetime import date
 
         with (
-            patch("app.tasks.ari_push.create_async_engine") as mock_engine_cls,
-            patch("app.tasks.ari_push.async_sessionmaker") as mock_session_cls,
+            patch("app.tasks.ari_push.create_async_engine"),
+            patch("app.tasks.ari_push.async_sessionmaker"),
         ):
             # These patches are complex due to async context managers.
             # Instead, test the service layer directly.
@@ -238,6 +233,7 @@ class TestARIPushPipeline:
         # Verify via service that the adapter mock returns success
         with patch("app.services.channel_service.get_adapter") as mock_get:
             from app.adapters.base import SyncResult
+
             mock_adapter = AsyncMock()
             mock_adapter.push_ari = AsyncMock(
                 return_value=SyncResult(success=True, pushed_count=3, response_status=200)

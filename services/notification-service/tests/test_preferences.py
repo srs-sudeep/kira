@@ -1,7 +1,5 @@
 """Tests for notification preferences: get defaults, upsert, respect in consumer."""
-import uuid
 
-import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.repositories.preference_repo import ALL_EVENT_TYPES, PreferenceRepository
@@ -25,9 +23,7 @@ class TestGetPreferences:
             assert pref.in_app_enabled is True
 
     async def test_returns_saved_preferences_merged_with_defaults(self, db: AsyncSession):
-        await make_preference(
-            db, event_type="new_booking", email_enabled=False, in_app_enabled=True
-        )
+        await make_preference(db, event_type="new_booking", email_enabled=False, in_app_enabled=True)
         await db.commit()
 
         svc = NotificationService(db)
@@ -104,9 +100,7 @@ class TestUpdatePreferences:
         svc = NotificationService(db)
         result = await svc.update_preferences(
             FAKE_USER_ID,
-            PreferencesUpdateRequest(
-                preferences=[PreferenceUpsert(event_type="system", email_enabled=False)]
-            ),
+            PreferencesUpdateRequest(preferences=[PreferenceUpsert(event_type="system", email_enabled=False)]),
         )
         # All event types still covered
         assert len(result.items) == len(ALL_EVENT_TYPES)
@@ -119,9 +113,7 @@ class TestPreferenceRepository:
         assert await repo.is_enabled(FAKE_USER_ID, "new_booking", "in_app") is True
 
     async def test_is_enabled_respects_saved_preference(self, db: AsyncSession):
-        await make_preference(
-            db, event_type="cancellation", email_enabled=False, in_app_enabled=True
-        )
+        await make_preference(db, event_type="cancellation", email_enabled=False, in_app_enabled=True)
         await db.commit()
 
         repo = PreferenceRepository(db)
@@ -142,6 +134,7 @@ class TestPreferenceRepository:
 
 
 # ── HTTP routes ───────────────────────────────────────────────────────────────
+
 
 class TestPreferencesRoutes:
     async def test_get_preferences_route(self, client):

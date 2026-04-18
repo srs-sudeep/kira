@@ -1,10 +1,10 @@
 """Repository for ari_snapshots — upsert-heavy, date-range queries."""
+
 import uuid
 from datetime import date
-from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import and_, select, update
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,9 +15,7 @@ class ARIRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._s = session
 
-    async def get(
-        self, room_type_id: uuid.UUID, rate_plan_id: uuid.UUID, d: date
-    ) -> ARISnapshot | None:
+    async def get(self, room_type_id: uuid.UUID, rate_plan_id: uuid.UUID, d: date) -> ARISnapshot | None:
         return (
             await self._s.execute(
                 select(ARISnapshot).where(
@@ -117,21 +115,13 @@ class ARIRepository:
 
     async def close_for_date(self, d: date) -> int:
         """Mark all snapshots for a blackout date as closed."""
-        stmt = (
-            update(ARISnapshot)
-            .where(ARISnapshot.date == d)
-            .values(is_closed=True)
-        )
+        stmt = update(ARISnapshot).where(ARISnapshot.date == d).values(is_closed=True)
         result = await self._s.execute(stmt)
         await self._s.flush()
         return result.rowcount
 
     async def reopen_for_date(self, d: date) -> int:
-        stmt = (
-            update(ARISnapshot)
-            .where(ARISnapshot.date == d)
-            .values(is_closed=False)
-        )
+        stmt = update(ARISnapshot).where(ARISnapshot.date == d).values(is_closed=False)
         result = await self._s.execute(stmt)
         await self._s.flush()
         return result.rowcount

@@ -1,6 +1,7 @@
 """pytest fixtures for channel-engine tests."""
+
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -12,9 +13,7 @@ from app.main import app
 from app.models.channel import Channel
 from app.models.channel_mapping import ChannelMapping
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_channel_test"
-)
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/kira_channel_test"
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
@@ -41,6 +40,7 @@ async def db(setup_db):
 
 # ── Kafka mock — applied to all tests ────────────────────────────────────────
 
+
 @pytest.fixture(autouse=True)
 def mock_kafka():
     with patch("app.events.producer.kafka_producer") as mock:
@@ -50,6 +50,7 @@ def mock_kafka():
 
 
 # ── HTTP test client ──────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 async def client(db: AsyncSession):
@@ -83,6 +84,7 @@ async def client(db: AsyncSession):
 
 
 # ── ORM factories ─────────────────────────────────────────────────────────────
+
 
 async def make_channel(
     session: AsyncSession,

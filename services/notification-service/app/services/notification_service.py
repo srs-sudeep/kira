@@ -1,4 +1,5 @@
 """Notification business logic: list, mark read, preferences."""
+
 import uuid
 from typing import Any
 
@@ -92,9 +93,7 @@ class NotificationService:
                         event_type=event_type,
                         email_enabled=True,
                         in_app_enabled=True,
-                        updated_at=__import__("datetime").datetime.now(
-                            __import__("datetime").timezone.utc
-                        ),
+                        updated_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
                     )
                 )
         return PreferencesListResponse(user_id=user_id, items=items)

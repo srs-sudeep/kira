@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for channels."""
+
 import uuid
 from datetime import datetime
 from typing import Any, Literal
@@ -6,13 +7,19 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 OtaCode = Literal[
-    "booking_com", "expedia", "makemytrip", "airbnb", "agoda",
-    "tripadvisor", "hotelbeds",
+    "booking_com",
+    "expedia",
+    "makemytrip",
+    "airbnb",
+    "agoda",
+    "tripadvisor",
+    "hotelbeds",
 ]
 ChannelStatus = Literal["connected", "disconnected", "error", "pending_certification"]
 
 
 # ── Write requests ────────────────────────────────────────────────────────────
+
 
 class ChannelCreate(BaseModel):
     ota_code: OtaCode
@@ -29,6 +36,7 @@ class ChannelUpdate(BaseModel):
 
 
 # ── Response schemas ──────────────────────────────────────────────────────────
+
 
 class ChannelResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

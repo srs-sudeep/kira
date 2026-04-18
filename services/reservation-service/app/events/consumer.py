@@ -26,6 +26,7 @@ Expected message schema on topic `channel.booking.raw`:
   "cancellation_policy": {...}|null
 }
 """
+
 import asyncio
 import json
 import uuid
@@ -39,8 +40,6 @@ from sqlalchemy import text
 from app.config import settings
 from app.core.crypto import encrypt_pii, hash_email
 from app.database import AsyncSessionLocal
-from app.models.guest_profile import GuestProfile
-from app.models.reservation import Reservation
 from app.repositories.guest_repo import GuestRepository
 from app.repositories.reservation_repo import ReservationRepository
 from app.events.producer import kafka_producer
@@ -101,9 +100,7 @@ class ChannelBookingConsumer:
 
         async with AsyncSessionLocal() as session:
             try:
-                await session.execute(
-                    text(f"SET LOCAL search_path TO {schema_name}, public")
-                )
+                await session.execute(text(f"SET LOCAL search_path TO {schema_name}, public"))
                 guest_repo = GuestRepository(session)
                 res_repo = ReservationRepository(session)
 
@@ -134,9 +131,7 @@ class ChannelBookingConsumer:
                 channel_res_id: str | None = payload.get("channel_reservation_id")
                 if channel_res_id:
                     existing = await session.execute(
-                        text(
-                            "SELECT id FROM reservations WHERE channel_reservation_id = :crid LIMIT 1"
-                        ),
+                        text("SELECT id FROM reservations WHERE channel_reservation_id = :crid LIMIT 1"),
                         {"crid": channel_res_id},
                     )
                     if existing.fetchone():
@@ -179,7 +174,7 @@ class ChannelBookingConsumer:
                     confirmation=res.confirmation_number,
                     source=res.source,
                 )
-            except Exception as exc:
+            except Exception:
                 await session.rollback()
                 raise
 

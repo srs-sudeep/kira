@@ -1,4 +1,5 @@
 """Tenant management service — create, list, update, and provision schemas."""
+
 import uuid
 
 import structlog
@@ -70,9 +71,7 @@ class TenantService:
         )
         return TenantResponse.model_validate(tenant)
 
-    async def list_tenants(
-        self, *, page: int = 1, page_size: int = 50
-    ) -> TenantListResponse:
+    async def list_tenants(self, *, page: int = 1, page_size: int = 50) -> TenantListResponse:
         return await self._repo.list_all(page=page, page_size=page_size)
 
     async def get_tenant(self, tenant_id: uuid.UUID) -> TenantResponse:
@@ -84,9 +83,7 @@ class TenantService:
     async def get_my_tenant(self, tenant_id: uuid.UUID) -> TenantResponse:
         return await self.get_tenant(tenant_id)
 
-    async def update_tenant(
-        self, tenant_id: uuid.UUID, req: TenantAdminUpdate
-    ) -> TenantResponse:
+    async def update_tenant(self, tenant_id: uuid.UUID, req: TenantAdminUpdate) -> TenantResponse:
         """super_admin can update subscription_tier, is_active, and name."""
         tenant = await self._repo.get_by_id(tenant_id)
         if tenant is None:
@@ -99,9 +96,7 @@ class TenantService:
         updated = await self._repo.update(tenant_id, fields)
         return TenantResponse.model_validate(updated)
 
-    async def update_my_tenant(
-        self, tenant_id: uuid.UUID, req: TenantMeUpdate
-    ) -> TenantResponse:
+    async def update_my_tenant(self, tenant_id: uuid.UUID, req: TenantMeUpdate) -> TenantResponse:
         """property_owner can update their own tenant's profile fields."""
         tenant = await self._repo.get_by_id(tenant_id)
         if tenant is None:

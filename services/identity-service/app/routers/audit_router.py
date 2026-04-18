@@ -1,4 +1,5 @@
 """Audit log endpoint — read-only, super_admin and property_owner only."""
+
 import math
 from typing import Annotated
 
@@ -31,9 +32,7 @@ async def list_audit_events(
     page_size: int = Query(50, ge=1, le=200),
 ) -> AuditEventListResponse:
     # Non-super-admins are restricted to their own tenant's audit log
-    effective_tenant_id = (
-        tenant_id if actor.role == "super_admin" else actor.tenant_id
-    )
+    effective_tenant_id = tenant_id if actor.role == "super_admin" else actor.tenant_id
 
     filters = AuditFilterParams(
         tenant_id=effective_tenant_id,

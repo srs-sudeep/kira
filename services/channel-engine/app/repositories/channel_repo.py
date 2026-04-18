@@ -1,4 +1,5 @@
 """Repository for channels."""
+
 import uuid
 from datetime import datetime
 
@@ -87,11 +88,7 @@ class ChannelRepository:
         )
         new_failures: int = result.scalar_one()
         if new_failures >= threshold:
-            await self._s.execute(
-                update(Channel)
-                .where(Channel.id == channel_id)
-                .values(status="error")
-            )
+            await self._s.execute(update(Channel).where(Channel.id == channel_id).values(status="error"))
         return new_failures
 
     async def count(self) -> int:
