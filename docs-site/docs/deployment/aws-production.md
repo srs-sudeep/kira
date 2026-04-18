@@ -855,56 +855,63 @@ kubectl logs deployment/identity-service -n kira-staging | tail -20
 
 ---
 
-## Step 9: Observability in Production
+## Step 9: Observability — development vs production
 
-### Option A: Grafana + Prometheus on EKS (recommended for Phase 1)
+KIRA uses **different observability shapes** on your laptop versus in AWS on purpose: **dev is rich and self-contained**; **production starts small** so you are not running a second full platform beside EKS until you need it.
 
-```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
+| | **Development** (`kira dev up --full` / `make up-full`) | **Production (recommended small scale)** | **Production (optional later)** |
+|---|----------------------------------------------------------|------------------------------------------|----------------------------------|
+| **Where it runs** | Docker Compose (`docker-compose.yml` + `docker-compose.observability.yml`) | **AWS only** — no separate Grafana/Prometheus/Loki **cluster** required | Self-hosted **Helm** on EKS (or **Grafana Cloud**) |
+| **Metrics** | Prometheus scrapes services + exporters | **CloudWatch** / **Container Insights** (CPU, memory, request counts) | Prometheus + Grafana (or Mimir remote write) |
+| **Logs** | **Grafana Alloy → Loki → Grafana** (same JSON logs as prod) | **CloudWatch Logs** (Fluent Bit / Container Insights DaemonSet) | **Alloy → Loki** (aligns with local **LGTM** stack) |
+| **Dashboards** | Grafana on **:3001** (anonymous Viewer for convenience) | CloudWatch console, metrics, **Logs Insights** | Grafana on EKS (VPN / SSO, not public) |
+| **Extra UIs** | Kafka UI, pgAdmin, Portainer, Redis Insight | Use **AWS consoles** / `kubectl` when needed | Same UIs as you choose to deploy |
 
-# Install kube-prometheus-stack (includes Prometheus, Grafana, Alertmanager)
-helm install monitoring prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --create-namespace \
-  --set grafana.adminPassword="$(openssl rand -base64 16)" \
-  --set grafana.service.type=ClusterIP   # internal only — access via port-forward
+**Same everywhere:** application code still emits **`/metrics`** (Prometheus format) and **JSON logs** via structlog — only the **collector and UI** change between dev (Loki stack) and small prod (CloudWatch).
 
-# Install Loki for log aggregation
-helm repo add grafana https://grafana.github.io/helm-charts
-helm install loki grafana/loki-stack \
-  --namespace monitoring \
-  --set promtail.enabled=true \
-  --set grafana.enabled=false   # already installed above
-```
+---
 
-:::note Promtail end of life
-Promtail is EOL (no further updates). For **new** clusters, plan a move to **Grafana Alloy** (or Grafana Cloud / Kubernetes Monitoring) for log shipping; the `loki-stack` chart’s Promtail subchart is shown here for compatibility with older docs—check current Grafana Helm charts for Alloy-based options.
-:::
+### Recommended for production (small teams, low traffic): AWS CloudWatch
 
-Access Grafana (not exposed publicly — access via VPN or port-forward):
+This is the **default recommendation** when you do **not** want a dedicated observability deployment on EKS: one billing line, no extra StatefulSets for Prometheus/Loki, alarms go straight to **SNS → email/PagerDuty**.
 
 ```bash
-kubectl port-forward svc/monitoring-grafana 3001:80 -n monitoring
-# Open http://localhost:3001 — admin / <password from above>
-```
-
-Add Loki as a data source in Grafana → use URL `http://loki:3100`.
-
-### Option B: AWS CloudWatch (simpler, no self-hosted infra)
-
-```bash
-# Install CloudWatch agent as DaemonSet
+# Example: CloudWatch agent as DaemonSet (Container Insights)
 kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
 kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-configmap.yaml
 kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-daemonset.yaml
 ```
 
-After this, metrics appear in **CloudWatch → Container Insights** and logs in **CloudWatch Logs** under `/aws/containerinsights/kira-production/`.
+After this, metrics appear in **CloudWatch → Container Insights** and logs in **CloudWatch Logs** (e.g. under `/aws/containerinsights/...`). Query JSON fields with **Logs Insights** — same ideas as LogQL in Grafana, different UI. See **[Logging](../operations/logging.md#production-log-aggregation-cloudwatch)**.
 
-### Recommendation
+---
 
-Use **Option A** for Phase 1 — it's the same Grafana/Prometheus setup from local dev, so you already know the dashboards. Migrate to Option B when maintaining the observability stack becomes a burden or when you need tighter AWS integration (CloudWatch Alarms → SNS → PagerDuty).
+### Optional later: self-hosted Grafana stack on EKS (matches the local **LGTM** stack)
+
+When traffic, SLOs, or team size justify it, add **kube-prometheus-stack** + **Loki** + **Grafana Alloy** (not Promtail — EOL) in a `monitoring` namespace. That is the **same technology family** as dev (Grafana / Prometheus / Loki), **not** the same Compose files.
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace \
+  --set grafana.adminPassword="$(openssl rand -base64 16)" \
+  --set grafana.service.type=ClusterIP
+
+# Loki: prefer current Grafana Helm charts with Alloy-based log collection (Promtail EOL).
+```
+
+Access Grafana via **port-forward** or private ingress — never expose Grafana admin to the public internet.
+
+---
+
+### Summary
+
+- **Dev:** full **Compose** observability stack — use it freely; it does not run in production as-is.  
+- **Prod (small):** **CloudWatch** for metrics + logs — **no** separate observability “instance” beyond AWS managed services and small agents.  
+- **Prod (scale up):** add **LGTM on EKS** or **Grafana Cloud** when you outgrow CloudWatch-only.
 
 ---
 
@@ -942,9 +949,9 @@ Complete all items before announcing production availability:
 - [ ] AWS WAF associated with ALB (add `aws_wafv2_web_acl_association` to Terraform)
 
 **Observability**
-- [ ] Grafana dashboards showing service metrics
-- [ ] Log search working: find a known log event in Grafana/CloudWatch
-- [ ] At least one alert rule active (ServiceDown)
+- [ ] Metrics visible: **CloudWatch** Container Insights (small prod default) **or** Grafana/Prometheus if you run the optional Helm stack
+- [ ] Log search working: find a known event in **CloudWatch Logs Insights** **or** Grafana/Loki
+- [ ] At least one alert path live and tested: **CloudWatch alarm → SNS** **or** Prometheus rule (e.g. ServiceDown) via Alertmanager
 - [ ] PagerDuty/OpsGenie integration tested (manually fire a test alert)
 
 ---

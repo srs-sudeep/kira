@@ -221,15 +221,16 @@ See [CI/CD Pipeline](./cicd-pipeline.md) for full details.
 
 ## Phase 8 — Monitoring & Alerting
 
-Deploy observability to EKS:
+**Small production (default):** use **CloudWatch** (Container Insights, Logs Insights) — no Helm observability stack required. See [AWS production — Step 9](./aws-production.md#step-9-observability--development-vs-production).
+
+**Optional later:** self-hosted **Prometheus + Grafana + Loki** on EKS (same *family* as local Compose, not the same files):
 
 ```bash
-# Prometheus + Grafana via Helm
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm install kube-prometheus prometheus-community/kube-prometheus-stack \
   -n monitoring --create-namespace
 
-# Import KIRA dashboards from observability/grafana/dashboards/
+# Import dashboards from observability/grafana/provisioning/dashboards/
 ```
 
 Set up CloudWatch alarms for:

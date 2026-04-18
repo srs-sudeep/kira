@@ -27,9 +27,20 @@ graph LR
     Prom --> AlertMgr
 ```
 
+### Development vs production
+
+| | **Development** | **Production (minimal)** | **Production (optional)** |
+|---|-----------------|--------------------------|---------------------------|
+| **Goal** | Full **Prometheus + Grafana + Alertmanager** next to services | **No** second observability platform on EKS by default | Same **LGTM** product family as dev, on-cluster or Grafana Cloud |
+| **How** | `docker/docker-compose.observability.yml` with `make up-full` / `kira dev up --full` | **CloudWatch** metrics + **Logs Insights**; optional Fluent Bit / Container Insights | Helm **kube-prometheus-stack** + Loki + **Grafana Alloy** (not Promtail) in a `monitoring` namespace |
+
 **Local dev:** Prometheus and Grafana run via **`docker/docker-compose.observability.yml`** (merge with `docker/docker-compose.yml`, e.g. `make up-full`). Grafana enables **anonymous Viewer** access at `http://localhost:3001` (no login). Use **Sign in** with `admin` / `admin` when you need to edit dashboards. See [Dev dashboards & ports](../getting-started/dev-dashboards.md).
 
-**Production:** Prometheus and Grafana run as pods in the `kira-monitoring` namespace, provisioned via Helm (kube-prometheus-stack).
+**Production (recommended small scale):** use **AWS CloudWatch** for metrics and logs — you do **not** need Grafana pods to run production. See [AWS production — Step 9](../deployment/aws-production.md#step-9-observability--development-vs-production).
+
+**Production (when you scale):** add Prometheus and Grafana (Helm) or **Grafana Cloud** if you want the same PromQL/Grafana workflow as local dev at higher cost and operational surface.
+
+The diagram below is the **local / optional self-hosted** path (Prometheus scrapes `/metrics`, Grafana reads Prometheus, Alertmanager routes alerts).
 
 ---
 

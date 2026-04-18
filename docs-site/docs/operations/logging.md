@@ -12,6 +12,8 @@ sidebar_position: 2
 - How to search and filter logs in Grafana
 - Log levels and when each is appropriate
 
+**Development vs production:** On your machine, logs flow **Alloy → Loki → Grafana** (`docker-compose.observability.yml`). In **small production** on EKS, the default path is **Fluent Bit / Container Insights → CloudWatch Logs** and **Logs Insights** — no Loki deployment required. Self-hosted Loki + Grafana is optional when you outgrow that. See [AWS production — Step 9](../deployment/aws-production.md#step-9-observability--development-vs-production).
+
 ---
 
 ## Structured JSON Logging {#structured-json-logging}

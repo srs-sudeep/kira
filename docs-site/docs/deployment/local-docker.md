@@ -31,6 +31,8 @@ sidebar_position: 1
 | **`docker-compose.override.yml`** | Per-developer merge (e.g. isolated `POSTGRES_DB` / `DATABASE_URL`) | **No** — gitignored; each dev creates their own |
 | **`docker-compose.override.yml.example`** | Template for the override above; documents env shape and copy commands | Yes |
 
+The observability merge file is for **local development** only. In **production** on AWS, the default path is **CloudWatch** (metrics + logs), not a second copy of this Compose stack — see [AWS production — Step 9](./aws-production.md#step-9-observability--development-vs-production).
+
 Compose **auto-merges** `docker-compose.override.yml` when it sits beside the `-f` file you pass (same directory). Use the **`.example`** as the source of truth for what to put in your personal override — see [Per-developer database isolation](../getting-started/per-developer-db.md).
 
 **Dummy OTA** is a separate merge so the main stack stays lean. Bring up the core network first, then:
