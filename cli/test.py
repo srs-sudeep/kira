@@ -127,8 +127,11 @@ def _run_integration() -> None:
                 cwd=ROOT / "services" / svc,
                 check=False,
             )
-            if result.returncode != 0:
+            # Exit 5 = no tests collected / all deselected for -m integration.
+            if result.returncode not in (0, 5):
                 failed.append(svc)
+            elif result.returncode == 5:
+                warn(f"  {svc}: no tests matched -m integration (ok)")
     finally:
         info("Tearing down infrastructure…")
         run(compose("down", "postgres", "redis", "kafka"), check=False)

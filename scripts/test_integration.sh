@@ -42,7 +42,16 @@ for svc in "${SERVICES[@]}"; do
   fi
   echo ""
   echo "--- Integration: $svc ---"
-  if ! (cd "services/$svc" && uv run pytest -v -m integration); then
+  set +e
+  (cd "services/$svc" && uv run pytest -v -m integration)
+  rc=$?
+  set -e
+  # Pytest exits 5 when no tests match -m integration (nothing to run — not a failure).
+  if [ "$rc" -eq 0 ]; then
+    :
+  elif [ "$rc" -eq 5 ]; then
+    echo "  (no tests matched -m integration in $svc — exit 5 treated as ok)"
+  else
     FAILED+=("$svc")
   fi
 done

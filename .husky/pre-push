@@ -13,8 +13,8 @@
 #   SKIP_TEST_INTEGRATION=1 git push
 #   SKIP_TEST_WEB=1 SKIP_TEST_SERVICES="channel-engine" git push
 #
-# Wrapper: `uv run kira push` / `kira push -i` — runs tests then `git push` with
-# SKIP_TEST_PRE_PUSH=1 so this hook does not duplicate work (`kira push --help`).
+# Wrapper: `uv run kira push` (interactive by default) or `kira push -y` (full suite, no prompts)
+# then `git push` with SKIP_TEST_PRE_PUSH=1 so this hook does not duplicate work (`kira push --help`).
 #
 # Integration vs E2E (this repo):
 #   Integration = real infra + pytest -m integration per service.
