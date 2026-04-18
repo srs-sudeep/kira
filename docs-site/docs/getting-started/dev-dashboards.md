@@ -16,8 +16,11 @@ Use this page as a quick reference for **local development** URLs. These setting
 |------|-----|--------|
 | **Web app (property manager UI)** | [http://localhost:3000](http://localhost:3000) | Vite dev server (`web-app/vite.config.ts`, default port **3000**; override with **`PORT`** or **`VITE_DEV_PORT`**). Docker Compose sets `PORT=3000` and maps host **3000**. API calls use `/api` → Kong. |
 | **Documentation site (Docusaurus)** | [http://localhost:4000](http://localhost:4000) | **`bun run start`** in `docs-site/` binds **4000** (`package.json`). **`make docs-dev`** / **`kira docs dev`**, or **`make docs-docker-up`** (static build in Docker). Same port — run **one** at a time. |
+| **Kong (HTTP proxy)** | [http://localhost:8000](http://localhost:8000) | Gateway landing + **`/api/v1/…`** routes (see `kong/kong.yml`). |
+| **Kong Admin API** | [http://localhost:8100](http://localhost:8100) | Declarative config / status (not OpenAPI). |
+| **Mailhog** | [http://localhost:8025](http://localhost:8025) | Outbound email inbox for local dev. |
 
-The web client stays on **3000** and the docs site on **4000** by design so nothing clashes.
+The web client stays on **3000** and the docs site on **4000** by design so nothing clashes. Service OpenAPI lives on **8001–8006** `/docs` (not through Kong).
 
 ---
 

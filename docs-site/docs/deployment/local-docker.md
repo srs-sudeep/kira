@@ -8,6 +8,7 @@ sidebar_position: 1
 
 **What you'll learn:**
 
+- How this file fits with **`kira` / Make** (see [Makefile, CLI, and Compose](../getting-started/makefile-and-cli.md))
 - What every service in `docker/docker-compose.yml` does and why
 - How `docker/docker-compose.observability.yml` adds monitoring dashboards
 - How volume mounts enable hot reload without rebuilding images

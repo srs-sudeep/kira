@@ -44,8 +44,16 @@ uv run kira dashboards --full   # same as above + Grafana, Prometheus, Loki, …
 **Step by step alternative:** `make up` → `make migrate-docker-all` → `make seed-docker` (see `make help`).
 
 :::info OpenAPI docs
-Available on each **direct service port**: [http://localhost:8001/docs](http://localhost:8001/docs), etc. Not exposed via Kong.
+Available on each **direct service port**: [http://localhost:8001/docs](http://localhost:8001/docs), etc. Not exposed via Kong. Kong serves HTTP APIs under **`/api/v1/…`** — see `kong/kong.yml`.
 :::
+
+**Celery workers:** `channel-worker` and `notification-worker` use the same code/images as **channel-engine** and **notification-service** but run **`celery worker`** only (no HTTP port in those containers).
+
+---
+
+## Makefile and `kira`
+
+You can use **either** [Make](Makefile) **or** `uv run kira` for most tasks; the Makefile often delegates to the CLI (for example `make dashboards` → `kira dashboards`). For a full comparison, compose **profiles**, **host vs Docker** migrations, and **`make bootstrap`**, see the docs site: **[Makefile, CLI, and Compose](docs-site/docs/getting-started/makefile-and-cli.md)**.
 
 ---
 
@@ -62,17 +70,19 @@ Full detail: [`docs-site/docs/getting-started/cli-reference.md`](docs-site/docs/
 
 | Command                                     | What it does                                                  |
 | ------------------------------------------- | ------------------------------------------------------------- |
-| `kira dev setup`                            | One-shot bootstrap (env files, deps, infra, migrations, seed) |
-| `kira dev up [--full]`                      | Start core stack (add `--full` for observability)             |
-| `kira dev down`                             | Stop containers                                               |
-| `kira dev clean`                            | Stop + remove volumes                                         |
-| `kira dev init --name alice`                | Per-developer DB isolation                                    |
-| `kira dev status`                           | Container health check                                        |
-| `kira test <service> [--all] [--coverage]`  | Run backend tests                                             |
-| `kira migrate <service> [--all] [--docker]` | Run Alembic migrations                                        |
-| `kira seed [--docker]`                      | Seed development data                                         |
+| `kira dev setup`                            | One-shot bootstrap (env files, deps, infra, migrations, seed on **host** Postgres) |
+| `kira dev e2e`                              | `setup` then **`dev up --full`** (core + observability + docs profile) |
+| `kira dev up [--full]`                      | Start Docker stack (add `--full` for observability + docs-site image) |
+| `kira dev down`                             | Stop containers (both compose files)                          |
+| `kira dev clean`                            | Stop + remove volumes (prompts first)                         |
+| `kira dev init --name alice`                | Per-developer DB isolation (`docker-compose.override.yml`)     |
+| `kira dev logs [service]`                   | Tail Compose logs                                             |
+| `kira dev status`                           | `docker compose ps -a`                                        |
+| `kira test …` / `kira migrate …` / `kira seed …` | Pytest, Alembic, seed — see [CLI Reference](docs-site/docs/getting-started/cli-reference.md) |
+| `kira lint …`                               | Ruff (services) / ESLint (web-app)                            |
+| `kira deploy staging` / `production`      | Deploy scripts (EKS); `--dry-run`, `--skip-terraform`, `--services` |
 | `kira commit`                               | Interactive Conventional Commit (Commitizen)                  |
-| `kira dashboards [--full \| --all]`         | Open local dev URLs in the browser (add `--full` or `--all` for observability UIs) |
+| `kira dashboards [--full \| --all]`         | Open local dev URLs in the browser                            |
 | `kira docs dev \| build`                    | Docusaurus dev server or build                                |
 
 ---
@@ -125,18 +135,35 @@ Start the full stack with observability: `make up-full`. These URLs assume defau
 | ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
 | **Grafana**       | [http://localhost:3001](http://localhost:3001)   | Anonymous **Viewer** (no login). **Sign in** as **`admin` / `admin`** to edit dashboards or settings.         |
 | **Prometheus**    | [http://localhost:9090](http://localhost:9090)   | No authentication.                                                                                            |
-| **Loki**          | [http://localhost:3100](http://localhost:3100)   | HTTP API only; query logs in Grafana.                                                                         |
+| **Loki**          | [http://localhost:3100](http://localhost:3100)   | **HTTP API only** (root `/` often 404). Query logs in **Grafana → Explore → Loki**; try `/ready` or `/metrics` to verify the process. |
 | **Grafana Alloy** | [http://localhost:12345](http://localhost:12345) | Ships Docker logs to Loki (replaces EOL Promtail); optional debug UI.                                         |
 | **Kafka UI**      | [http://localhost:8080](http://localhost:8080)   | No login (local dev).                                                                                         |
 | **Redis Insight** | [http://localhost:5540](http://localhost:5540)   | Add a Redis connection manually (see [dev dashboards](docs-site/docs/getting-started/dev-dashboards.md)).      |
 | **pgAdmin**       | [http://localhost:5050](http://localhost:5050)   | **`admin@kira.dev` / `admin`**. Pre-registered server **KIRA Local**.                                         |
-| **Loki**          | [http://localhost:3100](http://localhost:3100)   | HTTP API; query logs in Grafana → Loki.                                                                       |
 | **Portainer**     | [http://localhost:9000](http://localhost:9000)   | HTTP UI; HTTPS on [9443](https://localhost:9443). Password: [dev dashboards](docs-site/docs/getting-started/dev-dashboards.md). |
 | **Mailhog**       | [http://localhost:8025](http://localhost:8025)   | No login (starts with `make up`).                                                                             |
 
 **Postgres:** host `localhost`, port **`5432`**, database **`kira`**, user **`postgres`**, password **`postgres`**.
 
+**Redis:** host **`localhost`**, port **`6379`**, password **`redis-local-dev`** (matches Compose).
+
+**Kafka (host tools):** broker on **`127.0.0.1:9092`** (bound to loopback in Compose to reduce noise from random internet scans).
+
 More detail: [`docs-site/docs/getting-started/dev-dashboards.md`](docs-site/docs/getting-started/dev-dashboards.md).
+
+---
+
+## Troubleshooting (quick hits)
+
+| Symptom | What to check |
+|--------|----------------|
+| `uv run kira` fails inside `services/…` | Run from **repo root**, or `./bin/kira`, or `uv tool install --editable .` — see [CLI Reference](docs-site/docs/getting-started/cli-reference.md#installation). |
+| Grafana / `:3001` never loads | You need **`kira dev up --full`** or `make up-full`, not core-only `up`. |
+| `:8003` / reservation flapping | Ensure **Kafka** is healthy; **`docker compose … logs reservation-service`**. After DB changes, **`kira migrate reservation-service --docker`**. |
+| Worker container “connection refused” to `:8004` | Celery workers are **not** HTTP servers; ignore API **HEALTHCHECK** noise if you are on an older compose revision — workers disable that check in current `docker-compose.yml`. |
+| Loki **404** on `/` | Expected — use **Grafana** for log UI ([makefile-and-cli doc](docs-site/docs/getting-started/makefile-and-cli.md#loki-on-3100-returns-404)). |
+
+Longer walkthrough: [`docs-site/docs/getting-started/e2e-local-dev.md#troubleshooting`](docs-site/docs/getting-started/e2e-local-dev.md#troubleshooting).
 
 ---
 
@@ -151,3 +178,17 @@ More detail: [`docs-site/docs/getting-started/dev-dashboards.md`](docs-site/docs
 See [`docs-site/docs/contributing/development-workflow.md`](docs-site/docs/contributing/development-workflow.md).
 
 **Commits:** KIRA enforces [Conventional Commits](https://www.conventionalcommits.org/) via Husky + Commitlint. Use `uv run kira commit` for the interactive prompt.
+
+---
+
+## More documentation
+
+| Topic | Link |
+|-------|------|
+| End-to-end local dev (single page) | [`e2e-local-dev.md`](docs-site/docs/getting-started/e2e-local-dev.md) |
+| Makefile vs CLI, Compose profiles | [`makefile-and-cli.md`](docs-site/docs/getting-started/makefile-and-cli.md) |
+| Every `kira` command | [`cli-reference.md`](docs-site/docs/getting-started/cli-reference.md) |
+| Ports & sign-ins | [`dev-dashboards.md`](docs-site/docs/getting-started/dev-dashboards.md) |
+| Compose service-by-service | [`local-docker.md`](docs-site/docs/deployment/local-docker.md) |
+| Monorepo tour | [`project-structure.md`](docs-site/docs/getting-started/project-structure.md) |
+| Numbered internal blueprint (`docs/`) | [`00_OVERVIEW.md`](docs/00_OVERVIEW.md) |

@@ -50,8 +50,11 @@ graph LR
 
 Set up the full stack locally and take your first tour of the platform.
 
+- [E2E local dev](./getting-started/e2e-local-dev.md) — clone to tests on one page
 - [Prerequisites](./getting-started/prerequisites.md) — tools to install before you begin
 - [Local Setup](./getting-started/local-setup.md) — clone, configure, and run with Docker Compose
+- [Makefile, CLI, and Compose](./getting-started/makefile-and-cli.md) — `kira` vs `make`, compose files, profiles, workers, host vs Docker DB
+- [CLI Reference](./getting-started/cli-reference.md) — install `kira`, every command, Makefile equivalents
 - [Dev dashboards & ports](./getting-started/dev-dashboards.md) — web :3000, docs :4000, `kira dashboards` / `--full` (`--all`), Grafana/pgAdmin/Portainer sign-in
 - [First Run](./getting-started/first-run.md) — walkthrough of creating a tenant, room types, and your first reservation
 - [Project Structure](./getting-started/project-structure.md) — monorepo layout explained, folder by folder
@@ -130,7 +133,7 @@ How to add features, fix bugs, and keep the codebase healthy.
 
 ### I'm setting up locally for the first time
 
-→ The fastest path: install the prerequisites then run `uv run kira dev setup` — see the **[CLI Reference](./getting-started/cli-reference.md)**. Or follow the step-by-step **[Local Setup](./getting-started/local-setup.md)** guide.
+→ Install [Prerequisites](./getting-started/prerequisites.md), then **`uv run kira dev setup`** and **`uv run kira dev up`** — walkthrough: **[E2E local dev](./getting-started/e2e-local-dev.md)**. For **`make` vs `kira`**, compose files, and profiles: **[Makefile, CLI, and Compose](./getting-started/makefile-and-cli.md)**. Command-by-command: **[CLI Reference](./getting-started/cli-reference.md)**. Manual Docker path: **[Local Setup](./getting-started/local-setup.md)**.
 
 ### I'm deploying to production
 

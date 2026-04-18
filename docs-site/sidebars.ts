@@ -17,6 +17,7 @@ const sidebars: SidebarsConfig = {
         "getting-started/first-run",
         "getting-started/project-structure",
         "getting-started/cli-reference",
+        "getting-started/makefile-and-cli",
         "getting-started/per-developer-db",
       ],
     },

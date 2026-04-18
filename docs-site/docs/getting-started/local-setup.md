@@ -18,6 +18,10 @@ sidebar_position: 2
 Complete the [Prerequisites](./prerequisites.md) guide before continuing. You need Docker Desktop (with 8 GB+ RAM allocated), Python 3.13, uv, and bun installed.
 :::
 
+:::tip Make vs `kira` and Compose details
+See [Makefile, CLI, and Compose](./makefile-and-cli.md) for **`make bootstrap`**, compose **profiles**, Celery **workers**, and when to run migrations on the **host** vs **inside Docker**.
+:::
+
 ---
 
 ## Quick Start (CLI)

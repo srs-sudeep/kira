@@ -17,6 +17,8 @@ uv run kira dev up      # starts all services + web app
 open http://localhost:3000
 ```
 
+For **Make vs `kira`**, compose **profiles**, Celery **workers**, and **host vs Docker** Postgres, see [Makefile, CLI, and Compose](./makefile-and-cli.md).
+
 :::
 
 ---

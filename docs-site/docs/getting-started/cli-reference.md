@@ -232,17 +232,29 @@ The following service names are valid wherever a `<service>` argument is expecte
 
 ## Makefile Equivalents
 
-The CLI wraps the Makefile, so both work:
+Many tasks exist in both places. **`make help`** lists all Make targets. For compose **profiles**, **workers**, **bootstrap**, and when to prefer host vs Docker migrations, see **[Makefile, CLI, and Compose](./makefile-and-cli.md)**.
 
-| CLI                  | Makefile           |
-| -------------------- | ------------------ |
-| `kira dev up`        | `make up`          |
-| `kira dev up --full` | `make up-full`     |
-| `kira dev down`      | `make down`        |
-| `kira test --all`    | `make test-all`    |
-| `kira test --web`    | `make test-web`    |
+| CLI | Makefile |
+| --- | -------- |
+| `kira dev up` | `make up` |
+| `kira dev up --full` | `make up-full` |
+| `kira dev down` | `make down` |
+| `kira dev logs` / `kira dev logs <service>` | `make logs` / `make logs-<service>` |
+| `kira dev status` | `make stack-status` |
+| `kira dev clean` | `make clean` (Make does not prompt; `kira dev clean` asks for confirmation) |
+| `kira test <service>` | `make test-<service>` |
+| `kira test --all` | `make test-all` |
+| `kira test --web` | `make test-web` |
+| `kira test --coverage` | `make test-coverage` |
+| `kira test --integration` | `make test-integration` |
 | `kira migrate --all` | `make migrate-all` |
-| `kira seed`          | `make seed`        |
-| `kira dev setup`     | `make dev-setup`   |
-| `kira dashboards`    | `make dashboards`  |
-| `kira dashboards --full` | `make dashboards-full` |
+| `kira migrate --all --docker` | `make migrate-docker-all` |
+| `kira seed` | `make seed` |
+| `kira seed --docker` | `make seed-docker` |
+| `kira dev setup` | `make dev-setup` |
+| `kira dashboards` | `make dashboards` |
+| `kira dashboards --full` / `--all` | `make dashboards-full` |
+| `kira docs dev` | `make docs-dev` |
+| `kira docs build` | `make docs-build` |
+
+There is **no** `kira` subcommand for **`make bootstrap`** (`up-full` → migrate in Docker → seed in Docker); use Make or run those steps by hand.
