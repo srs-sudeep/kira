@@ -235,6 +235,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
       REDIS_URL: redis://:redis-local-dev@redis:6379/3
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    # Same image as channel-engine (HTTP /health on :8004); worker runs Celery only — disable inherited HEALTHCHECK.
+    healthcheck:
+      disable: true
     volumes:
       - ../services/channel-engine:/app
       - ../shared:/app/shared
@@ -257,6 +260,9 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
       REDIS_URL: redis://:redis-local-dev@redis:6379/4
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    # Same image as notification-service (HTTP /health on :8005); worker runs Celery only.
+    healthcheck:
+      disable: true
     volumes:
       - ../services/notification-service:/app
       - ../shared:/app/shared
