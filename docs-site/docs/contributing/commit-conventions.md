@@ -11,12 +11,32 @@ KIRA uses **Conventional Commits** enforced by Husky git hooks, Commitizen, and 
 ## Quick Start
 
 ```bash
-# Use the interactive prompt (recommended)
+# Use the interactive prompt (recommended) — same as:
+bun run commit
+# from the repo root (uses Commitizen + @commitlint/cz-commitlint)
+
 uv run kira commit
 
 # Or write it manually following the format below
 git commit -m "feat(identity): add MFA backup codes"
 ```
+
+## Interactive scope helper
+
+`bun run commit` / `npx cz` / `uv run kira commit` use **`@commitlint/cz-commitlint`**, which reads **`commitlint.config.mjs`**. Your **scope** is chosen from the same **allowed list** as commitlint (no free‑typing a filename like `bun.lockb` — pick **`deps`**, **`web`**, etc.). Types and header length follow the same rules as the hook.
+
+## Auditing or rewriting old commits
+
+List subjects that **fail today’s commitlint** (merge commits skipped):
+
+```bash
+bun run commit:audit
+```
+
+Older commits often predate stricter rules; **do not rewrite the entire shared history** unless you know every collaborator will re-clone or hard-reset. Rewriting changes every SHA and breaks open PRs / forks.
+
+- **Unpushed work only:** `git rebase -i origin/main` and `reword` / `edit` commits, then `git push --force-with-lease`.
+- **Already on `main` / GitHub:** leave history as-is; hooks still enforce **new** commits.
 
 ## Format
 
@@ -117,8 +137,9 @@ CI also validates commit messages on pull requests. Use `--no-verify` sparingly.
 
 | File                   | Purpose                                  |
 | ---------------------- | ---------------------------------------- |
-| `package.json` (root)  | Husky + Commitizen + Commitlint packages |
-| `commitlint.config.mjs` | Commitlint rules and allowed scopes     |
+| `package.json` (root)  | Husky, Commitizen (`@commitlint/cz-commitlint`), Commitlint, `commit:audit` script |
+| `commitlint.config.mjs` | Commitlint rules + scopes (also drives interactive `cz`) |
+| `scripts/audit-commit-messages.sh` | `bun run commit:audit` — list historical subjects that fail commitlint |
 | `.husky/pre-commit`    | Pre-commit hook script                   |
 | `.husky/commit-msg`    | Commit message validation hook           |
 | `.husky/pre-push`      | Pre-push test hook                       |
