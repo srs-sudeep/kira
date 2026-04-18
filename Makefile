@@ -4,7 +4,9 @@
 
 SERVICES := admin-service identity-service rate-inventory-service reservation-service channel-engine notification-service
 
-COMPOSE := docker compose -f docker/docker-compose.yml
+ROOT := $(abspath .)
+COMPOSE := docker compose -f $(ROOT)/docker/docker-compose.yml
+COMPOSE_FULL := docker compose -f $(ROOT)/docker/docker-compose.yml -f $(ROOT)/docker/docker-compose.observability.yml
 
 # ---------------------------------------------------------------------------
 # Stack management
@@ -16,11 +18,11 @@ up:
 
 ## Start full stack with observability (Grafana, Prometheus, Loki, …)
 up-full:
-	$(COMPOSE) -f docker/docker-compose.observability.yml up -d --build
+	$(COMPOSE_FULL) up -d --build
 
 ## Stop and remove containers (keep volumes)
 down:
-	$(COMPOSE) -f docker/docker-compose.observability.yml down
+	$(COMPOSE_FULL) down
 
 ## Follow logs for all containers
 logs:
@@ -136,7 +138,7 @@ superadmin:
 
 ## Stop everything and remove containers, volumes, and orphans
 clean:
-	$(COMPOSE) -f docker/docker-compose.observability.yml down -v --remove-orphans
+	$(COMPOSE_FULL) down -v --remove-orphans
 
 # ---------------------------------------------------------------------------
 # Dashboards — open UIs in the default browser (macOS/Linux)

@@ -87,12 +87,15 @@ services:
 
   # ---------------------------------------------------------------------------
   # Application services
+  # When context is ../services/<name>, dockerfile must be ../../docker/<file>
+  # so buildx resolves it from the service directory (../docker alone becomes
+  # services/docker and fails with "no such file or directory").
   # ---------------------------------------------------------------------------
   identity-service:
     <<: *app-defaults
     build:
       context: ../services/identity-service
-      dockerfile: ../docker/identity-service.Dockerfile
+      dockerfile: ../../docker/identity-service.Dockerfile
     env_file: ../services/identity-service/.env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
@@ -110,7 +113,7 @@ services:
     <<: *app-defaults
     build:
       context: ../services/rate-inventory-service
-      dockerfile: ../docker/rate-inventory-service.Dockerfile
+      dockerfile: ../../docker/rate-inventory-service.Dockerfile
     env_file: ../services/rate-inventory-service/.env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
@@ -127,7 +130,7 @@ services:
     <<: *app-defaults
     build:
       context: ../services/reservation-service
-      dockerfile: ../docker/reservation-service.Dockerfile
+      dockerfile: ../../docker/reservation-service.Dockerfile
     env_file: ../services/reservation-service/.env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
@@ -144,7 +147,7 @@ services:
     <<: *app-defaults
     build:
       context: ../services/channel-engine
-      dockerfile: ../docker/channel-engine.Dockerfile
+      dockerfile: ../../docker/channel-engine.Dockerfile
     env_file: ../services/channel-engine/.env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
@@ -168,7 +171,7 @@ services:
     <<: *app-defaults
     build:
       context: ../services/notification-service
-      dockerfile: ../docker/notification-service.Dockerfile
+      dockerfile: ../../docker/notification-service.Dockerfile
     env_file: ../services/notification-service/.env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
@@ -212,7 +215,7 @@ services:
     <<: *service-defaults
     build:
       context: ../services/channel-engine
-      dockerfile: ../docker/channel-engine.Dockerfile
+      dockerfile: ../../docker/channel-engine.Dockerfile
     env_file: ../services/channel-engine/.env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira
@@ -234,7 +237,7 @@ services:
     <<: *service-defaults
     build:
       context: ../services/notification-service
-      dockerfile: ../docker/notification-service.Dockerfile
+      dockerfile: ../../docker/notification-service.Dockerfile
     env_file: ../services/notification-service/.env.local
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira

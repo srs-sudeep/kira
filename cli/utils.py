@@ -122,12 +122,23 @@ def sync_poetry_service_env(svc_dir: Path) -> None:
 
 
 def compose(*args: str, files: list[str] | None = None) -> list[str]:
-    """Build a docker compose command list."""
+    """Build a docker compose command list.
+
+    Uses **absolute** ``-f`` paths so Compose and buildx resolve project-relative
+    paths (``../services/...``, ``../docker/...``) from the compose file directory
+    even when the process cwd is not the repository root (avoids errors like
+    ``lstat .../services/docker``).
+    """
     cmd = ["docker", "compose"]
-    if files:
-        for f in files:
-            cmd.extend(["-f", f])
-    else:
-        cmd.extend(["-f", "docker/docker-compose.yml"])
+    file_list = (
+        files
+        if files is not None
+        else [str(ROOT / "docker" / "docker-compose.yml")]
+    )
+    for f in file_list:
+        fp = Path(f).expanduser()
+        if not fp.is_absolute():
+            fp = (ROOT / fp).resolve()
+        cmd.extend(["-f", str(fp)])
     cmd.extend(args)
     return cmd
