@@ -41,6 +41,12 @@ def error(msg: str, *, abort: bool = True) -> None:
         raise typer.Exit(code=1)
 
 
+def _command_invokes_uv(cmd: list[str]) -> bool:
+    if not cmd:
+        return False
+    return Path(cmd[0]).name == "uv"
+
+
 def run(
     cmd: list[str],
     *,
@@ -53,6 +59,11 @@ def run(
     import os
 
     merged_env = {**os.environ, **(env or {})}
+    # When kira itself runs under `uv run kira`, VIRTUAL_ENV points at the root
+    # kira-cli .venv. Nested `uv run …` in a service dir must pick that service's
+    # project env; inherited VIRTUAL_ENV makes uv warn and ignore the wrong path.
+    if _command_invokes_uv(cmd):
+        merged_env.pop("VIRTUAL_ENV", None)
     try:
         return subprocess.run(
             cmd,
