@@ -1,4 +1,4 @@
-.PHONY: up up-full down logs test-% test-all test-web test-coverage test-integration migrate-% migrate-all migrate-docker-% migrate-docker-all \
+.PHONY: up up-full down logs test-% test-all test-web test-coverage test-integration test-pre-push migrate-% migrate-all migrate-docker-% migrate-docker-all \
 	seed seed-docker bootstrap wait-postgres clean dashboards dashboards-full stack-status docs-dev docs-build docs-docker-up dev-setup help
 
 
@@ -67,6 +67,12 @@ test-coverage:
 ## Run integration tests (starts infra containers)
 test-integration:
 	bash scripts/test_integration.sh
+
+## Run service pytest, web Vitest, then integration (Husky pre-push; sequential)
+test-pre-push:
+	@$(MAKE) test-all
+	@$(MAKE) test-web
+	@$(MAKE) test-integration
 
 # ---------------------------------------------------------------------------
 # Migrations (host — requires uv; uses localhost:5432)
@@ -217,6 +223,7 @@ help:
 	@echo "  make test-web        Run web-app tests (Vitest)"
 	@echo "  make test-coverage   Run tests with coverage"
 	@echo "  make test-integration Run integration tests with infra"
+	@echo "  make test-pre-push   test-all + test-web + test-integration (pre-push hook)"
 	@echo ""
 	@echo "CLI:"
 	@echo "  make dev-setup       Bootstrap local dev (via kira CLI)"
