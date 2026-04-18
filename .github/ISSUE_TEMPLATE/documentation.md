@@ -4,6 +4,7 @@ about: Suggest updates or additions to documentation
 title: "[Docs]: "
 labels: documentation
 assignees: ''
+module: ''
 ---
 
 ### Documentation Update

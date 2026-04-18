@@ -4,6 +4,7 @@ about: Report a bug in the system
 title: "[Bug]: "
 labels: bug
 assignees: ''
+module: ''
 ---
 
 ### Description
