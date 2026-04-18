@@ -31,6 +31,15 @@ done
 echo "=== Running integration tests ==="
 FAILED=()
 for svc in "${SERVICES[@]}"; do
+  skip=0
+  for s in ${SKIP_TEST_SERVICES:-}; do
+    if [ "$s" = "$svc" ]; then skip=1; break; fi
+  done
+  if [ "$skip" -eq 1 ]; then
+    echo ""
+    echo "--- Skipping integration: $svc (SKIP_TEST_SERVICES) ---"
+    continue
+  fi
   echo ""
   echo "--- Integration: $svc ---"
   if ! (cd "services/$svc" && uv run pytest -v -m integration); then

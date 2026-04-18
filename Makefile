@@ -44,9 +44,13 @@ stack-status:
 test-%:
 	cd services/$* && uv run pytest -v
 
-## Run tests for all services sequentially
+## Run tests for all services sequentially. Optional: SKIP_TEST_SERVICES="identity-service admin-service"
 test-all:
 	@for svc in $(SERVICES); do \
+		skip=0; for s in $(SKIP_TEST_SERVICES); do \
+			if [ "$$s" = "$$svc" ]; then skip=1; break; fi; \
+		done; \
+		if [ "$$skip" -eq 1 ]; then echo "\n=== Skipping $$svc (SKIP_TEST_SERVICES) ==="; continue; fi; \
 		echo "\n=== Testing $$svc ==="; \
 		cd services/$$svc && uv run pytest -v; \
 		cd ../..; \
@@ -68,11 +72,20 @@ test-coverage:
 test-integration:
 	bash scripts/test_integration.sh
 
-## Run service pytest, web Vitest, then integration (Husky pre-push; sequential)
+## Run service pytest, web Vitest, then integration (Husky pre-push; sequential).
+## Skip flags (export or prefix the command): SKIP_TEST_PRE_PUSH=1 skips the whole suite;
+## SKIP_TEST_ALL=1, SKIP_TEST_WEB=1, SKIP_TEST_INTEGRATION=1 skip each stage;
+## SKIP_TEST_SERVICES="svc …" skips those dirs in test-all and in scripts/test_integration.sh.
+## (One shell so SKIP_TEST_PRE_PUSH=1 exit applies to the whole target — not one line per subshell.)
 test-pre-push:
-	@$(MAKE) test-all
-	@$(MAKE) test-web
-	@$(MAKE) test-integration
+	@set -e; \
+	if [ "$$SKIP_TEST_PRE_PUSH" = "1" ]; then \
+		echo "SKIP_TEST_PRE_PUSH=1 — skipping entire pre-push test suite"; \
+		exit 0; \
+	fi; \
+	if [ "$$SKIP_TEST_ALL" != "1" ]; then $(MAKE) test-all; else echo "Skipping test-all (SKIP_TEST_ALL=1)"; fi; \
+	if [ "$$SKIP_TEST_WEB" != "1" ]; then $(MAKE) test-web; else echo "Skipping test-web (SKIP_TEST_WEB=1)"; fi; \
+	if [ "$$SKIP_TEST_INTEGRATION" != "1" ]; then $(MAKE) test-integration; else echo "Skipping test-integration (SKIP_TEST_INTEGRATION=1)"; fi
 
 # ---------------------------------------------------------------------------
 # Migrations (host — requires uv; uses localhost:5432)
@@ -223,7 +236,7 @@ help:
 	@echo "  make test-web        Run web-app tests (Vitest)"
 	@echo "  make test-coverage   Run tests with coverage"
 	@echo "  make test-integration Run integration tests with infra"
-	@echo "  make test-pre-push   test-all + test-web + test-integration (pre-push hook)"
+	@echo "  make test-pre-push   test-all + test-web + test-integration (pre-push; see skip envs in Makefile)"
 	@echo ""
 	@echo "CLI:"
 	@echo "  make dev-setup       Bootstrap local dev (via kira CLI)"

@@ -1,12 +1,24 @@
-# Pre-push: full test gate (see Makefile test-pre-push).
-#   test-all        — pytest in every Python service (unit + default markers)
-#   test-web        — Vitest in web-app
+# Pre-push: full test gate (see Makefile `test-pre-push`).
+#   test-all         — pytest in every Python service (unit + default markers)
+#   test-web         — Vitest in web-app
 #   test-integration — Docker postgres/redis/kafka + pytest -m integration per service
 #
+# Skip (same shell env as `git push` — export first, or one-shot):
+#   SKIP_TEST_PRE_PUSH=1          — skip the entire pre-push test suite
+#   SKIP_TEST_ALL=1               — skip all Python service pytest runs
+#   SKIP_TEST_WEB=1               — skip web-app tests
+#   SKIP_TEST_INTEGRATION=1       — skip Docker integration tests
+#   SKIP_TEST_SERVICES="identity-service …" — skip those dirs in test-all and integration
+# Examples:
+#   SKIP_TEST_INTEGRATION=1 git push
+#   SKIP_TEST_WEB=1 SKIP_TEST_SERVICES="channel-engine" git push
+#
+# Wrapper: `uv run kira push` / `kira push -i` — runs tests then `git push` with
+# SKIP_TEST_PRE_PUSH=1 so this hook does not duplicate work (`kira push --help`).
+#
 # Integration vs E2E (this repo):
-#   Integration = real infra pieces + pytest in each service (marked @pytest.mark.integration).
-#   E2E = full stack for humans/QA (e.g. `uv run kira dev e2e`, docs getting-started/e2e-local-dev.md);
-#         not run here — slower, needs full compose and is not a single automated browser suite.
+#   Integration = real infra + pytest -m integration per service.
+#   E2E = full stack for humans/QA (`kira dev e2e`); not run on pre-push.
 export PATH="$HOME/.bun/bin:/opt/homebrew/bin:$PATH"
 set -e
 make test-pre-push

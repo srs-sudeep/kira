@@ -23,6 +23,7 @@ from cli.dev import app as dev_app
 from cli.docs import app as docs_app
 from cli.lint import app as lint_app
 from cli.migrate import app as migrate_app
+from cli.push import register_push
 from cli.seed import app as seed_app
 from cli.test import app as test_app
 
@@ -40,6 +41,8 @@ app.add_typer(seed_app, name="seed", help="Seed development data")
 app.add_typer(deploy_app, name="deploy", help="Deploy to staging / production")
 app.add_typer(docs_app, name="docs", help="Documentation site management")
 app.add_typer(lint_app, name="lint", help="Lint services and web app")
+
+register_push(app)
 
 
 @app.command()
