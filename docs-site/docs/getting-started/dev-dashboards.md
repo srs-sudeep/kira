@@ -14,8 +14,8 @@ Use this page as a quick reference for **local development** URLs. These setting
 
 | What | URL | Notes |
 |------|-----|--------|
-| **Web app (property manager UI)** | [http://localhost:3000](http://localhost:3000) | Vite dev server via Docker Compose (`web-app` service). API calls use `/api` → Kong. |
-| **Documentation site (Docusaurus)** | [http://localhost:4000](http://localhost:4000) | **`make docs-dev`** (hot reload on the host), or **`make docs-docker-up`** (static build in Docker). Same port — run **one** at a time. |
+| **Web app (property manager UI)** | [http://localhost:3000](http://localhost:3000) | Vite dev server (`web-app/vite.config.ts`, default port **3000**; override with **`PORT`** or **`VITE_DEV_PORT`**). Docker Compose sets `PORT=3000` and maps host **3000**. API calls use `/api` → Kong. |
+| **Documentation site (Docusaurus)** | [http://localhost:4000](http://localhost:4000) | **`bun run start`** in `docs-site/` binds **4000** (`package.json`). **`make docs-dev`** / **`kira docs dev`**, or **`make docs-docker-up`** (static build in Docker). Same port — run **one** at a time. |
 
 The web client stays on **3000** and the docs site on **4000** by design so nothing clashes.
 
@@ -50,10 +50,15 @@ Grafana anonymous access, pgAdmin master-password bypass, and committed Portaine
 
 ## Opening everything in the browser
 
-- **Core stack** (after `make up`): `make dashboards`
-- **Full observability** (after `make up-full`): `make dashboards-full`
+- **Core stack** (after `make up` or `kira dev up`): **`kira dashboards`** — opens the web app, docs (:4000), Mailhog, Kong proxy + admin, and **each service’s** `/docs` (8001–8006). Some tabs only load if that service or profile is running (e.g. docs on :4000 needs `docs-site` or `make docs-dev`).
+- **Full observability** (after `make up-full` or `kira dev up --full`): **`kira dashboards --full`** (alias **`--all`**) — same as above **plus** Grafana, Prometheus, Loki, Alloy, pgAdmin, Redis Insight, Kafka UI, and Portainer.
 
-`make dashboards` only works if the containers are **up and healthy**. Check with:
+Legacy Make targets:
+
+- **Core stack**: `make dashboards`
+- **Full observability**: `make dashboards-full`
+
+`kira dashboards` / `make dashboards` only help if the containers are **up and healthy**. Check with:
 
 ```bash
 make stack-status

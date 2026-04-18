@@ -3,6 +3,13 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vitest/config";
 
+/** Host dev server; Docker sets PORT=3000 (see docker/docker-compose.yml). */
+function devServerPort(): number {
+  const raw = process.env.VITE_DEV_PORT ?? process.env.PORT ?? "3000";
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : 3000;
+}
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -17,7 +24,8 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   server: {
-    port: 3000,
+    port: devServerPort(),
+    strictPort: true,
     host: true,
     proxy: {
       "/api": {

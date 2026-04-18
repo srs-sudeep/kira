@@ -1,3 +1,4 @@
+# Runtime: nginx :80 in-container; compose maps host :4000 → :80. Host Docusaurus dev defaults to :4000 (docs-site/package.json).
 # ── Stage 1: Build ───────────────────────────────────────────────────────────
 FROM oven/bun:1 AS builder
 WORKDIR /app

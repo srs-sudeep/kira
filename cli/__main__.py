@@ -51,34 +51,60 @@ def commit() -> None:
     run(["npx", "cz"])
 
 
+# Local dev URLs (see docs-site/docs/getting-started/dev-dashboards.md).
+_DASHBOARD_CORE: list[str] = [
+    "http://localhost:3000",  # web-app (Vite)
+    "http://localhost:4000",  # docs-site (Docker profile docs or make docs-dev)
+    "http://localhost:8025",  # Mailhog
+    "http://localhost:8000",  # Kong proxy (gateway landing)
+    "http://localhost:8100",  # Kong admin API (declarative / status)
+]
+# FastAPI OpenAPI — one tab per service (Kong does not proxy /docs).
+_DASHBOARD_SERVICE_DOCS: list[str] = [
+    "http://localhost:8001/docs",  # identity-service
+    "http://localhost:8002/docs",  # rate-inventory-service
+    "http://localhost:8003/docs",  # reservation-service
+    "http://localhost:8004/docs",  # channel-engine
+    "http://localhost:8005/docs",  # notification-service
+    "http://localhost:8006/docs",  # admin-service
+]
+_DASHBOARD_OBSERVABILITY: list[str] = [
+    "http://localhost:3001",  # Grafana
+    "http://localhost:9090",  # Prometheus
+    "http://localhost:3100",  # Loki (API; query via Grafana)
+    "http://localhost:12345",  # Grafana Alloy
+    "http://localhost:5050",  # pgAdmin
+    "http://localhost:5540",  # Redis Insight
+    "http://localhost:8080",  # Kafka UI
+    "http://localhost:9000",  # Portainer (HTTP)
+]
+
+
 @app.command()
 def dashboards(
-    full: bool = typer.Option(False, "--full", help="Include observability UIs"),
+    full: bool = typer.Option(
+        False,
+        "--full",
+        "--all",
+        help="Include observability UIs (Grafana, Prometheus, Loki, …)",
+    ),
 ) -> None:
-    """Open KIRA dashboard URLs in the default browser."""
+    """Open local dev URLs in the default browser (web :3000, docs :4000, Mailhog, Kong, each /docs, …)."""
     import webbrowser
 
     from cli.utils import info
 
-    core = [
-        "http://localhost:3000",
-        "http://localhost:8025",
-        "http://localhost:8000",
-        "http://localhost:8001/docs",
+    urls = [
+        *_DASHBOARD_CORE,
+        *_DASHBOARD_SERVICE_DOCS,
+        *(_DASHBOARD_OBSERVABILITY if full else []),
     ]
-    obs = [
-        "http://localhost:3001",
-        "http://localhost:9090",
-        "http://localhost:5050",
-        "http://localhost:5540",
-        "http://localhost:8080",
-        "http://localhost:12345",
-        "http://localhost:9000",
-    ]
-    urls = core + obs if full else core
     for url in urls:
         webbrowser.open(url)
-    info(f"Opened {len(urls)} dashboard(s) in your browser")
+    info(
+        f"Opened {len(urls)} URL(s) — core + {len(_DASHBOARD_SERVICE_DOCS)} service /docs"
+        + (f" + observability ({len(_DASHBOARD_OBSERVABILITY)})" if full else "")
+    )
 
 
 if __name__ == "__main__":

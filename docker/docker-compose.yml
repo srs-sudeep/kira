@@ -305,7 +305,7 @@ services:
       ]
 
   # ---------------------------------------------------------------------------
-  # Frontend — Vite dev server (http://localhost:3000)
+  # Frontend — Vite dev server (http://localhost:3000 — PORT matches web-app/vite.config.ts)
   # API calls go to Kong :8000 via Vite proxy (/api → localhost:8000 from browser host)
   # ---------------------------------------------------------------------------
   web-app:
@@ -315,6 +315,7 @@ services:
     environment:
       # Vite dev server proxies /api → Kong; must use service DNS from inside the container
       API_PROXY_TARGET: http://kong:8000
+      PORT: "3000"
     volumes:
       - ../web-app:/app
     ports:
@@ -323,14 +324,15 @@ services:
       [
         "sh",
         "-c",
-        "bun install && bunx vite --host 0.0.0.0 --port 3000",
+        "bun install && bunx vite --host 0.0.0.0",
       ]
     depends_on:
       kong:
         condition: service_started
 
   # ---------------------------------------------------------------------------
-  # Documentation site (static build) — optional profile to avoid slow rebuilds on every up
+  # Documentation site (static nginx on :80 in-container → host :4000; host dev: bun run start → :4000)
+  # Optional profile to avoid slow rebuilds on every up.
   # Start with: docker compose --profile docs up -d docs-site   OR   make docs-docker-up
   # ---------------------------------------------------------------------------
   docs-site:

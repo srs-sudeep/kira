@@ -146,33 +146,16 @@ clean:
 
 ## Core stack URLs (requires: make up — containers must be healthy)
 dashboards:
-	@echo "Opening KIRA core UIs (web, Mailhog, Kong landing, one Swagger example)…"
+	@echo "Opening KIRA core UIs (same as  uv run kira dashboards )…"
 	@echo "Tip: Grafana/pgAdmin/Kafka UI need  make up-full  then  make dashboards-full"
 	@echo "If tabs fail:  make stack-status   and   docker compose logs <service>"
-	@python3 -c "import webbrowser; webbrowser.open('http://localhost:3000'); \
-		[webbrowser.open(u) for u in [ \
-		'http://localhost:8025', \
-		'http://localhost:8000', \
-		'http://localhost:8001/docs', \
-		]]"
+	@uv run kira dashboards
 
 ## Observability + debug UIs (requires: make up-full — not started by make up alone)
 dashboards-full:
-	@echo "Opening KIRA + observability UIs (Grafana :3001, Prometheus, pgAdmin, …)…"
+	@echo "Opening KIRA + observability UIs (same as  uv run kira dashboards --full )…"
 	@echo "If ports refuse connection, run:  make up-full"
-	@python3 -c "import webbrowser; [webbrowser.open(u) for u in [ \
-		'http://localhost:3000', \
-		'http://localhost:8025', \
-		'http://localhost:3001', \
-		'http://localhost:9090', \
-		'http://localhost:5050', \
-		'http://localhost:5540', \
-		'http://localhost:8080', \
-		'http://localhost:12345', \
-		'http://localhost:9000', \
-		'http://localhost:8000', \
-		'http://localhost:8001/docs', \
-		]]"
+	@uv run kira dashboards --full
 
 # ---------------------------------------------------------------------------
 # Documentation
@@ -180,7 +163,7 @@ dashboards-full:
 
 ## Docusaurus dev server with hot reload (http://localhost:4000) — run on host
 docs-dev:
-	cd docs-site && bun install && bun run start -- --port 4000
+	cd docs-site && bun install && bun run start
 
 ## Build static documentation site
 docs-build:
@@ -242,7 +225,7 @@ help:
 	@echo "  make docs-dev        Docusaurus dev server (host, port 4000)"
 	@echo "  make docs-docker-up  Built docs in Docker (port 4000)"
 	@echo ""
-	@echo "  make dashboards      Open core UIs (web, Mailhog, Kong :8000, identity /docs)"
-	@echo "  make dashboards-full After make up-full — Grafana, pgAdmin, Kafka UI, …"
+	@echo "  make dashboards      Open core UIs (kira dashboards: web, docs, Mailhog, Kong, all /docs)"
+	@echo "  make dashboards-full After make up-full — same + Grafana, Prometheus, Loki, …"
 	@echo "  make stack-status    docker compose ps (debug connection errors)"
 	@echo ""

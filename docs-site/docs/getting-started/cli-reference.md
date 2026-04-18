@@ -207,8 +207,9 @@ uv run kira commit
 Opens KIRA dashboard URLs in the default browser.
 
 ```bash
-uv run kira dashboards          # Core UIs
-uv run kira dashboards --full   # Core + observability
+uv run kira dashboards              # Web :3000, docs :4000, Mailhog, Kong, each service /docs (8001–8006)
+uv run kira dashboards --full       # Above + observability UIs (Grafana, Prometheus, …)
+uv run kira dashboards --all        # Same as --full
 ```
 
 ---

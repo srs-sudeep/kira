@@ -15,7 +15,7 @@ DOCS_DIR = ROOT / "docs-site"
 def dev() -> None:
     """Start Docusaurus dev server with hot reload (port 4000)."""
     info("Starting docs dev server on http://localhost:4000 …")
-    run(["bun", "run", "start", "--", "--port", "4000"], cwd=DOCS_DIR)
+    run(["bun", "run", "start"], cwd=DOCS_DIR)
 
 
 @app.command()

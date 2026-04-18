@@ -1,3 +1,4 @@
+# Production image: nginx listens on :80. Local Vite dev uses host :3000 (see docker-compose web-app, web-app/vite.config.ts).
 # ── Stage 1: build ───────────────────────────────────────────────────────────
 FROM oven/bun:1.1-alpine AS builder
 
