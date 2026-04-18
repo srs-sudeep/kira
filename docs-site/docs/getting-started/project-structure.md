@@ -31,12 +31,14 @@ kira/
 ├── observability/     # Prometheus, Grafana, Loki, Grafana Alloy configs
 ├── docs-site/         # This documentation (Docusaurus 3)
 ├── scripts/           # One-off scripts (seed data, create super-admin)
+├── bin/               # `bin/kira` — run root CLI from any cwd (`uv run --project` to repo root); see [CLI Reference](./cli-reference.md#bin-kira)
 ├── docker/            # Dockerfiles + Compose files
 │   ├── docker-compose.yml
 │   ├── docker-compose.observability.yml
-│   ├── docker-compose.override.yml.example
+│   ├── docker-compose.dummy-ota.yml
+│   ├── docker-compose.override.yml.example   # template; real override is gitignored
 │   └── *.Dockerfile
-├── cli/               # `kira` CLI (Python); see [CLI Reference](./cli-reference.md#installation) for `uv run`, `bin/kira`, and `uv tool install`
+├── cli/               # `kira` CLI (Python); see [CLI Reference](./cli-reference.md#installation) and [bin/kira](./cli-reference.md#bin-kira)
 ├── .github/
 │   └── workflows/     # GitHub Actions CI/CD (one workflow per service)
 ├── Makefile

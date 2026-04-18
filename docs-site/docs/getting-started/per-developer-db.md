@@ -1,5 +1,7 @@
 ---
+title: Per-Developer Database Isolation
 sidebar_position: 8
+description: docker-compose.override.yml, the committed .example template, and per-developer Postgres database names.
 ---
 
 # Per-Developer Database Isolation
@@ -8,13 +10,23 @@ When multiple developers work on KIRA simultaneously, each person needs their ow
 
 ## How It Works
 
-Docker Compose supports an **override file** (`docker/docker-compose.override.yml`) that is automatically merged with the base `docker/docker-compose.yml`. Each developer creates their own override that sets a unique `POSTGRES_DB` name and updates `DATABASE_URL` for all services.
+Docker Compose supports an **override file** (`docker/docker-compose.override.yml`) in the **same directory** as the main file. When you run `docker compose -f docker/docker-compose.yml …`, Compose **automatically merges** `docker/docker-compose.override.yml` if that file exists (you do not pass it as a second `-f`).
+
+Each developer creates their own override with a unique `POSTGRES_DB` name and matching `DATABASE_URL` for every service.
 
 ```
 docker/docker-compose.yml                  ← shared, committed
-docker/docker-compose.override.yml         ← per-developer, gitignored
+docker/docker-compose.override.yml         ← per-developer, gitignored (see .gitignore)
 docker/docker-compose.override.yml.example ← template, committed
 ```
+
+### Why `docker-compose.override.yml.example` exists
+
+- **`docker-compose.override.yml`** is **gitignored** on purpose: it encodes **your** machine-specific choice (database name, and optionally other local tweaks). It must not be committed, or every developer would fight the same file in Git.
+- The **`.example`** file **is** committed so everyone shares the **same shape** of overrides (which services need `DATABASE_URL`, how `POSTGRES_DB` is wired, comments, and copy/paste commands).
+- **`kira dev init`** (or a manual `cp`) copies the example to the real override so you start from a known-good template and only change names or env.
+
+Without the example, new contributors would have to reverse-engineer the override from docs alone; with it, upgrades to the override pattern can be reviewed in PRs by updating the example file.
 
 ## Quick Setup
 

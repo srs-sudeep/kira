@@ -71,6 +71,8 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Deployment",
       items: [
+        "deployment/how-deployment-fits",
+        "deployment/overview",
         "deployment/e2e-production",
         "deployment/local-docker",
         "deployment/aws-production",

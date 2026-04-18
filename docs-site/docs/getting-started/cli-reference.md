@@ -10,9 +10,25 @@ KIRA ships a unified CLI tool that wraps every monorepo operation — Docker, te
 
 :::info How commands are written here
 
-Examples use **`uv run kira …`** from the **repository root** (where the root `pyproject.toml` lives). If you installed the CLI with **`uv tool install --editable .`** from that same root, the executable is on your **`PATH`** and every command works as **`kira …`** instead — same flags, no `uv run` prefix. From a service subdirectory without a global install, use **`./bin/kira …`** from the clone (it pins `--project` to the repo root).
+Examples use **`uv run kira …`** from the **repository root** (where the root `pyproject.toml` lives). If you installed the CLI with **`uv tool install --editable .`** from that same root, the executable is on your **`PATH`** and every command works as **`kira …`** instead — same flags, no `uv run` prefix.
 
 :::
+
+### `bin/kira` (repo wrapper script) {#bin-kira}
+
+The repo ships **`bin/kira`**, a small Bash script that:
+
+1. Finds the monorepo root (`git rev-parse --show-toplevel`, or the parent of `bin/` if Git is unavailable).
+2. Runs **`exec uv run --project "$root" kira "$@"`** so the **root** `pyproject.toml` is always used.
+
+Use it when your cwd is under **`services/…`** (or anywhere `uv run kira` would bind to the wrong project), **without** a global `uv tool install`:
+
+```bash
+./bin/kira dev up
+./bin/kira --help
+```
+
+It does **not** install `kira` globally; it only forwards to the root CLI. For a permanent **`kira`** on `PATH`, still use **`uv tool install --editable .`** from the repo root.
 
 ## Installation
 
@@ -26,11 +42,7 @@ From the **repository root** (the directory that contains the root `pyproject.to
 uv run kira --help
 ```
 
-If your shell is inside `services/*`, uv picks that service’s `pyproject.toml` instead, and `uv run kira` fails. From anywhere in the clone you can use the wrapper:
-
-```bash
-./bin/kira --help
-```
+If your shell is inside `services/*`, uv picks that service’s `pyproject.toml` instead, and `uv run kira` fails — use **`./bin/kira`** as in the [wrapper section above](#bin-kira).
 
 More causes and fixes: [E2E local dev → Troubleshooting](./e2e-local-dev.md#troubleshooting).
 

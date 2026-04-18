@@ -9,6 +9,7 @@ sidebar_position: 1
 **What you'll learn:**
 
 - How this file fits with **`kira` / Make** (see [Makefile, CLI, and Compose](../getting-started/makefile-and-cli.md))
+- All **Compose files** under `docker/` (core, observability, optional dummy OTA, per-developer override)
 - What every service in `docker/docker-compose.yml` does and why
 - How `docker/docker-compose.observability.yml` adds monitoring dashboards
 - How volume mounts enable hot reload without rebuilding images
@@ -16,16 +17,25 @@ sidebar_position: 1
 
 ---
 
-## Two Compose Files
+## Compose files under `docker/`
 
-KIRA's local environment is split into two compose files:
+| File | Purpose | Committed? |
+| ---- | ------- | ---------- |
+| **`docker-compose.yml`** | Core stack — Postgres, Redis, Kafka, Mailhog, Kong, six APIs, web-app, Celery workers, optional **docs** / **tools** profiles | Yes |
+| **`docker-compose.observability.yml`** | Grafana, Prometheus, Loki, Grafana Alloy, pgAdmin, Redis Insight, Kafka UI, Portainer, exporters | Yes |
+| **`docker-compose.dummy-ota.yml`** | Optional **dummy OTA** HTTP server for local channel testing (`dummy-ota` on `kira_kira-net`, host **127.0.0.1:18080**) | Yes |
+| **`docker-compose.override.yml`** | Per-developer merge (e.g. isolated `POSTGRES_DB` / `DATABASE_URL`) | **No** — gitignored; each dev creates their own |
+| **`docker-compose.override.yml.example`** | Template for the override above; documents env shape and copy commands | Yes |
 
-| File                                      | Purpose                                      | When to use                 |
-| ----------------------------------------- | -------------------------------------------- | --------------------------- |
-| `docker/docker-compose.yml`               | Core stack — all services, infra, gateway    | Always                      |
-| `docker/docker-compose.observability.yml` | Prometheus, Grafana, Loki, Alloy, pgAdmin, Redis Insight, Kafka UI, Portainer | When debugging metrics/logs |
+Compose **auto-merges** `docker-compose.override.yml` when it sits beside the `-f` file you pass (same directory). Use the **`.example`** as the source of truth for what to put in your personal override — see [Per-developer database isolation](../getting-started/per-developer-db.md).
 
-Start the core stack from the **repository root** (compose file lives under `docker/`):
+**Dummy OTA** is a separate merge so the main stack stays lean. Bring up the core network first, then:
+
+```bash
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.dummy-ota.yml up -d dummy-ota
+```
+
+Start the core stack from the **repository root**:
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d --build

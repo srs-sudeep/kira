@@ -16,13 +16,18 @@ You can run the same work through **`uv run kira`**, plain **`kira`** (after `uv
 |------|------|
 | `docker/docker-compose.yml` | **Core** — Postgres, Redis, Kafka, Mailhog, six API services, Kong, **web-app**, Celery **channel-worker** and **notification-worker**, optional **docs-site** (`docs` profile), **seed-data** (`tools` profile). |
 | `docker/docker-compose.observability.yml` | **Observability** — Grafana, Prometheus, Loki, Grafana Alloy, pgAdmin, Redis Insight, Kafka UI, Portainer, exporters. |
+| `docker/docker-compose.dummy-ota.yml` | **Optional dummy OTA** — merge with core when you need the fake OTA server on the same Docker network (`127.0.0.1:18080` on the host). |
+| `docker/docker-compose.override.yml` | **Per-developer** — auto-merged next to the core file when present; **gitignored** (DB name isolation, local tweaks). |
+| `docker/docker-compose.override.yml.example` | **Committed template** for that override — copy or use `kira dev init`; see [Per-developer database isolation](./per-developer-db.md). |
 
-From the **repo root**, Compose almost always needs an explicit compose file path:
+From the **repo root**, Compose almost always needs an explicit compose file path for the **base** file:
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up -d
 ```
+
+If `docker/docker-compose.override.yml` exists, Compose loads it **automatically** (same directory as the first `-f` file).
 
 The **Makefile** and **`kira`** CLI embed these `-f` paths so you do not have to remember them.
 

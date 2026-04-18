@@ -1,8 +1,14 @@
 ---
+title: Deployment overview
 sidebar_position: 1
+description: Compose vs EKS targets, pipeline summary, environments, and required AWS building blocks.
 ---
 
-# Deployment Overview
+# Deployment overview
+
+:::tip New to how the pieces connect?
+Read **[How deployment fits together](./how-deployment-fits.md)** first (local Compose vs EKS, AWS services, minikube vs Compose).
+:::
 
 KIRA supports three deployment targets:
 
