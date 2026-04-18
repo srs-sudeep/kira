@@ -112,6 +112,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ env.WORKDIR }}
+          file: docker/channel-engine.Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.sha }}

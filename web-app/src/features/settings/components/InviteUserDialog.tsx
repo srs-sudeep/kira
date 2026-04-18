@@ -12,7 +12,6 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { USER_ROLES } from '@/config/constants'
 import type { InviteUserPayload } from '../services/users-service'
 
 const schema = z.object({

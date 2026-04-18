@@ -1,13 +1,14 @@
 ---
 title: Local Docker Development
-description: How docker-compose.yml powers the full KIRA stack locally — service by service, volumes, hot reload, and useful commands.
+description: How docker/docker-compose.yml powers the full KIRA stack locally — service by service, volumes, hot reload, and useful commands.
 sidebar_position: 1
 ---
 
 # Local Docker Development
 
 **What you'll learn:**
-- What every service in `docker-compose.yml` does and why
+
+- What every service in `docker/docker-compose.yml` does and why
 - How `docker-compose.observability.yml` adds monitoring dashboards
 - How volume mounts enable hot reload without rebuilding images
 - The commands you'll use every day
@@ -18,10 +19,10 @@ sidebar_position: 1
 
 KIRA's local environment is split into two compose files:
 
-| File | Purpose | When to use |
-|---|---|---|
-| `docker-compose.yml` | Core stack — all services, infra, gateway | Always |
-| `docker-compose.observability.yml` | Prometheus, Grafana, Loki, pgAdmin, Kafka UI | When debugging metrics/logs |
+| File                                      | Purpose                                      | When to use                 |
+| ----------------------------------------- | -------------------------------------------- | --------------------------- |
+| `docker/docker-compose.yml`               | Core stack — all services, infra, gateway    | Always                      |
+| `docker/docker-compose.observability.yml` | Prometheus, Grafana, Loki, pgAdmin, Kafka UI | When debugging metrics/logs |
 
 Start the core stack:
 
@@ -32,7 +33,7 @@ docker compose up -d --build
 Start with observability dashboards:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d --build
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up -d --build
 ```
 
 ---
@@ -61,14 +62,14 @@ volumes: [redisdata:/data]
 
 Shared Redis instance. Each service uses a different database number (0–5) to avoid key collisions:
 
-| DB | Usage |
-|---|---|
-| 0 | identity-service — sessions, rate limiting |
-| 1 | Celery broker (task queue) |
-| 2 | Celery result backend |
-| 3 | channel-engine — circuit breaker, rate limiting |
-| 4 | notification-service |
-| 5 | admin-service |
+| DB  | Usage                                           |
+| --- | ----------------------------------------------- |
+| 0   | identity-service — sessions, rate limiting      |
+| 1   | Celery broker (task queue)                      |
+| 2   | Celery result backend                           |
+| 3   | channel-engine — circuit breaker, rate limiting |
+| 4   | notification-service                            |
+| 5   | admin-service                                   |
 
 ### kafka
 
@@ -118,18 +119,19 @@ command: uvicorn app.main:app --host 0.0.0.0 --port 800X --reload
 ```
 
 Key points:
+
 - **Build context is the repo root** (`.`), not the service directory. This is required because Dockerfiles `COPY` the `shared/` directory.
 - **`env_file`** loads from `.env.local` — copy from `.env.example` in each service directory.
 - **`--reload`** enables hot reload. Any change to Python files triggers an automatic restart.
 
-| Service | Port | Notes |
-|---|---|---|
-| identity-service | 8001 | Depends on postgres + redis only |
-| rate-inventory-service | 8002 | Depends on postgres + redis only |
-| reservation-service | 8003 | Depends on postgres + redis only |
-| channel-engine | 8004 | Depends on postgres + redis + kafka |
-| notification-service | 8005 | Depends on postgres + redis + kafka |
-| admin-service | 8006 | Depends on postgres + redis only |
+| Service                | Port | Notes                               |
+| ---------------------- | ---- | ----------------------------------- |
+| identity-service       | 8001 | Depends on postgres + redis only    |
+| rate-inventory-service | 8002 | Depends on postgres + redis only    |
+| reservation-service    | 8003 | Depends on postgres + redis only    |
+| channel-engine         | 8004 | Depends on postgres + redis + kafka |
+| notification-service   | 8005 | Depends on postgres + redis + kafka |
+| admin-service          | 8006 | Depends on postgres + redis only    |
 
 ---
 
@@ -153,8 +155,8 @@ Two mounts on every app service enable live code changes:
 
 ```yaml
 volumes:
-  - ./services/identity-service/app:/app/app    # service-specific code
-  - ./shared:/app/shared                         # shared utilities, schemas, middleware
+  - ./services/identity-service/app:/app/app # service-specific code
+  - ./shared:/app/shared # shared utilities, schemas, middleware
 ```
 
 When you edit any `.py` file in `services/<name>/app/` or `shared/`, uvicorn detects the change and reloads the process. **No rebuild required.**
@@ -195,16 +197,16 @@ docker compose --profile docs up -d docs-site
 
 Launched by merging `docker-compose.observability.yml`:
 
-| Service | Port | Purpose |
-|---|---|---|
-| Prometheus | 9090 | Scrapes `/metrics` from all services |
-| Grafana | 3001 | Dashboards — default login admin/admin |
-| Loki | 3100 | Log aggregation (receives from Promtail) |
-| Promtail | — | Ships Docker container logs to Loki |
-| pgAdmin | 5050 | PostgreSQL GUI — `admin@kira.dev` / `admin` ([dev dashboards](../getting-started/dev-dashboards.md)) |
-| Redis Insight | 5540 | Redis key browser |
-| Kafka UI | 8080 | Topic browser, consumer group lag |
-| Portainer | 9443 | Docker container management UI |
+| Service       | Port | Purpose                                                                                              |
+| ------------- | ---- | ---------------------------------------------------------------------------------------------------- |
+| Prometheus    | 9090 | Scrapes `/metrics` from all services                                                                 |
+| Grafana       | 3001 | Dashboards — default login admin/admin                                                               |
+| Loki          | 3100 | Log aggregation (receives from Promtail)                                                             |
+| Promtail      | —    | Ships Docker container logs to Loki                                                                  |
+| pgAdmin       | 5050 | PostgreSQL GUI — `admin@kira.dev` / `admin` ([dev dashboards](../getting-started/dev-dashboards.md)) |
+| Redis Insight | 5540 | Redis key browser                                                                                    |
+| Kafka UI      | 8080 | Topic browser, consumer group lag                                                                    |
+| Portainer     | 9443 | Docker container management UI                                                                       |
 
 The observability stack joins the `kira_kira-net` network (set `external: true`) so it can reach the app services.
 
@@ -266,7 +268,7 @@ docker stats
 ## Troubleshooting
 
 :::warning Port already in use
-If a port is taken, find and stop the conflicting process or change the host-side port in `docker-compose.yml` (e.g., `"8002:8002"` → `"18002:8002"`).
+If a port is taken, find and stop the conflicting process or change the host-side port in `docker/docker-compose.yml` (e.g., `"8002:8002"` → `"18002:8002"`).
 :::
 
 :::tip Service keeps restarting

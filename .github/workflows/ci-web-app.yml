@@ -107,6 +107,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ env.WORKDIR }}
+          file: docker/web-app.Dockerfile
           push: true
           build-args: |
             VITE_API_BASE_URL=${{ secrets.STAGING_API_BASE_URL }}

@@ -1,0 +1,50 @@
+# docker-compose.override.yml — Per-developer customization
+#
+# Copy this file:  cp docker-compose.override.yml.example docker-compose.override.yml
+# Docker Compose automatically merges docker-compose.override.yml with docker-compose.yml.
+#
+# Each developer gets an isolated database by setting a unique POSTGRES_DB.
+# Convention: kira_<your-name>  (e.g. kira_alice, kira_bob)
+#
+# After changing the DB name, run:
+#   docker compose down -v   # remove old volume with stale DB
+#   docker compose up -d     # creates the new DB automatically
+#   kira migrate --all --docker   # run Alembic migrations
+#   kira seed --docker            # seed dev data
+
+services:
+  postgres:
+    environment:
+      POSTGRES_DB: kira_${KIRA_DEV_USER:-dev}
+
+  identity-service:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}
+
+  rate-inventory-service:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}
+
+  reservation-service:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}
+
+  channel-engine:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}
+
+  notification-service:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}
+
+  admin-service:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}
+
+  channel-worker:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}
+
+  notification-worker:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/kira_${KIRA_DEV_USER:-dev}

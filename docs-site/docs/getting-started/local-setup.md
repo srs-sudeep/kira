@@ -7,6 +7,7 @@ sidebar_position: 2
 # Local Setup
 
 **What you'll learn:**
+
 - How to clone the repo and configure per-service `.env.local` files
 - What `docker compose up --build` actually does (which services start, in what order)
 - How to run database migrations and seed test data
@@ -15,6 +16,40 @@ sidebar_position: 2
 
 :::info Prerequisites
 Complete the [Prerequisites](./prerequisites.md) guide before continuing. You need Docker Desktop (with 8 GB+ RAM allocated), Python 3.13, uv, and bun installed.
+:::
+
+---
+
+## Quick Start (CLI)
+
+The fastest way to get everything running:
+
+```bash
+git clone https://github.com/abodeab/kira.git
+cd kira
+uv run kira dev setup
+```
+
+This single command will:
+
+1. Check all prerequisites are installed
+2. Copy `.env.example` → `.env.local` for each service
+3. Install npm dependencies (root + web-app)
+4. Start infrastructure containers (Postgres, Redis, Kafka)
+5. Run database migrations for all services
+6. Seed development data
+
+After setup completes, start the stack:
+
+```bash
+uv run kira dev up          # Start all services
+uv run kira dashboards      # Open UIs in browser
+```
+
+See the [CLI Reference](./cli-reference.md) for the full command list.
+
+:::tip Prefer the manual route?
+The step-by-step instructions below do the same thing — use them if you want to understand each stage, or if you hit issues with the CLI setup.
 :::
 
 ---
@@ -76,9 +111,11 @@ First build takes **3–6 minutes** depending on your internet speed and machine
 
 :::tip Watching the build
 Drop the `-d` flag to see live output:
+
 ```bash
 docker compose up --build
 ```
+
 Use `Ctrl+C` to detach once everything is up (or run in a separate terminal).
 :::
 
@@ -144,6 +181,7 @@ make seed
 **All-in-one** after a fresh clone: `make bootstrap` runs `up`, waits for Postgres, `migrate-docker-all`, and `make seed-docker`.
 
 This runs `scripts/seed_data.py` which creates:
+
 - A test tenant: **"Grand Hotel Demo"** (ID is printed to stdout — save it)
 - A super-admin user: `admin@example.com` / `Admin1234!`
 - One hotel admin user: `manager@grandhotel.example.com` / `Manager1234!`
@@ -151,6 +189,7 @@ This runs `scripts/seed_data.py` which creates:
 :::caution Login emails and `.local`
 Use addresses that pass API validation (e.g. `@example.com`, `@grandhotel.example.com`). The identity service uses Pydantic **`EmailStr`**, which **rejects** domains like **`*.local`** (reserved for mDNS). If you see `422` with “not a valid email address” for `@kira.local`, switch to the addresses above or run `make superadmin` with an allowed email.
 :::
+
 - Three room types: Standard Twin, Deluxe King, Suite
 - Rate plans for each room type: BAR, Non-Refundable
 - 30 days of ARI data starting from today
@@ -215,12 +254,14 @@ Each should return:
 Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
 Log in with the seeded hotel admin:
+
 - **Email:** `manager@grandhotel.example.com`
 - **Password:** `Manager1234!`
 
 You should land on the dashboard showing the KPI cards and the seeded reservation data.
 
 To log in as super-admin (full platform access, including the admin-service):
+
 - **Email:** `admin@example.com`
 - **Password:** `Admin1234!`
 
@@ -242,18 +283,18 @@ make dashboards-full
 
 For the **core** stack only (web, Mailhog, Kong landing, one Swagger tab): `make dashboards` after `make up`. See [Dev dashboards & ports](./dev-dashboards.md) for what each command opens.
 
-| Dashboard | URL | Purpose |
-|---|---|---|
-| KIRA web-app | [localhost:3000](http://localhost:3000) | Property manager dashboard |
-| Kong proxy | [localhost:8000](http://localhost:8000) | API gateway (HTML landing on `/`; APIs under `/api/v1/`) |
-| Kong Admin API | [localhost:8100](http://localhost:8100) | Kong admin (not Swagger) |
-| Grafana | [localhost:3001](http://localhost:3001) | Metrics + logs (anonymous or admin/admin) |
-| Prometheus | [localhost:9090](http://localhost:9090) | Raw metrics browser |
-| Kafka UI | [localhost:8080](http://localhost:8080) | Topic browser, consumer lag |
-| pgAdmin | [localhost:5050](http://localhost:5050) | SQL browser — **`admin@kira.dev` / `admin`** (see [Dev dashboards](./dev-dashboards.md)) |
-| Redis Insight | [localhost:5540](http://localhost:5540) | Redis key browser |
-| Mailhog | [localhost:8025](http://localhost:8025) | Outbound email trap |
-| Portainer | [localhost:9443](https://localhost:9443) | Container management UI |
+| Dashboard      | URL                                      | Purpose                                                                                  |
+| -------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------- |
+| KIRA web-app   | [localhost:3000](http://localhost:3000)  | Property manager dashboard                                                               |
+| Kong proxy     | [localhost:8000](http://localhost:8000)  | API gateway (HTML landing on `/`; APIs under `/api/v1/`)                                 |
+| Kong Admin API | [localhost:8100](http://localhost:8100)  | Kong admin (not Swagger)                                                                 |
+| Grafana        | [localhost:3001](http://localhost:3001)  | Metrics + logs (anonymous or admin/admin)                                                |
+| Prometheus     | [localhost:9090](http://localhost:9090)  | Raw metrics browser                                                                      |
+| Kafka UI       | [localhost:8080](http://localhost:8080)  | Topic browser, consumer lag                                                              |
+| pgAdmin        | [localhost:5050](http://localhost:5050)  | SQL browser — **`admin@kira.dev` / `admin`** (see [Dev dashboards](./dev-dashboards.md)) |
+| Redis Insight  | [localhost:5540](http://localhost:5540)  | Redis key browser                                                                        |
+| Mailhog        | [localhost:8025](http://localhost:8025)  | Outbound email trap                                                                      |
+| Portainer      | [localhost:9443](https://localhost:9443) | Container management UI                                                                  |
 
 ---
 

@@ -7,6 +7,7 @@ sidebar_position: 6
 # Project Structure
 
 **What you'll learn:**
+
 - Why KIRA uses a monorepo and what that means day-to-day
 - What every top-level folder contains and why it exists
 - How the `services/` directory is organised internally (and why every service looks the same)
@@ -30,10 +31,14 @@ kira/
 ├── observability/     # Prometheus, Grafana, Loki, Promtail configs
 ├── docs-site/         # This documentation (Docusaurus 3)
 ├── scripts/           # One-off scripts (seed data, create super-admin)
+├── docker/            # Dockerfiles + Compose files
+│   ├── docker-compose.yml
+│   ├── docker-compose.observability.yml
+│   ├── docker-compose.override.yml.example
+│   └── *.Dockerfile
+├── cli/               # `kira` CLI (Python, invoked via `uv run kira`)
 ├── .github/
 │   └── workflows/     # GitHub Actions CI/CD (one workflow per service)
-├── docker-compose.yml
-├── docker-compose.observability.yml
 ├── Makefile
 └── CLAUDE.md          # AI assistant instructions for this repo
 ```
@@ -42,13 +47,13 @@ kira/
 
 KIRA uses a single repository for all six services, the frontend, and infrastructure rather than separate repos per service. The reasons:
 
-| Concern | Monorepo advantage |
-|---|---|
+| Concern            | Monorepo advantage                                                             |
+| ------------------ | ------------------------------------------------------------------------------ |
 | **Atomic changes** | A Kafka event schema change that affects producer and consumer lands in one PR |
-| **Shared code** | The `shared/` package is a local file dependency — no publish/version step |
-| **CI cost** | Path-filtered workflows mean only the changed service is tested |
-| **Onboarding** | Clone once, `docker compose up`, done — not seven separate repo setups |
-| **Code search** | One place to grep across the entire codebase |
+| **Shared code**    | The `shared/` package is a local file dependency — no publish/version step     |
+| **CI cost**        | Path-filtered workflows mean only the changed service is tested                |
+| **Onboarding**     | Clone once, `docker compose up`, done — not seven separate repo setups         |
+| **Code search**    | One place to grep across the entire codebase                                   |
 
 The tradeoff is that the repo grows over time. For a team under ten developers, the benefits outweigh the cost.
 
@@ -165,12 +170,14 @@ shared = { path = "../../shared", develop = true }
 In Docker, the `shared/` directory is volume-mounted (dev) or COPY-ed (production build) into each service image before `poetry install` runs.
 
 **What goes in `shared/`:**
+
 - Kafka event schemas — so the producer (rate-inventory) and consumer (channel-engine) both use the same `ARIUpdatedEvent` Pydantic model
 - JWT verification — all services validate tokens identically
 - Tenant middleware — one implementation used by all services
 - Encryption utilities — guest PII and OTA credentials use the same AES-256 wrapper
 
 **What does NOT go in `shared/`:**
+
 - Business logic (belongs in the owning service's `services/` layer)
 - SQLAlchemy models (each service owns its own schema)
 - API request/response schemas (each service defines its own shapes)
@@ -247,7 +254,7 @@ k8s/
 
 **How Kustomize overlays work:**
 
-The `base/` directory defines everything at its simplest (1 replica, base resource limits, `latest` image tag). Each overlay *patches* the base without duplicating it:
+The `base/` directory defines everything at its simplest (1 replica, base resource limits, `latest` image tag). Each overlay _patches_ the base without duplicating it:
 
 ```bash
 # What staging will apply:
@@ -321,7 +328,7 @@ observability/
 The observability stack is opt-in via a separate Compose file:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.observability.yml up -d
 ```
 
 ---
@@ -348,13 +355,14 @@ docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
 on:
   push:
     paths:
-      - 'services/channel-engine/**'
-      - 'shared/**'               # shared/ changes trigger all services
+      - "services/channel-engine/**"
+      - "shared/**" # shared/ changes trigger all services
 ```
 
 A commit that only touches `services/channel-engine/` will run `ci-channel-engine.yml` and nothing else. The other five service tests don't start. This keeps CI fast (a single-service change completes in ~3 minutes) and cheap (no wasted GitHub Actions minutes).
 
 Each per-service workflow has three jobs:
+
 1. **test** — runs on every push and PR: install deps, lint, format check, pytest with 70% coverage gate
 2. **build-and-push** — only on `main` push: builds Docker image, pushes to ECR with git SHA tag
 3. **deploy-staging** — only on `main` push: `kubectl set image` on the staging EKS cluster
@@ -405,16 +413,16 @@ make docs-build  # outputs to docs-site/build/
 
 ## Summary: Where to Find Things
 
-| Task | Where to look |
-|---|---|
-| Add an API endpoint | `services/<name>/app/routers/` + `services/` + `repositories/` |
-| Change a Pydantic schema | `services/<name>/app/schemas/` |
-| Add a Kafka event type | `shared/schemas/events.py` |
-| Change the tenant middleware | `shared/middleware/tenant.py` |
-| Add a React page | `web-app/src/features/<name>/pages/` + `web-app/src/router/` |
-| Add an API service call | `web-app/src/features/<name>/services/<name>Service.ts` |
-| Change K8s resource limits | `k8s/overlays/production/patches/resources.yaml` |
-| Add a new Kong route | `kong/kong.yml` |
-| Add AWS infrastructure | `infra/terraform/*.tf` |
-| Add a CI step | `.github/workflows/ci-<service>.yml` |
-| Update these docs | `docs-site/docs/<section>/<page>.md` |
+| Task                         | Where to look                                                  |
+| ---------------------------- | -------------------------------------------------------------- |
+| Add an API endpoint          | `services/<name>/app/routers/` + `services/` + `repositories/` |
+| Change a Pydantic schema     | `services/<name>/app/schemas/`                                 |
+| Add a Kafka event type       | `shared/schemas/events.py`                                     |
+| Change the tenant middleware | `shared/middleware/tenant.py`                                  |
+| Add a React page             | `web-app/src/features/<name>/pages/` + `web-app/src/router/`   |
+| Add an API service call      | `web-app/src/features/<name>/services/<name>Service.ts`        |
+| Change K8s resource limits   | `k8s/overlays/production/patches/resources.yaml`               |
+| Add a new Kong route         | `kong/kong.yml`                                                |
+| Add AWS infrastructure       | `infra/terraform/*.tf`                                         |
+| Add a CI step                | `.github/workflows/ci-<service>.yml`                           |
+| Update these docs            | `docs-site/docs/<section>/<page>.md`                           |

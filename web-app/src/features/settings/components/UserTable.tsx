@@ -27,14 +27,6 @@ const ROLE_LABELS: Record<UserRole, string> = {
   read_only: 'Read only',
 }
 
-const ROLE_BADGE_VARIANT: Record<UserRole, 'default' | 'secondary' | 'outline'> = {
-  super_admin: 'default',
-  property_owner: 'default',
-  revenue_manager: 'secondary',
-  front_desk: 'outline',
-  read_only: 'outline',
-}
-
 interface Props {
   users: User[]
 }

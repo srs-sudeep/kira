@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# scripts/test_integration.sh — Run integration tests with real infra
+set -euo pipefail
+
+COMPOSE="docker compose"
+SERVICES=(admin-service identity-service rate-inventory-service reservation-service channel-engine notification-service)
+
+cleanup() {
+  echo ""
+  echo "=== Tearing down integration infra ==="
+  $COMPOSE down postgres redis kafka 2>/dev/null || true
+}
+trap cleanup EXIT
+
+echo "=== Starting integration infrastructure ==="
+$COMPOSE up -d postgres redis kafka
+
+echo "=== Waiting for Postgres ==="
+for i in $(seq 1 30); do
+  $COMPOSE exec -T postgres pg_isready -U postgres -d kira >/dev/null 2>&1 && break
+  sleep 1
+done
+
+echo "=== Running integration tests ==="
+FAILED=()
+for svc in "${SERVICES[@]}"; do
+  echo ""
+  echo "--- Integration: $svc ---"
+  if ! (cd "services/$svc" && uv run pytest -v -m integration); then
+    FAILED+=("$svc")
+  fi
+done
+
+echo ""
+if [ ${#FAILED[@]} -gt 0 ]; then
+  echo "FAILED: ${FAILED[*]}"
+  exit 1
+else
+  echo "All integration tests passed."
+fi

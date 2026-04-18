@@ -54,7 +54,7 @@ function applyAccentColor(color: AccentColor) {
 
 export const useUiStore = create<UiState & UiActions>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       sidebarCollapsed: false,
       theme: 'system',
       accentColor: 'indigo',

@@ -1,4 +1,5 @@
 """Project Kira — channel-engine entry point."""
+
 from contextlib import asynccontextmanager
 
 import structlog
@@ -37,8 +38,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Tenant-ID"],
 )
 
 Instrumentator(

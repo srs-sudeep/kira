@@ -22,7 +22,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form'
 import { Badge } from '@/components/ui/badge'
 import type { RoomType } from '@/types/room'

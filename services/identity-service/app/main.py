@@ -1,4 +1,5 @@
 """KIRA Identity Service — FastAPI application factory."""
+
 import uuid
 from contextlib import asynccontextmanager
 
@@ -8,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.middleware.base import BaseHTTPMiddleware
 
+# Ensure all ORM models are registered on Base.metadata before Alembic/tests use it
+import app.models  # noqa: F401  — registers User, RefreshToken, AuditEvent
 from app.config import settings
 from app.database import engine
 from app.exception_handlers import register_exception_handlers
@@ -16,9 +19,6 @@ from app.routers.audit_router import router as audit_router
 from app.routers.auth_router import router as auth_router
 from app.routers.permission_router import router as permission_router
 from app.routers.user_router import router as user_router
-
-# Ensure all ORM models are registered on Base.metadata before Alembic/tests use it
-import app.models  # noqa: F401  — registers User, RefreshToken, AuditEvent
 
 logger = structlog.get_logger(__name__)
 
@@ -39,6 +39,7 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
             token = auth_header.removeprefix("Bearer ").strip()
             try:
                 from app.core.security import decode_access_token
+
                 payload = decode_access_token(token)
                 if payload.get("tenant_id"):
                     request.state.tenant_id = uuid.UUID(payload["tenant_id"])
@@ -72,8 +73,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Tenant-ID"],
 )
 app.add_middleware(TenantContextMiddleware)
 

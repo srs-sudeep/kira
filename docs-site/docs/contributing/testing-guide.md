@@ -7,6 +7,7 @@ sidebar_position: 5
 # Testing Guide
 
 **What you'll learn:**
+
 - What to test and what to skip
 - pytest fixtures and how to structure them
 - How to test services by mocking repositories
@@ -17,12 +18,12 @@ sidebar_position: 5
 
 ## What to Test
 
-| Layer | What to test | What to skip |
-|---|---|---|
-| Service (business logic) | Business rules, error cases, Kafka publish calls | Dependency injection wiring |
-| Repository | Query correctness with a real test DB | SQLAlchemy internals |
-| Router (integration) | Request validation, auth enforcement, response schema | Internal business logic (tested via service tests) |
-| Models | Non-trivial property methods | Plain attribute access |
+| Layer                    | What to test                                          | What to skip                                       |
+| ------------------------ | ----------------------------------------------------- | -------------------------------------------------- |
+| Service (business logic) | Business rules, error cases, Kafka publish calls      | Dependency injection wiring                        |
+| Repository               | Query correctness with a real test DB                 | SQLAlchemy internals                               |
+| Router (integration)     | Request validation, auth enforcement, response schema | Internal business logic (tested via service tests) |
+| Models                   | Non-trivial property methods                          | Plain attribute access                             |
 
 **Coverage target: 70% on the `app/services/` and `app/repositories/` modules.** Router tests and model tests are bonuses, not the target.
 
@@ -228,6 +229,7 @@ class TestReservationRepository:
 ## Integration Tests
 
 Integration tests hit the full FastAPI app through TestClient. Use them for:
+
 - Verifying auth enforcement (unauthenticated request returns 401)
 - Verifying request validation (bad input returns 422 with useful errors)
 - Smoke-testing the happy path end-to-end
@@ -301,15 +303,47 @@ async def test_publishes_ari_updated_event(
 
 ## Frontend Testing (when added)
 
-The frontend is planned to use **Vitest** (Jest-compatible, Vite-native) and **React Testing Library**.
+The frontend uses **Vitest** (Jest-compatible, Vite-native) and **React Testing Library**.
+
+### Setup
+
+Vitest is configured in `web-app/vite.config.ts`:
+
+```typescript
+test: {
+  globals: true,
+  environment: 'jsdom',
+  setupFiles: ['./src/test/setup.ts'],
+  include: ['src/**/*.{test,spec}.{ts,tsx}'],
+}
+```
+
+The setup file (`src/test/setup.ts`) loads jest-dom matchers:
+
+```typescript
+import "@testing-library/jest-dom/vitest";
+```
+
+### Running web tests
+
+```bash
+# Via CLI
+uv run kira test --web
+
+# Or directly
+cd web-app && bun run test
+
+# Watch mode for development
+cd web-app && bun run test:watch
+```
 
 ### What to test on the frontend
 
-| Test type | What | Tools |
-|---|---|---|
-| Unit | Custom hooks, utility functions, service calls | Vitest + msw (mock API) |
-| Component | Rendering, user interactions, form validation | Vitest + React Testing Library |
-| E2E (future) | Full user flows in a real browser | Playwright |
+| Test type    | What                                           | Tools                          |
+| ------------ | ---------------------------------------------- | ------------------------------ |
+| Unit         | Custom hooks, utility functions, service calls | Vitest + msw (mock API)        |
+| Component    | Rendering, user interactions, form validation  | Vitest + React Testing Library |
+| E2E (future) | Full user flows in a real browser              | Playwright                     |
 
 ### Component test pattern
 
@@ -352,9 +386,44 @@ import { http, HttpResponse } from "msw";
 
 export const handlers = [
   http.get("/api/v1/reservations", () =>
-    HttpResponse.json({ items: [], total: 0, page: 1, page_size: 20 })
+    HttpResponse.json({ items: [], total: 0, page: 1, page_size: 20 }),
   ),
 ];
 ```
 
 Use msw's `server` in `beforeAll`/`afterAll` so tests never make real HTTP calls.
+
+---
+
+## Running Tests via CLI
+
+The KIRA CLI provides a unified interface for all test commands:
+
+```bash
+# Test a single backend service
+uv run kira test identity-service
+
+# Test all services + web-app
+uv run kira test --all
+
+# Web-app only
+uv run kira test --web
+
+# With coverage gate (70% minimum)
+uv run kira test --coverage
+
+# Integration tests (starts Postgres, Redis, Kafka)
+uv run kira test --integration
+```
+
+Or use Makefile equivalents:
+
+```bash
+make test-identity-service     # Single service
+make test-all                  # All services
+make test-web                  # Web-app (Vitest)
+make test-coverage             # With coverage
+make test-integration          # Integration with infra
+```
+
+See the [CLI Reference](../getting-started/cli-reference.md) for the full command list.

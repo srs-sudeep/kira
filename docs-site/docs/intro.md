@@ -47,6 +47,7 @@ graph LR
 ## Documentation Sections
 
 ### Getting Started
+
 Set up the full stack locally and take your first tour of the platform.
 
 - [Prerequisites](./getting-started/prerequisites.md) — tools to install before you begin
@@ -56,6 +57,7 @@ Set up the full stack locally and take your first tour of the platform.
 - [Project Structure](./getting-started/project-structure.md) — monorepo layout explained, folder by folder
 
 ### Architecture
+
 How the pieces fit together.
 
 - [Overview](./architecture/overview.md) — system topology, communication patterns, data isolation
@@ -65,6 +67,7 @@ How the pieces fit together.
 - [Security](./architecture/security.md) — JWT auth flow, RBAC roles, MFA, audit log
 
 ### Services
+
 Deep-dives on each backend service.
 
 - [Identity Service](./services/identity-service.md) — auth, users, RBAC, MFA, audit
@@ -75,6 +78,7 @@ Deep-dives on each backend service.
 - [Admin Service](./services/admin-service.md) — tenant onboarding, billing, super-admin ops
 
 ### Frontend
+
 The React 19 property manager dashboard.
 
 - [Overview](./frontend/overview.md) — tech stack, project structure, feature list
@@ -83,6 +87,7 @@ The React 19 property manager dashboard.
 - [Feature Modules](./frontend/feature-modules.md) — per-feature structure and adding new modules
 
 ### API Reference
+
 Every endpoint documented with request/response examples.
 
 - [Overview](./api-reference/overview.md) — conventions, auth, error format, status codes
@@ -92,15 +97,18 @@ Every endpoint documented with request/response examples.
 - [Channels](./api-reference/channels.md) — connect OTAs, manage mappings, view sync log
 
 ### Deployment
+
 From Docker Compose to production on AWS EKS.
 
 - [Overview](./deployment/overview.md) — environments, image tagging, required AWS infrastructure
-- [Docker](./deployment/docker.md) — Compose setup, Dockerfiles, observability stack
+- [Docker](./deployment/local-docker.md) — Compose setup, Dockerfiles, observability stack
 - [Kubernetes](./deployment/kubernetes.md) — Kustomize base + overlays, secrets, resource config
 - [Local Kubernetes validation](./deployment/local-kubernetes.md) — dev cluster smoke tests vs EKS
-- [CI/CD](./deployment/ci-cd.md) — GitHub Actions pipelines, path filters, production approval gate
+- [CI/CD](./deployment/cicd-pipeline.md) — GitHub Actions pipelines, path filters, production approval gate
+- [Deploy Scripts](./deployment/deploy-scripts.md) — Manual CLI-based deployment to staging/production
 
 ### Operations
+
 Running the platform in production.
 
 - [Monitoring](./operations/monitoring.md) — Prometheus metrics, Grafana dashboards, SLOs, alerts
@@ -108,12 +116,13 @@ Running the platform in production.
 - [Runbooks](./operations/runbooks.md) — OTA sync failures, pod crashes, Kafka lag, rollbacks
 
 ### Contributing
+
 How to add features, fix bugs, and keep the codebase healthy.
 
-- [Development Setup](./contributing/development-setup.md) — IDE config, running a service outside Docker
-- [Code Conventions](./contributing/code-conventions.md) — Python and TypeScript style rules
-- [Testing](./contributing/testing.md) — pytest patterns, coverage gate, React Testing Library
-- [Git Workflow](./contributing/git-workflow.md) — branch naming, commit format, PR process
+- [Development Workflow](./contributing/development-workflow.md) — branch naming, commit format, PR process
+- [Coding Standards](./contributing/coding-standards.md) — Python and TypeScript style rules
+- [Testing Guide](./contributing/testing-guide.md) — pytest patterns, Vitest, coverage gate
+- [Commit Conventions](./contributing/commit-conventions.md) — Husky hooks, Commitizen, Commitlint
 
 ---
 
@@ -121,15 +130,15 @@ How to add features, fix bugs, and keep the codebase healthy.
 
 ### I'm setting up locally for the first time
 
-→ Start with **[Prerequisites](./getting-started/prerequisites.md)**, then follow the **[Local Setup](./getting-started/local-setup.md)** guide. The whole stack runs with one command after that.
+→ The fastest path: install the prerequisites then run `uv run kira dev setup` — see the **[CLI Reference](./getting-started/cli-reference.md)**. Or follow the step-by-step **[Local Setup](./getting-started/local-setup.md)** guide.
 
 ### I'm deploying to production
 
-→ Go to **[Deployment Overview](./deployment/overview.md)** for the AWS infrastructure requirements, then **[Kubernetes](./deployment/kubernetes.md)** for the Kustomize manifests, and **[CI/CD](./deployment/ci-cd.md)** for the GitHub Actions pipeline setup.
+→ Go to **[Deployment Overview](./deployment/overview.md)** for the AWS infrastructure requirements, then **[Kubernetes](./deployment/kubernetes.md)** for the Kustomize manifests, and **[CI/CD](./deployment/cicd-pipeline.md)** for the GitHub Actions pipeline setup. For manual deploys, see **[Deploy Scripts](./deployment/deploy-scripts.md)**.
 
 ### I'm adding a feature to an existing service
 
-→ Read **[Code Conventions](./contributing/code-conventions.md)** and the relevant **[Service](./services/identity-service.md)** doc first so you understand the layer rules, then **[Git Workflow](./contributing/git-workflow.md)** for branch and PR requirements.
+→ Read **[Coding Standards](./contributing/coding-standards.md)** and the relevant **[Service](./services/identity-service.md)** doc first so you understand the layer rules, then **[Development Workflow](./contributing/development-workflow.md)** for branch and PR requirements. Commits must follow **[Commit Conventions](./contributing/commit-conventions.md)**.
 
 ### I'm debugging a production issue
 

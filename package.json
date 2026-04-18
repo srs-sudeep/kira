@@ -1,0 +1,39 @@
+{
+  "name": "kira",
+  "private": true,
+  "version": "0.0.0",
+  "description": "KIRA monorepo — DX tooling (Husky, Commitizen, Commitlint)",
+  "scripts": {
+    "commit": "cz",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "services/**/*.py": [
+      "ruff check --fix",
+      "ruff format"
+    ],
+    "shared/**/*.py": [
+      "ruff check --fix",
+      "ruff format"
+    ],
+    "web-app/**/*.{ts,tsx}": [
+      "bash -c 'cd web-app && bunx eslint --fix'"
+    ],
+    "web-app/**/*.{ts,tsx,js,jsx}": [
+      "bash -c 'cd web-app && bunx tsc --noEmit'"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  }
+}

@@ -1,10 +1,10 @@
-.PHONY: up up-full down logs test-% test-all migrate-% migrate-all migrate-docker-% migrate-docker-all \
-	seed seed-docker bootstrap wait-postgres clean dashboards dashboards-full stack-status docs-dev docs-build docs-docker-up help
+.PHONY: up up-full down logs test-% test-all test-web test-coverage test-integration migrate-% migrate-all migrate-docker-% migrate-docker-all \
+	seed seed-docker bootstrap wait-postgres clean dashboards dashboards-full stack-status docs-dev docs-build docs-docker-up dev-setup help
 
 
 SERVICES := admin-service identity-service rate-inventory-service reservation-service channel-engine notification-service
 
-COMPOSE := docker compose
+COMPOSE := docker compose -f docker/docker-compose.yml
 
 # ---------------------------------------------------------------------------
 # Stack management
@@ -16,11 +16,11 @@ up:
 
 ## Start full stack with observability (Grafana, Prometheus, Loki, …)
 up-full:
-	$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml up -d --build
+	$(COMPOSE) -f docker/docker-compose.observability.yml up -d --build
 
 ## Stop and remove containers (keep volumes)
 down:
-	$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml down
+	$(COMPOSE) -f docker/docker-compose.observability.yml down
 
 ## Follow logs for all containers
 logs:
@@ -49,6 +49,22 @@ test-all:
 		cd services/$$svc && uv run pytest -v; \
 		cd ../..; \
 	done
+
+## Run web-app tests (Vitest)
+test-web:
+	cd web-app && bun run test
+
+## Run tests with coverage for all services (fail-under=70%)
+test-coverage:
+	@for svc in $(SERVICES); do \
+		echo "\n=== Coverage: $$svc ==="; \
+		cd services/$$svc && uv run pytest --cov --cov-report=html --cov-fail-under=70 -v; \
+		cd ../..; \
+	done
+
+## Run integration tests (starts infra containers)
+test-integration:
+	bash scripts/test_integration.sh
 
 # ---------------------------------------------------------------------------
 # Migrations (host — requires uv; uses localhost:5432)
@@ -120,7 +136,7 @@ superadmin:
 
 ## Stop everything and remove containers, volumes, and orphans
 clean:
-	$(COMPOSE) -f docker-compose.yml -f docker-compose.observability.yml down -v --remove-orphans
+	$(COMPOSE) -f docker/docker-compose.observability.yml down -v --remove-orphans
 
 # ---------------------------------------------------------------------------
 # Dashboards — open UIs in the default browser (macOS/Linux)
@@ -173,6 +189,14 @@ docs-docker-up:
 	$(COMPOSE) --profile docs up -d --build docs-site
 
 # ---------------------------------------------------------------------------
+# Dev Setup
+# ---------------------------------------------------------------------------
+
+## Bootstrap local development environment via the kira CLI
+dev-setup:
+	uv run kira dev setup
+
+# ---------------------------------------------------------------------------
 # Help
 # ---------------------------------------------------------------------------
 
@@ -205,6 +229,12 @@ help:
 	@echo "Tests:"
 	@echo "  make test-<service>  Run tests for one service"
 	@echo "  make test-all        Run all service tests"
+	@echo "  make test-web        Run web-app tests (Vitest)"
+	@echo "  make test-coverage   Run tests with coverage"
+	@echo "  make test-integration Run integration tests with infra"
+	@echo ""
+	@echo "CLI:"
+	@echo "  make dev-setup       Bootstrap local dev (via kira CLI)"
 	@echo ""
 	@echo "Docs:"
 	@echo "  make docs-dev        Docusaurus dev server (host, port 4000)"

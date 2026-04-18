@@ -1,11 +1,11 @@
 # Optional dummy OTA HTTP server for local dev (seeded hotels, reservations, inventory).
 #
 # Prerequisites: main stack created the Docker network (default project name `kira`):
-#   docker compose -f docker-compose.yml up -d postgres redis
+#   docker compose -f docker/docker-compose.yml up -d postgres redis
 #   # …or full stack; network will be named `kira_kira-net`
 #
 # Start dummy OTA (reachable as http://dummy-ota:18080 from other containers on kira-net):
-#   docker compose -f docker-compose.yml -f docker-compose.dummy-ota.yml up -d dummy-ota
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.dummy-ota.yml up -d dummy-ota
 #
 # From your host (loopback only):
 #   curl -s http://127.0.0.1:18080/health
@@ -17,8 +17,8 @@
 services:
   dummy-ota:
     build:
-      context: ./dev/dummy-ota-server
-      dockerfile: Dockerfile
+      context: ../dev/dummy-ota-server
+      dockerfile: ../docker/dummy-ota-server.Dockerfile
     container_name: kira-dummy-ota
     restart: unless-stopped
     ports:

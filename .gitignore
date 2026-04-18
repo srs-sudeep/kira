@@ -43,10 +43,6 @@ yarn-debug.log*
 yarn-error.log*
 .npm
 
-# bun
-# bun.lockb is a binary — ignore to avoid binary diffs in PRs
-bun.lockb
-
 # Build output
 web-app/dist/
 web-app/.next/
@@ -68,6 +64,7 @@ secrets/
 # Docker
 # ============================================================
 .dockerignore
+docker/docker-compose.override.yml
 
 # ============================================================
 # IDE / OS

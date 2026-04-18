@@ -34,9 +34,9 @@ services:
       GF_NEWS_NEWS_FEED_ENABLED: "false"
     volumes:
       - grafanadata:/var/lib/grafana
-      - ./observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ../observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ../observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
       - loki
@@ -59,8 +59,8 @@ services:
       - --web.enable-lifecycle
       - --web.enable-admin-api
     volumes:
-      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./observability/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../observability/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - promdata:/prometheus
     depends_on:
       - postgres-exporter
@@ -79,7 +79,7 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - ./observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - ../observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
       - lokidata:/loki
     networks:
       - kira-net
@@ -100,7 +100,7 @@ services:
       - /etc/alloy/config.alloy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - ../observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - alloydata:/var/lib/alloy/data
     depends_on:
       - loki
@@ -127,7 +127,7 @@ services:
     image: oliver006/redis_exporter:v1.62.0
     restart: unless-stopped
     environment:
-      REDIS_ADDR: "redis://redis:6379"
+      REDIS_ADDR: "redis://default:redis-local-dev@redis:6379"
     ports:
       - "9121:9121"
     depends_on:
@@ -156,7 +156,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainerdata:/data
-      - ./observability/portainer/dev-admin-password:/tmp/portainer-password:ro
+      - ../observability/portainer/dev-admin-password:/tmp/portainer-password:ro
     networks:
       - kira-net
 
@@ -190,8 +190,8 @@ services:
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
     volumes:
       - pgadmindata:/var/lib/pgadmin
-      - ./observability/pgadmin/servers.json:/pgadmin4/servers.json:ro
-      - ./observability/pgadmin/pgpass:/pgadmin4/pgpass:ro
+      - ../observability/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ../observability/pgadmin/pgpass:/pgadmin4/pgpass:ro
     depends_on:
       postgres:
         condition: service_healthy

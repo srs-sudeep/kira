@@ -118,7 +118,6 @@ export function BulkUpdateForm({ open, onOpenChange, calendarQueryKey }: Props) 
   }
 
   function toggleTarget(target: Target) {
-    const key = `${target.room_type_id}-${target.rate_plan_id}`
     setSelectedTargets((prev) => {
       const exists = prev.some(
         (t) =>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Plus, Radio } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,7 +11,6 @@ import { ChannelCard } from '../components/ChannelCard'
 import { ConnectChannelWizard } from '../components/ConnectChannelWizard'
 
 export default function ChannelsPage() {
-  const qc = useQueryClient()
   const { user } = useAuthStore()
   const [connectOpen, setConnectOpen] = useState(false)
 

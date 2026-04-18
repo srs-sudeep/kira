@@ -1,6 +1,5 @@
 import { apiClient } from '@/lib/api-client'
 import type { RoomType, RatePlan, RoomTypeCreateRequest, RatePlanCreateRequest } from '@/types/room'
-import type { PaginatedResponse } from '@/types/api'
 
 import { ensureArray } from '@/lib/ensure-array'
 

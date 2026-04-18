@@ -1,0 +1,19 @@
+[project]
+name = "kira-cli"
+version = "0.1.0"
+description = "KIRA monorepo CLI — manage dev, test, deploy, and docs from one tool"
+requires-python = ">=3.13"
+dependencies = [
+    "typer>=0.9",
+    "rich>=13.0",
+]
+
+[project.scripts]
+kira = "cli.__main__:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cli"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

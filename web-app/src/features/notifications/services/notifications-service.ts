@@ -4,7 +4,6 @@ import type {
   Notification,
   NotificationListParams,
   NotificationPreferences,
-  NotificationType,
 } from '@/types/notification'
 import type { PaginatedResponse } from '@/types/api'
 

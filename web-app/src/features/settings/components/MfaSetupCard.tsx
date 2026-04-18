@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { ShieldCheck, ShieldOff, Copy, Eye, EyeOff } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -20,7 +20,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import authService from '@/features/auth/services/auth-service'
-import { useAuthStore } from '@/stores/auth-store'
 
 const otpSchema = z.object({
   code: z.string().length(6, 'Enter the 6-digit code'),
@@ -226,7 +225,6 @@ function MfaDisableFlow({ onDone }: { onDone: () => void }) {
 // ── Card ──────────────────────────────────────────────────────────────────────
 
 export function MfaSetupCard() {
-  const { user } = useAuthStore()
   const [showSetup, setShowSetup] = useState(false)
 
   // Track MFA state locally since User type doesn't expose mfa_enabled

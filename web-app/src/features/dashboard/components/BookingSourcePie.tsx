@@ -1,4 +1,3 @@
-/* global document, MutationObserver -- browser */
 import { useSyncExternalStore } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {

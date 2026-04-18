@@ -1,5 +1,8 @@
 """KIRA tenant middleware — sets PostgreSQL search_path per request from JWT tenant_id."""
+
 from __future__ import annotations
+
+import re
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +14,7 @@ logger = structlog.get_logger(__name__)
 
 TENANT_SCHEMA_PREFIX = "tenant_"
 PUBLIC_PATHS = {"/health", "/metrics", "/docs", "/openapi.json", "/redoc"}
+_UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
 
 
 class TenantMiddleware(BaseHTTPMiddleware):
@@ -36,10 +40,8 @@ async def set_tenant_search_path(session: AsyncSession, tenant_id: str) -> None:
     Set the PostgreSQL search_path for the given session to the tenant schema.
     Call this inside the get_db dependency after the tenant_id is resolved.
     """
+    if not _UUID_RE.match(tenant_id):
+        raise ValueError(f"Invalid tenant_id: must be a UUID, got {tenant_id!r}")
     schema = f"{TENANT_SCHEMA_PREFIX}{tenant_id.replace('-', '_')}"
-    await session.execute(
-        # Raw text is safe here — tenant_id comes from a verified JWT claim
-        # and is validated as a UUID before reaching this function
-        __import__("sqlalchemy").text(f'SET search_path TO "{schema}", public')
-    )
+    await session.execute(__import__("sqlalchemy").text(f'SET search_path TO "{schema}", public'))
     logger.debug("tenant_schema_set", schema=schema)

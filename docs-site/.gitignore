@@ -5,9 +5,6 @@ node_modules/
 build/
 .docusaurus/
 
-# Bun
-bun.lockb
-
 # OS
 .DS_Store
 Thumbs.db

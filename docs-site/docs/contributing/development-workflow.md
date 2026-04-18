@@ -7,6 +7,7 @@ sidebar_position: 1
 # Development Workflow
 
 **What you'll learn:**
+
 - The full lifecycle from branch to merged PR
 - Branch naming and commit message conventions
 - How to run the complete test suite locally
@@ -62,15 +63,15 @@ Optional longer description if the change needs context.
 Max 72 chars on the first line.
 ```
 
-| Type | When |
-|---|---|
-| `feat` | New feature |
-| `fix` | Bug fix |
-| `test` | Adding or fixing tests |
+| Type       | When                              |
+| ---------- | --------------------------------- |
+| `feat`     | New feature                       |
+| `fix`      | Bug fix                           |
+| `test`     | Adding or fixing tests            |
 | `refactor` | Refactoring (no behaviour change) |
-| `docs` | Documentation |
-| `chore` | Dependencies, config, tooling |
-| `perf` | Performance improvement |
+| `docs`     | Documentation                     |
+| `chore`    | Dependencies, config, tooling     |
+| `perf`     | Performance improvement           |
 
 Examples:
 
@@ -82,6 +83,28 @@ fix(identity): refresh token not invalidated on logout
 test(reservation): add integration tests for cancellation flow
 
 chore(deps): bump fastapi from 0.111 to 0.115
+```
+
+:::tip Commit conventions are enforced
+Husky git hooks run **commitlint** on every commit message. If the format is wrong, the commit is rejected. Use `uv run kira commit` or `bun run commit` for an interactive prompt. See [Commit Conventions](./commit-conventions.md) for the full reference.
+:::
+
+---
+
+## Git Hooks (Husky)
+
+Three hooks run automatically after `bun install`:
+
+| Hook         | When                         | What it does                                        |
+| ------------ | ---------------------------- | --------------------------------------------------- |
+| `pre-commit` | Before every commit          | TypeScript type-check + ESLint on `web-app/`        |
+| `commit-msg` | After writing commit message | Validates conventional commit format via commitlint |
+| `pre-push`   | Before every push            | Runs `make test-all` (all backend tests)            |
+
+If hooks aren't active after a fresh clone, run:
+
+```bash
+bun install    # installs Husky and activates hooks
 ```
 
 ---
@@ -101,6 +124,11 @@ git checkout -b feat/rate-inventory-seasonal-blackout
 ### Running a single service
 
 ```bash
+# Via CLI
+uv run kira dev up
+uv run kira dev logs rate-inventory-service
+
+# Or directly with docker compose
 docker compose up -d postgres redis kafka
 docker compose up -d rate-inventory-service
 docker compose logs -f rate-inventory-service
@@ -109,14 +137,10 @@ docker compose logs -f rate-inventory-service
 ### Running tests for one service
 
 ```bash
-# From the repo root
-docker compose exec rate-inventory-service \
-  uv run pytest -v --cov=app --cov-report=term-missing
-```
+# Via CLI
+uv run kira test rate-inventory-service
 
-Or directly if your local Python env is configured:
-
-```bash
+# Or directly
 cd services/rate-inventory-service
 uv run pytest -v --cov=app --cov-report=term-missing
 ```
@@ -124,7 +148,13 @@ uv run pytest -v --cov=app --cov-report=term-missing
 ### Running tests for all services
 
 ```bash
-# services with test databases need postgres + redis running
+# Via CLI
+uv run kira test --all
+
+# Or with make
+make test-all
+
+# Or manually
 docker compose up -d postgres redis kafka
 
 for service in identity-service rate-inventory-service reservation-service channel-engine notification-service admin-service; do
@@ -136,6 +166,11 @@ done
 ### Running lint
 
 ```bash
+# Via CLI
+uv run kira lint --all         # All services + web
+uv run kira lint --all --fix   # Auto-fix
+
+# Or directly
 cd services/identity-service
 uv run ruff check .
 uv run ruff format --check .
@@ -159,7 +194,7 @@ Before opening a PR, verify:
 - [ ] New database columns have an Alembic migration
 - [ ] If a Kafka event schema changed, the shared schema in `shared/schemas/events.py` is updated
 - [ ] PR title follows `type(scope): description` format
-- [ ] PR description explains *what changed* and *why* (not just a list of files)
+- [ ] PR description explains _what changed_ and _why_ (not just a list of files)
 
 ### PR description template
 
@@ -188,16 +223,19 @@ How to manually verify the change (endpoint to hit, expected response).
 ## Code Review Guidelines
 
 **As an author:**
+
 - Keep PRs focused — one feature or fix per PR
 - Respond to review comments within one business day
 - Prefer small, incremental PRs over large all-in-one PRs
 
 **As a reviewer:**
+
 - Review within one business day of assignment
 - Approve when you are satisfied, even if minor nits remain (leave them as comments, not change requests)
 - Block on: correctness bugs, security issues, missing tests for business logic, hardcoded secrets
 
 **Merge strategy:**
+
 - Use **squash and merge** for feature/fix branches (keeps `main` history clean)
 - Use **merge commit** only for long-running feature branches where per-commit history is important
 
