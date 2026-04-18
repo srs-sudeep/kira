@@ -17,6 +17,7 @@ export default {
         "shared",
         "cli",
         "deps",
+        "docs-site",
       ],
     ],
   },
