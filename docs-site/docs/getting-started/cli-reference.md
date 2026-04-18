@@ -211,6 +211,23 @@ uv run kira commit
 
 ---
 
+### `kira push`
+
+Runs the same gate as Husky **pre-push** (`make test-pre-push`) with optional skips, then **`git push`** with **`SKIP_TEST_PRE_PUSH=1`** so the hook does not run that suite again.
+
+- **Default:** interactive prompts (which stages to run).
+- **`-y` / `--yes`:** non-interactive full suite (CI-friendly).
+- **`--skip-tests`**, **`--no-services`**, **`--no-web`**, **`--no-integration`**, **`--skip-services`:** non-interactive partial runs.
+
+```bash
+uv run kira push -y origin main
+uv run kira push --no-services --no-integration
+```
+
+Full reference: [Git, Husky hooks, and pushes](../contributing/git-hooks-and-pushes.md).
+
+---
+
 ### `kira dashboards`
 
 Opens KIRA dashboard URLs in the default browser.
@@ -253,6 +270,7 @@ Many tasks exist in both places. **`make help`** lists all Make targets. For com
 | `kira test --web` | `make test-web` |
 | `kira test --coverage` | `make test-coverage` |
 | `kira test --integration` | `make test-integration` |
+| `kira push` / `kira push -y` | Runs `make test-pre-push` (with your skips), then `git push` — not a single Make alias; see [Git hooks doc](../contributing/git-hooks-and-pushes.md) |
 | `kira migrate --all` | `make migrate-all` |
 | `kira migrate --all --docker` | `make migrate-docker-all` |
 | `kira seed` | `make seed` |

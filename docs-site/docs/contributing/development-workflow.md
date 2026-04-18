@@ -91,17 +91,13 @@ Husky git hooks run **commitlint** on every commit message. If the format is wro
 
 ---
 
-## Git Hooks (Husky)
+## Git hooks (Husky)
 
-Three hooks run automatically after `bun install`:
+Hooks run automatically after **`bun install`** at the repo root. They run **lint-staged**, **full `kira lint --all`**, **commitlint**, and **`make test-pre-push`** (Python + web + Docker integration) on commit and push.
 
-| Hook         | When                         | What it does                                        |
-| ------------ | ---------------------------- | --------------------------------------------------- |
-| `pre-commit` | Before every commit          | TypeScript type-check + ESLint on `web-app/`        |
-| `commit-msg` | After writing commit message | Validates conventional commit format via commitlint |
-| `pre-push`   | Before every push            | Runs `make test-all` (all backend tests)            |
+For a full table, skip variables, and the **`kira push`** wrapper, see **[Git, Husky hooks, and pushes](./git-hooks-and-pushes.md)**.
 
-If hooks aren't active after a fresh clone, run:
+If hooks are not active after a fresh clone:
 
 ```bash
 bun install    # installs Husky and activates hooks

@@ -99,6 +99,7 @@ const sidebars: SidebarsConfig = {
       label: "Contributing",
       items: [
         "contributing/development-workflow",
+        "contributing/git-hooks-and-pushes",
         "contributing/coding-standards",
         "contributing/adding-a-service",
         "contributing/adding-a-feature",
