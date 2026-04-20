@@ -99,8 +99,8 @@ for svc in "${SERVICES[@]}"; do
   docker build -t "kira-${svc}:local" -f "docker/${svc}.Dockerfile" .
 done
 
-# Build web-app
-docker build -t kira-web-app:local -f docker/web-app.Dockerfile .
+# Build web-app (context is web-app/ — Dockerfile copies package.json and nginx.conf from there)
+docker build -t kira-web-app:local -f docker/web-app.Dockerfile web-app
 ```
 
 Alternatively, build outside minikube and load:
@@ -110,7 +110,7 @@ for svc in "${SERVICES[@]}"; do
   docker build -t "kira-${svc}:local" -f "docker/${svc}.Dockerfile" .
   minikube image load "kira-${svc}:local"
 done
-docker build -t kira-web-app:local -f docker/web-app.Dockerfile .
+docker build -t kira-web-app:local -f docker/web-app.Dockerfile web-app
 minikube image load kira-web-app:local
 ```
 

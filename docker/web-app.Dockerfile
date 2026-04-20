@@ -5,12 +5,12 @@ FROM oven/bun:1.1-alpine AS builder
 WORKDIR /app
 
 # Install dependencies (cached layer)
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# Copy source and build
+# Copy source and build (vite only — `bun run build` runs tsc on vite.config.ts and fails in Docker)
 COPY . .
-RUN bun run build
+RUN bunx vite build
 
 # ── Stage 2: serve ────────────────────────────────────────────────────────────
 FROM nginx:1.27-alpine AS runner
